@@ -50,4 +50,8 @@ inline int vlm_getReversed(int mValue)
 	return result;
 }
 
+// TODO: docs
+inline int vlm_max(int mA, int mB) { return mA > mB ? mA : mB; }
+inline int vlm_min(int mA, int mB) { return mA < mB ? mA : mB; }
+
 #endif

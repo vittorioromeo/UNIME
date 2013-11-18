@@ -41,24 +41,24 @@ void choiceSequenceMinMax()
 
 	bool increasing = true;
 
-	int number, min, max, evenCount = 0, prevNumber = -1;
-	number = min = max = vlc_getScanfInt();
+	int number, min, max, prevNumber, evenCount = 0;
+	number = min = max = prevNumber = vlc_getScanfInt();
 
+	if(min == -1 && max == -1) { printf("The entered sequence is empty."); return; }
+	
 	while(number != -1) 
 	{
-		if(prevNumber != -1 && number < prevNumber) increasing = false;
-
+		if(number < prevNumber) increasing = false;
 		if(number % 2 == 0) ++evenCount;
 
-		if(number < min) min = number;
-		else if(number > max) max = number;
+		min = vlm_min(min, number);
+		max = vlm_max(max, number);
 		
 		prevNumber = number;
 		number = vlc_getScanfInt();
 	}
 
-	if(min == -1 && max == -1) printf("The entered sequence is empty.");
-	else printf("Min: %d\tMax: %d\tEven count: %d\nThe sequence is in %s order\n", min, max, evenCount, increasing ? "increasing" : "decreasing");
+	printf("Min: %d\tMax: %d\tEven count: %d\nThe sequence is in %sincreasing order\n", min, max, evenCount, increasing ? "" : "not in ");
 }
 
 int main()

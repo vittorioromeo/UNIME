@@ -35,6 +35,24 @@ void choiceNaivePrintfVersion()
 	}
 }
 
+void choiceSequenceMinMax()
+{
+	printf("Enter any number of integers, separated by pressing return.\nWhen you're done, enter '-1' to signal the end of the sequence.\n");
+
+	int number, min, max;
+	number = min = max = vlc_getScanfInt();
+
+	while(number != -1) 
+	{
+		if(number < min) min = number;
+		else if(number > max) max = number;
+		number = vlc_getScanfInt();
+	}
+
+	if(min == -1 && max == -1) printf("The entered sequence is empty.");
+	else printf("Min: %d\t Max: %d", min, max);
+}
+
 int main()
 {	
 	runTests();
@@ -43,17 +61,19 @@ int main()
 	{
 		"Print a number's reverse and whether it's palindrome.",
 		"Print a number's reverse and whether it's palindrome. (naive version)",
-		"Print a number's reverse. (naive printf version)"
+		"Print a number's reverse. (naive printf version)",
+		"Print an integer sequence's min and max numbers."
 	};
 
 	void(*fnPtrs[])() = 
 	{
 		&choiceNewVersion,
 		&choiceNaiveVersion,
-		&choiceNaivePrintfVersion
+		&choiceNaivePrintfVersion,
+		&choiceSequenceMinMax
 	};
 
-	vlc_showMenu(3, choiceDescs, fnPtrs);
+	vlc_showMenu(4, choiceDescs, fnPtrs);
 	return 0;
 }
 

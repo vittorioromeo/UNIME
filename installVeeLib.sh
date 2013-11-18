@@ -1,3 +1,8 @@
 #!/bin/bash
 
-sudo cp -R ./VeeLib/include/* /usr/include/
+(
+	cd ./VeeLib/
+	mkdir lib
+	cd lib
+	cmake .. && make -j4 && sudo make install -j4
+)

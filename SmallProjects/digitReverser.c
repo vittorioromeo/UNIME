@@ -39,18 +39,26 @@ void choiceSequenceMinMax()
 {
 	printf("Enter any number of integers, separated by pressing return.\nWhen you're done, enter '-1' to signal the end of the sequence.\n");
 
-	int number, min, max;
+	bool increasing = true;
+
+	int number, min, max, evenCount = 0, prevNumber = -1;
 	number = min = max = vlc_getScanfInt();
 
 	while(number != -1) 
 	{
+		if(prevNumber != -1 && number < prevNumber) increasing = false;
+
+		if(number % 2 == 0) ++evenCount;
+
 		if(number < min) min = number;
 		else if(number > max) max = number;
+		
+		prevNumber = number;
 		number = vlc_getScanfInt();
 	}
 
 	if(min == -1 && max == -1) printf("The entered sequence is empty.");
-	else printf("Min: %d\t Max: %d", min, max);
+	else printf("Min: %d\t Max: %d\t Even count: %d\t Increasing: %d", min, max, evenCount, increasing);
 }
 
 int main()

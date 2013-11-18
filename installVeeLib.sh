@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo cp -R ./VeeLib/ /usr/include/
+sudo cp -R ./VeeLib/include/* /usr/include/

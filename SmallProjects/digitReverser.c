@@ -58,7 +58,7 @@ void choiceSequenceMinMax()
 	}
 
 	if(min == -1 && max == -1) printf("The entered sequence is empty.");
-	else printf("Min: %d\t Max: %d\t Even count: %d\t Increasing: %d", min, max, evenCount, increasing);
+	else printf("Min: %d\tMax: %d\tEven count: %d\nThe sequence is in %s order\n", min, max, evenCount, increasing ? "increasing" : "decreasing");
 }
 
 int main()

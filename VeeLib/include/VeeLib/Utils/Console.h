@@ -13,7 +13,7 @@ inline float vlc_getScanfFloat() 	{ float result; 	scanf("%f", &result); return 
 inline double vlc_getScanfDouble() 	{ double result; 	scanf("%f", &result); return result; }
 
 inline void vlc_waitForAnyKey()	{ char temp; scanf("%c", &temp); scanf("%c", &temp); }
-inline void vlc_clearScreen() 	{ int i; for(i = 0; i < 50; ++i) printf("\n"); }
+inline void vlc_clearScreen() 	{ int i; for(i = 0; i < 50; ++i) printf("\n\n\n\n"); }
 
 inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnPtrs[])())
 {
@@ -26,8 +26,7 @@ inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnP
 		for(i = 0; i < mChoiceCount; ++i) printf("\n(%d): %s", i, mChoiceDescs[i]);
 		printf("\n(%d): %s", i, "Exit.");
 		
-		int choice;
-		scanf("%d", &choice);
+		int choice = vlc_getScanfInt();
 
 		if(choice >= mChoiceCount) break;
 

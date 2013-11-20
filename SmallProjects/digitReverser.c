@@ -61,6 +61,8 @@ void choiceSequenceMinMax()
 	printf("Min: %d\tMax: %d\tEven count: %d\nThe sequence is in %sincreasing order\n", min, max, evenCount, increasing ? "" : "not in ");
 }
 
+void choiceFibonacci() { printFibonacci(vlc_getScanfInt()); }
+
 int main()
 {	
 	runTests();
@@ -70,7 +72,8 @@ int main()
 		"Print a number's reverse and whether it's palindrome.",
 		"Print a number's reverse and whether it's palindrome. (naive version)",
 		"Print a number's reverse. (naive printf version)",
-		"Print an integer sequence's min and max numbers."
+		"Print an integer sequence's min and max numbers.",
+		"Print n fibonacci number"
 	};
 
 	void(*fnPtrs[])() = 
@@ -78,10 +81,11 @@ int main()
 		&choiceNewVersion,
 		&choiceNaiveVersion,
 		&choiceNaivePrintfVersion,
-		&choiceSequenceMinMax
+		&choiceSequenceMinMax,
+		&choiceFibonacci
 	};
 
-	vlc_showMenu(4, choiceDescs, fnPtrs);
+	vlc_showMenu(5, choiceDescs, fnPtrs);
 	return 0;
 }
 

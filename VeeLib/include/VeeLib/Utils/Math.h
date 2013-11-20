@@ -54,4 +54,17 @@ inline int vlm_getReversed(int mValue)
 inline int vlm_max(int mA, int mB) { return mA > mB ? mA : mB; }
 inline int vlm_min(int mA, int mB) { return mA < mB ? mA : mB; }
 
+inline void printFibonacci(int mCount)
+{
+	int n1 = 1, n2 = 1, result, i;
+
+	for(i = 0; i < mCount; ++i)
+	{
+		result = n1 + n2;
+		n1 = n2;
+		n2 = result;
+		printf("%d\n", result);
+	}
+}
+
 #endif

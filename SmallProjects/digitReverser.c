@@ -106,6 +106,46 @@ void choiceFactorial()
 
 void choiceFibonacci() { printf(vlm_getFibonacci(vlc_getScanfInt())); }
 
+void choiceFindLog()
+{
+	printf("Insert base\n");
+	int base = vlc_getScanfInt();
+
+	printf("Insert argument\n");
+	int arg = vlc_getScanfInt();
+
+	int result = -1;
+
+	do
+	{
+		++result;
+		arg /= base;
+	} while(arg != 0);
+	 
+	 printf("Log: %d", result);
+}
+
+void choiceFunctionExercise()
+{
+	
+
+	
+	/*printf("Enter lower bound (inclusive)\n");
+	int lb = vlc_getScanfInt();
+
+	printf("Enter upper bound (exclusive)\n");
+	int ub = vlc_getScanfInt();
+
+	bool foundPositive = 0;
+	bool foundNegative = 0;
+
+	int i;
+	for(i = lb; i < ub; ++i)
+	{
+
+	}*/
+}
+
 int main()
 {	
 	runTests();
@@ -113,28 +153,32 @@ int main()
 	const char* choiceDescs[] = 
 	{
 		"Print a number's reverse and whether it's palindrome.",
-		"Print a number's reverse and whether it's palindrome. (naive version)",
-		"Print a number's reverse. (naive printf version)",
 		"Print an integer sequence's min and max numbers.",
-		"Print n fibonacci number",
-		"Print multiples of x between n1 and n2",
-		"Print powers of two",
-		"Print factorial"
+		"Print nth fibonacci number",
+		"Print multiples of n between m1 and m2",
+		"Print n powers of m",
+		"Print factorial of n",
+		"Print a number's reverse and whether it's palindrome. (deprecated naive version)",
+		"Print a number's reverse. (deprecated naive printf version)",
+		"Find log",
+		"Function exercise"
 	};
 
 	void(*fnPtrs[])() = 
 	{
 		&choiceNewVersion,
-		&choiceNaiveVersion,
-		&choiceNaivePrintfVersion,
 		&choiceSequenceMinMax,
 		&choiceFibonacci,
 		&choiceCountMultipleOf,
 		&choicePowOf2,
-		&choiceFactorial
+		&choiceFactorial,
+		&choiceNaiveVersion,
+		&choiceNaivePrintfVersion,
+		&choiceFindLog,
+		&choiceFunctionExercise
 	};
 
-	vlc_showMenu(8, choiceDescs, fnPtrs);
+	vlc_showMenu(9, choiceDescs, fnPtrs);
 	return 0;
 }
 

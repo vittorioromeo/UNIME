@@ -51,8 +51,8 @@ void choiceSequenceMinMax()
 		if(number < prevNumber) increasing = false;
 		if(number % 2 == 0) ++evenCount;
 
-		min = vlm_min(min, number);
-		max = vlm_max(max, number);
+		min = vlm_getMin(min, number);
+		max = vlm_getMax(max, number);
 		
 		prevNumber = number;
 		number = vlc_getScanfInt();
@@ -101,16 +101,10 @@ void choiceFactorial()
 
 	vlc_clearScreen();
 
-	/*int n, m;
-	for(n = 100; n > 0; --n)
-	{
-		m = m * n;
-	}*/
-
 	printf("%d\n", vlm_getFactorial(number));
 }
 
-void choiceFibonacci() { printFibonacci(vlc_getScanfInt()); }
+void choiceFibonacci() { printf(vlm_getFibonacci(vlc_getScanfInt())); }
 
 int main()
 {	

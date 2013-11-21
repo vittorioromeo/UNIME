@@ -36,7 +36,7 @@ inline int vlm_getDigitFromRightAt(int mValue, int mPosFromRight)
 /// @brief Returns the reverse of an integer.
 /// @details Internally uses mod, division and mutliplication. 
 /// @param mValue Number to reverse.
-inline int vlm_getReversed(int mValue)
+inline int vlm_getReversed(int mValue) 
 {
 	int result = 0;
 
@@ -50,6 +50,15 @@ inline int vlm_getReversed(int mValue)
 	return result;
 }
 
+/// @brief Returns the max between two integers.
+/// @param mA First integer.
+/// @param mB Second integer.
+inline int vlm_getMax(int mA, int mB) { return mA > mB ? mA : mB; }
+
+/// @brief Returns the min between two integers.
+/// @param mA First integer.
+/// @param mB Second integer.
+inline int vlm_getMin(int mA, int mB) { return mA < mB ? mA : mB; }
 
 // TODO: docs
 inline int vlm_getFactorial(int mValue) 
@@ -60,21 +69,18 @@ inline int vlm_getFactorial(int mValue)
 	return mValue;
 }
 
-
-inline int vlm_max(int mA, int mB) { return mA > mB ? mA : mB; }
-inline int vlm_min(int mA, int mB) { return mA < mB ? mA : mB; }
-
-inline void printFibonacci(int mCount)
+inline int vlm_getFibonacci(int mValue)
 {
 	int n1 = 1, n2 = 1, result, i;
 
-	for(i = 0; i < mCount; ++i)
+	for(i = 0; i < mValue; ++i)
 	{
 		result = n1 + n2;
 		n1 = n2;
-		n2 = result;
-		printf("%d\n", result);
+		n2 = result;		
 	}
+
+	return result;
 }
 
 #endif

@@ -50,7 +50,17 @@ inline int vlm_getReversed(int mValue)
 	return result;
 }
 
+
 // TODO: docs
+inline int vlm_getFactorial(int mValue) 
+{
+	if(mValue == 0 || mValue == 1) return 1; 
+	int last;
+	for(last = mValue - 1; last > 0; --last) mValue *= last; 
+	return mValue;
+}
+
+
 inline int vlm_max(int mA, int mB) { return mA > mB ? mA : mB; }
 inline int vlm_min(int mA, int mB) { return mA < mB ? mA : mB; }
 

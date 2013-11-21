@@ -61,6 +61,55 @@ void choiceSequenceMinMax()
 	printf("Min: %d\tMax: %d\tEven count: %d\nThe sequence is in %sincreasing order\n", min, max, evenCount, increasing ? "" : "not in ");
 }
 
+void choiceCountMultipleOf()
+{
+	printf("Enter lower bound (inclusive)\n");
+	int lb = vlc_getScanfInt();
+
+	printf("Enter upper bound (exclusive)\n");
+	int ub = vlc_getScanfInt();
+
+	printf("Enter divisor\n");
+	int divisor = vlc_getScanfInt();
+
+	vlc_clearScreen();
+
+	int i, firstMultiple;
+	for(i = lb; i < ub; ++i) if(i % divisor == 0) { firstMultiple = i; break; }
+
+	for(i = firstMultiple; i < ub; i += divisor) printf("%d\n", i);
+}
+
+void choicePowOf2()
+{
+	printf("Enter power base\n");
+	int base = vlc_getScanfInt();
+
+	printf("Enter how many powers to calculate\n");
+	int count = vlc_getScanfInt();
+
+	vlc_clearScreen();
+
+	int i, n = 1;
+	for(i = 0; i < count; ++i) printf("%d\n", n *= base);
+}
+
+void choiceFactorial()
+{
+	printf("Enter number\n");
+	int number = vlc_getScanfInt();	
+
+	vlc_clearScreen();
+
+	/*int n, m;
+	for(n = 100; n > 0; --n)
+	{
+		m = m * n;
+	}*/
+
+	printf("%d\n", vlm_getFactorial(number));
+}
+
 void choiceFibonacci() { printFibonacci(vlc_getScanfInt()); }
 
 int main()
@@ -73,7 +122,10 @@ int main()
 		"Print a number's reverse and whether it's palindrome. (naive version)",
 		"Print a number's reverse. (naive printf version)",
 		"Print an integer sequence's min and max numbers.",
-		"Print n fibonacci number"
+		"Print n fibonacci number",
+		"Print multiples of x between n1 and n2",
+		"Print powers of two",
+		"Print factorial"
 	};
 
 	void(*fnPtrs[])() = 
@@ -82,10 +134,13 @@ int main()
 		&choiceNaiveVersion,
 		&choiceNaivePrintfVersion,
 		&choiceSequenceMinMax,
-		&choiceFibonacci
+		&choiceFibonacci,
+		&choiceCountMultipleOf,
+		&choicePowOf2,
+		&choiceFactorial
 	};
 
-	vlc_showMenu(5, choiceDescs, fnPtrs);
+	vlc_showMenu(8, choiceDescs, fnPtrs);
 	return 0;
 }
 

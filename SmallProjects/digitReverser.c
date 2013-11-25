@@ -125,25 +125,40 @@ void choiceFindLog()
 	 printf("Log: %d", result);
 }
 
+float getSignF(float mA) { return mA > 0.f ? 1.f : -1.f; }
+
 void choiceFunctionExercise()
 {
-	
+	float tolerance = 0.0001f;
 
-	
-	/*printf("Enter lower bound (inclusive)\n");
-	int lb = vlc_getScanfInt();
+	printf("Enter lower bound (inclusive)\n");
+	float lb = vlc_getScanfFloat();
 
 	printf("Enter upper bound (exclusive)\n");
-	int ub = vlc_getScanfInt();
+	float ub = vlc_getScanfFloat();
 
-	bool foundPositive = 0;
-	bool foundNegative = 0;
+	float mb, sinLb, sinUb, sinMb;
 
-	int i;
-	for(i = lb; i < ub; ++i)
+	do
 	{
+		mb = (lb + ub) / 2.f;
+		sinLb = sin(lb);
+		sinUb = sin(ub);
+		sinMb = sin(mb);
+		
+		if(sinMb > 0) 
+		{
+			if(sinLb < 0 && sinUb > 0) ub = mb;
+			else if(sinLb > 0 && sinUb < 0) lb = mb;			
+		}
+		else
+		{
+			if(sinLb > 0 && sinUb < 0) ub = mb;
+			else if(sinLb < 0 && sinUb > 0) lb = mb;
+		}
 
-	}*/
+		printf("sin(%f) -> %f\n", mb, sinMb);
+	} while(fabs(sinMb) > tolerance);
 }
 
 int main()
@@ -160,8 +175,8 @@ int main()
 		"Print factorial of n",
 		"Print a number's reverse and whether it's palindrome. (deprecated naive version)",
 		"Print a number's reverse. (deprecated naive printf version)",
-		"Find log",
-		"Function exercise"
+		"Find log by using divisions",
+		"Find function using bisection"
 	};
 
 	void(*fnPtrs[])() = 
@@ -178,7 +193,7 @@ int main()
 		&choiceFunctionExercise
 	};
 
-	vlc_showMenu(9, choiceDescs, fnPtrs);
+	vlc_showMenu(10, choiceDescs, fnPtrs);
 	return 0;
 }
 

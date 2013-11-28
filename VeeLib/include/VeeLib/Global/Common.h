@@ -17,7 +17,7 @@
 	typedef int bool;
 #endif
 
-#define VL_EXPECT(x) do{ if(!(x)){ printf("Test << " #x " failed! >>\n"); exit(1); } } while(0); 
+#define VL_EXPECT(x) do{ if(!(x)){ printf("Test << " #x " failed! >>\n"); exit(1); } } while(false); 
 
 // Prefixes:
 // 		vlm_:		math functions

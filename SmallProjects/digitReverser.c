@@ -165,7 +165,9 @@ int main()
 {	
 	runTests();
 
-	const char* choiceDescs[] = 
+	const size_t choiceCount = 10;
+
+	const char* choiceDescs[choiceCount] = 
 	{
 		"Print a number's reverse and whether it's palindrome.",
 		"Print an integer sequence's min and max numbers.",
@@ -179,7 +181,7 @@ int main()
 		"Find function using bisection"
 	};
 
-	void(*fnPtrs[])() = 
+	void(*fnPtrs[choiceCount])() = 
 	{
 		&choiceNewVersion,
 		&choiceSequenceMinMax,
@@ -193,7 +195,7 @@ int main()
 		&choiceFunctionExercise
 	};
 
-	vlc_showMenu(10, choiceDescs, fnPtrs);
+	vlc_showMenu(choiceCount, choiceDescs, fnPtrs);
 	return 0;
 }
 

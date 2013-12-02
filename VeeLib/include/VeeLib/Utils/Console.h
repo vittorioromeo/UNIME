@@ -23,12 +23,12 @@ inline double vlc_getScanfDouble() { double result; scanf("%f", &result); return
 inline void vlc_waitForAnyKey()	{ char temp; scanf("%c", &temp); scanf("%c", &temp); }
 
 /// @brief Clears the console screen bt printing 50*4 newlines.
-inline void vlc_clearScreen() { int i; for(i = 0; i < 50; ++i) printf("\n\n\n\n"); }
+inline void vlc_clearScreen() { int i; for(i = 0; i < 25; ++i) printf("\n\n\n\n\n\n\n\n\n\n\n"); }
 
 // TODO: docs
 inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnPtrs[])())
 {
-	while(1)
+	while(true)
 	{
 		vlc_clearScreen();
 		printf("\nWelcome! Choose:");

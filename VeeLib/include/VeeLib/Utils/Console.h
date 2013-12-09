@@ -7,6 +7,42 @@
 
 #include "VeeLib/Global/Common.h"
 
+#define VLC_STYLE_COUNT 13
+#define VLC_COLOR_COUNT 16
+
+enum Style_impl
+{
+	vlc_StyleNone = 0, vlc_StyleBold = 1, vlc_StyleDim = 2, vlc_StyleUnderline = 3, vlc_StyleBlink = 4, vlc_StyleReverseFGBG = 5, vlc_StyleHidden = 6,
+	vlc_StyleResetBold = 7, vlc_StyleResetDim = 8, vlc_StyleResetUnderline = 9, vlc_StyleResetBlink = 10, vlc_StyleResetReverse = 11, vlc_StyleResetHidden = 12
+};
+enum Color_impl
+{
+	vlc_ColorDefault = 0, vlc_ColorBlack = 1, vlc_ColorRed = 2, vlc_ColorGreen = 3, vlc_ColorYellow = 4, vlc_ColorBlue = 5, 
+	vlc_ColorMagenta = 6, vlc_ColorCyan = 7, vlc_ColorLightGray = 8, vlc_ColorDarkGray = 9, vlc_ColorLightRed = 10, vlc_ColorLightGreen = 11, 
+	vlc_ColorLightYellow = 12, vlc_ColorLightBlue = 13, vlc_ColorLightMagenta = 14, vlc_ColorLightCyan = 15, vlc_ColorLightWhite = 16
+};
+
+typedef enum Style_impl Style;
+typedef enum Color_impl Color;
+
+#if (__linux || __unix || __posix)
+	#include "VeeLib/Utils/Console/UtilsConsoleImplUnix.h"
+#elif (_WIN64 || _WIN32)
+	#include "VeeLib/Utils/Console/UtilsConsoleImplWin.h"
+#else
+	#include "VeeLib/Utils/Console/UtilsConsoleImplNull.h"
+#endif
+
+inline const char* vlc_getResetFmtStr() 			{ return vlc_impl_getResetFmtStr(); }
+inline const char* vlc_getStyleStr(Style mStyle)	{ return vlc_impl_getStyleStr(mStyle); }
+inline const char* vlc_getColorFGStr(Color mColor) 	{ return vlc_impl_getColorFGStr(mColor); }
+inline const char* vlc_getColorBGStr(Color mColor) 	{ return vlc_impl_getColorBGStr(mColor); }
+
+inline void vlc_resetFmt() 					{ printf("%s", vlc_getResetFmtStr()); }
+inline void vlc_setStyle(Style mStyle)		{ printf("%s", vlc_getStyleStr(mStyle)); }
+inline void vlc_setColorFG(Color mColor) 	{ printf("%s", vlc_getColorFGStr(mColor)); }
+inline void vlc_setColorBG(Color mColor) 	{ printf("%s", vlc_getColorBGStr(mColor)); }
+
 /// @brief Gets and returns an integer value using scanf.
 inline int vlc_getScanfInt() { int result; scanf("%d", &result); return result; }
 
@@ -31,12 +67,38 @@ inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnP
 	while(true)
 	{
 		vlc_clearScreen();
+
+		vlc_resetFmt();
+		vlc_setStyle(vlc_StyleBold);
+		vlc_setColorFG(vlc_ColorCyan);
 		printf("\nWelcome! Choose:");
 
 		int i;
-		for(i = 0; i < mChoiceCount; ++i) printf("\n(%d): %s", i, mChoiceDescs[i]);
-		printf("\n(%d): %s", i, "Exit.");
+		for(i = 0; i < mChoiceCount; ++i) 
+		{
+			vlc_resetFmt();
+			vlc_setStyle(vlc_StyleBold);
+			vlc_setColorFG(vlc_ColorRed);
+			printf("\n(%d): ", i);
+
+			vlc_resetFmt();
+			vlc_setStyle(vlc_StyleUnderline);
+			vlc_setColorFG(vlc_ColorYellow);
+			printf("%s", mChoiceDescs[i]);
+		}
 		
+		vlc_resetFmt();
+		vlc_setStyle(vlc_StyleBold);
+		vlc_setColorFG(vlc_ColorRed);
+		printf("\n(%d): ", i);
+
+		vlc_resetFmt();
+		vlc_setStyle(vlc_StyleUnderline);
+		vlc_setColorFG(vlc_ColorYellow);
+		printf("%s", "EXIT");
+
+		vlc_resetFmt();
+
 		int choice = vlc_getScanfInt();
 
 		if(choice >= mChoiceCount) break;

@@ -7,6 +7,8 @@
 #include <assert.h>
 #include <VeeLib/VeeLib.h>
 
+#define VL_CHOICE_COUNT 10
+
 void runTests();
 
 void choiceNewVersion()
@@ -104,7 +106,7 @@ void choiceFactorial()
 	printf("%d\n", vlm_getFactorial(number));
 }
 
-void choiceFibonacci() { printf(vlm_getFibonacci(vlc_getScanfInt())); }
+void choiceFibonacci() { printf("%d", vlm_getFibonacci(vlc_getScanfInt())); }
 
 void choiceFindLog()
 {
@@ -165,9 +167,7 @@ int main()
 {	
 	runTests();
 
-	const size_t choiceCount = 10;
-
-	const char* choiceDescs[choiceCount] = 
+	const char* choiceDescs[VL_CHOICE_COUNT] = 
 	{
 		"Print a number's reverse and whether it's palindrome.",
 		"Print an integer sequence's min and max numbers.",
@@ -181,7 +181,7 @@ int main()
 		"Find function using bisection"
 	};
 
-	void(*fnPtrs[choiceCount])() = 
+	void(*fnPtrs[VL_CHOICE_COUNT])() = 
 	{
 		&choiceNewVersion,
 		&choiceSequenceMinMax,
@@ -195,7 +195,7 @@ int main()
 		&choiceFunctionExercise
 	};
 
-	vlc_showMenu(choiceCount, choiceDescs, fnPtrs);
+	vlc_showMenu(VL_CHOICE_COUNT, choiceDescs, fnPtrs);
 	return 0;
 }
 

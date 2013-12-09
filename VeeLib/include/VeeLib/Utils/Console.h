@@ -43,6 +43,8 @@ inline void vlc_setStyle(Style mStyle)		{ printf("%s", vlc_getStyleStr(mStyle));
 inline void vlc_setColorFG(Color mColor) 	{ printf("%s", vlc_getColorFGStr(mColor)); }
 inline void vlc_setColorBG(Color mColor) 	{ printf("%s", vlc_getColorBGStr(mColor)); }
 
+inline void vlc_setFmt(Style mStyle, Color mColor) 	{ vlc_resetFmt(); vlc_setStyle(mStyle); vlc_setColorFG(mColor); }
+
 /// @brief Gets and returns an integer value using scanf.
 inline int vlc_getScanfInt() { int result; scanf("%d", &result); return result; }
 
@@ -68,33 +70,23 @@ inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnP
 	{
 		vlc_clearScreen();
 
-		vlc_resetFmt();
-		vlc_setStyle(vlc_StyleBold);
-		vlc_setColorFG(vlc_ColorCyan);
+		vlc_setFmt(vlc_StyleBold, vlc_ColorCyan);
 		printf("\nWelcome! Choose:");
 
 		int i;
 		for(i = 0; i < mChoiceCount; ++i) 
 		{
-			vlc_resetFmt();
-			vlc_setStyle(vlc_StyleBold);
-			vlc_setColorFG(vlc_ColorRed);
+			vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 			printf("\n(%d): ", i);
 
-			vlc_resetFmt();
-			vlc_setStyle(vlc_StyleUnderline);
-			vlc_setColorFG(vlc_ColorYellow);
+			vlc_setFmt(vlc_StyleUnderline, vlc_ColorYellow);
 			printf("%s", mChoiceDescs[i]);
 		}
 		
-		vlc_resetFmt();
-		vlc_setStyle(vlc_StyleBold);
-		vlc_setColorFG(vlc_ColorRed);
+		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 		printf("\n(%d): ", i);
 
-		vlc_resetFmt();
-		vlc_setStyle(vlc_StyleUnderline);
-		vlc_setColorFG(vlc_ColorYellow);
+		vlc_setFmt(vlc_StyleUnderline, vlc_ColorYellow);
 		printf("%s", "EXIT");
 
 		vlc_resetFmt();

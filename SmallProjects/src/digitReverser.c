@@ -29,10 +29,10 @@ void choiceNaiveVersion()
 void choiceNaivePrintfVersion()
 {
 	printf("Insert an integer: \nThe reversed integer is: ");
-	
+
 	int number = vlc_getScanfInt();
 	while(number != 0)
-	{ 
+	{
 		printf("%d", number % 10);
 		number /= 10;
 	}
@@ -48,15 +48,15 @@ void choiceSequenceMinMax()
 	number = min = max = prevNumber = vlc_getScanfInt();
 
 	if(min == -1 && max == -1) { printf("The entered sequence is empty."); return; }
-	
-	while(number != -1) 
+
+	while(number != -1)
 	{
 		if(number < prevNumber) increasing = false;
 		if(number % 2 == 0) ++evenCount;
 
 		min = vlm_getMin(min, number);
 		max = vlm_getMax(max, number);
-		
+
 		prevNumber = number;
 		number = vlc_getScanfInt();
 	}
@@ -78,9 +78,13 @@ void choiceCountMultipleOf()
 	vlc_clearScreen();
 
 	int i, firstMultiple;
-	for(i = lb; i < ub; ++i) if(i % divisor == 0) { firstMultiple = i; break; }
-
-	for(i = firstMultiple; i < ub; i += divisor) printf("%d\n", i);
+	for(i = lb; i < ub; ++i)
+		if(i % divisor == 0)
+		{
+			firstMultiple = i;
+			for(i = firstMultiple; i < ub; i += divisor) printf("%d\n", i);
+			return;
+		}
 }
 
 void choicePowOf2()
@@ -100,7 +104,7 @@ void choicePowOf2()
 void choiceFactorial()
 {
 	printf("Enter number\n");
-	int number = vlc_getScanfInt();	
+	int number = vlc_getScanfInt();
 
 	vlc_clearScreen();
 
@@ -124,7 +128,7 @@ void choiceFindLog()
 		++result;
 		arg /= base;
 	} while(arg != 0);
-	 
+
 	 printf("Log: %d", result);
 }
 
@@ -148,11 +152,11 @@ void choiceFunctionExercise()
 		sinLb = sin(lb);
 		sinUb = sin(ub);
 		sinMb = sin(mb);
-		
-		if(sinMb > 0) 
+
+		if(sinMb > 0)
 		{
 			if(sinLb < 0 && sinUb > 0) ub = mb;
-			else if(sinLb > 0 && sinUb < 0) lb = mb;			
+			else if(sinLb > 0 && sinUb < 0) lb = mb;
 		}
 		else
 		{
@@ -172,7 +176,7 @@ void prettyPrintArray(int* mArray, int mSize)
 
 bool isInArray(int* mArray, int mSize, int mNumber)
 {
-	int i; 
+	int i;
 	for(i = 0; i < mSize; ++i) if(mArray[i] == mNumber) return true;
 	return false;
 }
@@ -182,12 +186,12 @@ void getArrayUnique(int* mArray, int mSize, int* mTarget, int* mNewSize)
 	// Possible alternative solution: sort the array first, then skip adjacent
 	// identical values.
 
-	int targetSize = 0, i, iTarget;
+	int targetSize = 0, i;
 
-	for(i = 0; i < mSize; ++i) 
-		if(!isInArray(mTarget, targetSize, mArray[i])) 
+	for(i = 0; i < mSize; ++i)
+		if(!isInArray(mTarget, targetSize, mArray[i]))
 			mTarget[targetSize++] = mArray[i];
-	
+
 	*mNewSize = targetSize;
 }
 
@@ -197,7 +201,7 @@ void getArrayIntersection(int* mUniqueA, int mSizeA, int* mUniqueB, int mSizeB, 
 	int targetSize = 0, i;
 
 	for(i = 0; i < mSizeA; ++i)
-		if(isInArray(mUniqueB, mSizeB, mUniqueA[i])) 
+		if(isInArray(mUniqueB, mSizeB, mUniqueA[i]))
 			mTarget[targetSize++] = mUniqueA[i];
 
 	*mNewSize = targetSize;
@@ -207,15 +211,15 @@ void getArrayUnion(int* mUniqueA, int mSizeA, int* mUniqueB, int mSizeB, int* mT
 {
 	int tempArray[MAX_SIZE], tempSize = 0, i;
 
-	for(i = 0; i < mSizeA; ++i) tempArray[tempSize++] = mUniqueA[i];	
+	for(i = 0; i < mSizeA; ++i) tempArray[tempSize++] = mUniqueA[i];
 	for(i = 0; i < mSizeB; ++i) tempArray[tempSize++] = mUniqueB[i];
-			
-	getArrayUnique(tempArray, tempSize, mTarget, mNewSize); 
+
+	getArrayUnique(tempArray, tempSize, mTarget, mNewSize);
 }
 
 void calcIntersection(int* mA, int mSizeA, int* mB, int mSizeB, int* mTarget, int* mNewSize)
 {
-	int uniqueA[MAX_SIZE], uniqueB[MAX_SIZE], sizeUniqueA, sizeUniqueB; 
+	int uniqueA[MAX_SIZE], uniqueB[MAX_SIZE], sizeUniqueA, sizeUniqueB;
 	getArrayUnique(mA, mSizeA, uniqueA, &sizeUniqueA);
 	getArrayUnique(mB, mSizeB, uniqueB, &sizeUniqueB);
 
@@ -237,11 +241,11 @@ void calcIntersection(int* mA, int mSizeA, int* mB, int mSizeB, int* mTarget, in
 	prettyPrintArray(uniqueA, sizeUniqueA);
 	printf("\n"); vlc_resetFmt();
 
-	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 	printf("Unique B:\t\t");
 	vlc_setFmt(vlc_StyleBold, vlc_ColorYellow);
 	prettyPrintArray(uniqueB, sizeUniqueB);
-	printf("\n"); vlc_resetFmt(); 
+	printf("\n"); vlc_resetFmt();
 
 	int sizeIntersection;
 	getArrayIntersection(uniqueA, sizeUniqueA, uniqueB, sizeUniqueB, mTarget, &sizeIntersection);
@@ -251,7 +255,7 @@ void calcIntersection(int* mA, int mSizeA, int* mB, int mSizeB, int* mTarget, in
 
 void calcUnion(int* mA, int mSizeA, int* mB, int mSizeB, int* mTarget, int* mNewSize)
 {
-	int uniqueA[MAX_SIZE], uniqueB[MAX_SIZE], sizeUniqueA, sizeUniqueB; 
+	int uniqueA[MAX_SIZE], uniqueB[MAX_SIZE], sizeUniqueA, sizeUniqueB;
 	getArrayUnique(mA, mSizeA, uniqueA, &sizeUniqueA);
 	getArrayUnique(mB, mSizeB, uniqueB, &sizeUniqueB);
 
@@ -273,11 +277,11 @@ void calcUnion(int* mA, int mSizeA, int* mB, int mSizeB, int* mTarget, int* mNew
 	prettyPrintArray(uniqueA, sizeUniqueA);
 	printf("\n"); vlc_resetFmt();
 
-	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 	printf("Unique B:\t\t");
 	vlc_setFmt(vlc_StyleBold, vlc_ColorYellow);
 	prettyPrintArray(uniqueB, sizeUniqueB);
-	printf("\n"); vlc_resetFmt(); 
+	printf("\n"); vlc_resetFmt();
 
 	int sizeUnion;
 	getArrayUnion(uniqueA, sizeUniqueA, uniqueB, sizeUniqueB, mTarget, &sizeUnion);
@@ -285,7 +289,7 @@ void calcUnion(int* mA, int mSizeA, int* mB, int mSizeB, int* mTarget, int* mNew
 	*mNewSize = sizeUnion;
 }
 
-void choiceVExercise1() 
+void choiceVExercise1()
 {
 	#define SIZE_A 11
 	#define SIZE_B 7
@@ -295,12 +299,12 @@ void choiceVExercise1()
 	int b[SIZE_B] = { 1, 5, 2, 6, 9, 1000, 9 };
 	int target[SIZE_TARGET];
 
-	int intersectionSize; 
+	int intersectionSize;
 	calcIntersection(a, SIZE_A, b, SIZE_B, target, &intersectionSize);
 
-	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 	printf("Intersection:\t\t");
-	vlc_setFmt(vlc_StyleBold, vlc_ColorBlue);	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorBlue);
 	prettyPrintArray(target, intersectionSize);
 	printf("\n"); vlc_resetFmt();
 
@@ -309,7 +313,7 @@ void choiceVExercise1()
 	#undef SIZE_TARGET
 }
 
-void choiceVExercise2() 
+void choiceVExercise2()
 {
 	#define SIZE_A 11
 	#define SIZE_B 7
@@ -319,12 +323,12 @@ void choiceVExercise2()
 	int b[SIZE_B] = { 1, 5, 2, 6, 9, 1000, 9 };
 	int target[SIZE_TARGET];
 
-	int unionSize; 
+	int unionSize;
 	calcUnion(a, SIZE_A, b, SIZE_B, target, &unionSize);
 
-	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 	printf("Union:\t\t\t");
-	vlc_setFmt(vlc_StyleBold, vlc_ColorBlue);	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorBlue);
 	prettyPrintArray(target, unionSize);
 	printf("\n"); vlc_resetFmt();
 
@@ -333,7 +337,7 @@ void choiceVExercise2()
 	#undef SIZE_TARGET
 }
 
-void choiceVExercise3() 
+void choiceVExercise3()
 {
 	// This can be improved by sorting the array first, then using a binary search
 	// to check if the value minus the present value is available in the array
@@ -346,7 +350,7 @@ void choiceVExercise3()
 
 	int a[SIZE_A] = { 1, 2, 3, 4, 5, 6, 1, 7, 8, 9, 10 };
 
-	int uniqueA[MAX_SIZE], sizeUniqueA; 
+	int uniqueA[MAX_SIZE], sizeUniqueA;
 	getArrayUnique(a, SIZE_A, uniqueA, &sizeUniqueA);
 
 	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
@@ -365,7 +369,7 @@ void choiceVExercise3()
 	int iA, iB, n1, n2;
 	for(iA = 0; iA < sizeUniqueA; ++iA)
 		for(iB = 0; iB < sizeUniqueA; ++iB)
-			if(iA != iB && (uniqueA[iA] + uniqueA[iB] == desiredSum)) 
+			if(iA != iB && (uniqueA[iA] + uniqueA[iB] == desiredSum))
 			{
 				n1 = uniqueA[iA];
 				n2 = uniqueA[iB];
@@ -382,10 +386,10 @@ void choiceVExercise3()
 }
 
 int main()
-{	
+{
 	runTests();
 
-	const char* choiceDescs[VL_CHOICE_COUNT] = 
+	const char* choiceDescs[VL_CHOICE_COUNT] =
 	{
 		"Print a number's reverse and whether it's palindrome.",
 		"Print an integer sequence's min and max numbers.",
@@ -402,7 +406,7 @@ int main()
 		"Given a vector, does the sum of two number exist?"
 	};
 
-	void(*fnPtrs[VL_CHOICE_COUNT])() = 
+	void(*fnPtrs[VL_CHOICE_COUNT])() =
 	{
 		&choiceNewVersion,
 		&choiceSequenceMinMax,

@@ -14,7 +14,7 @@
 inline int vlm_getNumberOfDigits(int mValue)
 {
 	int result = 0;
-	do { mValue /= 10; ++result; } while(mValue != 0); 
+	do { mValue /= 10; ++result; } while(mValue != 0);
 
 	assert(result > 0);
 	return result;
@@ -34,9 +34,9 @@ inline int vlm_getDigitFromRightAt(int mValue, int mPosFromRight)
 }
 
 /// @brief Returns the reverse of an integer.
-/// @details Internally uses mod, division and mutliplication. 
+/// @details Internally uses mod, division and mutliplication.
 /// @param mValue Number to reverse.
-inline int vlm_getReversed(int mValue) 
+inline int vlm_getReversed(int mValue)
 {
 	int result = 0;
 
@@ -61,23 +61,23 @@ inline int vlm_getMax(int mA, int mB) { return mA > mB ? mA : mB; }
 inline int vlm_getMin(int mA, int mB) { return mA < mB ? mA : mB; }
 
 // TODO: docs
-inline int vlm_getFactorial(int mValue) 
+inline int vlm_getFactorial(int mValue)
 {
-	if(mValue == 0 || mValue == 1) return 1; 
+	if(mValue == 0 || mValue == 1) return 1;
 	int last;
-	for(last = mValue - 1; last > 0; --last) mValue *= last; 
+	for(last = mValue - 1; last > 0; --last) mValue *= last;
 	return mValue;
 }
 
 inline int vlm_getFibonacci(int mValue)
 {
-	int n1 = 1, n2 = 1, result, i;
+	int n1 = 1, n2 = 1, result = 0, i;
 
 	for(i = 0; i < mValue; ++i)
 	{
 		result = n1 + n2;
 		n1 = n2;
-		n2 = result;		
+		n2 = result;
 	}
 
 	return result;

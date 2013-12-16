@@ -6,6 +6,7 @@
 #define VL_UTILS_CONSOLE
 
 #include "VeeLib/Global/Common.h"
+#include "VeeLib/Utils/Utility.h"
 
 #define VLC_STYLE_COUNT 13
 #define VLC_COLOR_COUNT 16
@@ -17,8 +18,8 @@ enum Style_impl
 };
 enum Color_impl
 {
-	vlc_ColorDefault = 0, vlc_ColorBlack = 1, vlc_ColorRed = 2, vlc_ColorGreen = 3, vlc_ColorYellow = 4, vlc_ColorBlue = 5, 
-	vlc_ColorMagenta = 6, vlc_ColorCyan = 7, vlc_ColorLightGray = 8, vlc_ColorDarkGray = 9, vlc_ColorLightRed = 10, vlc_ColorLightGreen = 11, 
+	vlc_ColorDefault = 0, vlc_ColorBlack = 1, vlc_ColorRed = 2, vlc_ColorGreen = 3, vlc_ColorYellow = 4, vlc_ColorBlue = 5,
+	vlc_ColorMagenta = 6, vlc_ColorCyan = 7, vlc_ColorLightGray = 8, vlc_ColorDarkGray = 9, vlc_ColorLightRed = 10, vlc_ColorLightGreen = 11,
 	vlc_ColorLightYellow = 12, vlc_ColorLightBlue = 13, vlc_ColorLightMagenta = 14, vlc_ColorLightCyan = 15, vlc_ColorLightWhite = 16
 };
 
@@ -74,7 +75,7 @@ inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnP
 		printf("\nWelcome! Choose:");
 
 		int i;
-		for(i = 0; i < mChoiceCount; ++i) 
+		for(i = 0; i < mChoiceCount; ++i)
 		{
 			vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 			printf("\n(%d): ", i);
@@ -82,7 +83,7 @@ inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnP
 			vlc_setFmt(vlc_StyleUnderline, vlc_ColorYellow);
 			printf("%s", mChoiceDescs[i]);
 		}
-		
+
 		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 		printf("\n(%d): ", i);
 

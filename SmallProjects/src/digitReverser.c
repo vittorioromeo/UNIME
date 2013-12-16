@@ -54,8 +54,8 @@ void choiceSequenceMinMax()
 		if(number < prevNumber) increasing = false;
 		if(number % 2 == 0) ++evenCount;
 
-		min = vlm_getMin(min, number);
-		max = vlm_getMax(max, number);
+		min = vlm_getMinI(min, number);
+		max = vlm_getMaxI(max, number);
 
 		prevNumber = number;
 		number = vlc_getScanfInt();
@@ -451,4 +451,51 @@ void runTests()
 	VL_EXPECT(vldpr_getReversedNaive(12345) == 54321);
 	VL_EXPECT(vldpr_getReversedNaive(43211234) == 43211234);
 	VL_EXPECT(vldpr_getReversedNaive(152354) == 453251);
+
+	{
+		int a = 5, b = 10;
+
+		vlu_swapI(&a, &b);
+		VL_EXPECT(a == 10);
+		VL_EXPECT(b == 5);
+	}
+
+	{
+		int array[] = { 2, 5, 1, 4, 7, 1 };
+
+		vla_sortSelectionI(array, 6);
+		VL_EXPECT(array[0] == 1);
+		VL_EXPECT(array[1] == 1);
+		VL_EXPECT(array[2] == 2);
+		VL_EXPECT(array[3] == 4);
+		VL_EXPECT(array[4] == 5);
+		VL_EXPECT(array[5] == 7);
+	}
+
+	{
+		int array[] = { 2, 5, 1, 4, 7, 1 };
+
+		vla_shiftToEndI(array, 6, 0);
+		VL_EXPECT(array[0] == 5);
+		VL_EXPECT(array[5] == 2);
+
+		vla_shiftToEndI(array, 6, 0);
+		VL_EXPECT(array[0] == 1);
+		VL_EXPECT(array[4] == 2);
+		VL_EXPECT(array[5] == 5);
+	}
+
+	{
+		int array[] = { 2, 5, 1, 4, 7, 1, 4 };
+		int newSize;
+
+		vla_sortSelectionI(array, 7);
+		vla_uniquifyInPlaceI(array, 7, &newSize);
+		VL_EXPECT(newSize == 5);
+		VL_EXPECT(array[0] == 1);
+		VL_EXPECT(array[1] == 2);
+		VL_EXPECT(array[2] == 4);
+		VL_EXPECT(array[3] == 5);
+		VL_EXPECT(array[4] == 7);
+	}
 }

@@ -6,7 +6,9 @@
 #define VL_VEELIB
 
 #include "VeeLib/Global/Common.h"
+#include "VeeLib/Utils/Utility.h"
 #include "VeeLib/Utils/Math.h"
+#include "VeeLib/Utils/Array.h"
 #include "VeeLib/Utils/Console.h"
 #include "VeeLib/Deprecated/Deprecated.h"
 

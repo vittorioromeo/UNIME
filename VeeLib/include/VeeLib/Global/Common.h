@@ -17,11 +17,13 @@
 	typedef int bool;
 #endif
 
-#define VL_EXPECT(x) do{ if(!(x)){ printf("Test << " #x " failed! >>\n"); exit(1); } } while(false); 
+#define VL_EXPECT(x) do{ if(!(x)){ printf("Test << " #x " failed! >>\n"); exit(1); } } while(false);
 
 // Prefixes:
-// 		vlm_:		math functions
+//		vlu_:		misc utility functions
+//		vlm_:		math functions
 //		vlc_:		console functions
+//		vla_:		array functions
 //		vldpr_:		deprecated functions
 
 #endif

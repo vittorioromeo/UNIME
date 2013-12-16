@@ -6,6 +6,7 @@
 #define VL_UTILS_MATH
 
 #include "VeeLib/Global/Common.h"
+#include "VeeLib/Utils/Utility.h"
 
 /// @brief Returns the number of digits in an integer.
 /// @details Internally repeatedly divides the number by 10
@@ -53,12 +54,12 @@ inline int vlm_getReversed(int mValue)
 /// @brief Returns the max between two integers.
 /// @param mA First integer.
 /// @param mB Second integer.
-inline int vlm_getMax(int mA, int mB) { return mA > mB ? mA : mB; }
+inline int vlm_getMaxI(int mA, int mB) { return mA > mB ? mA : mB; }
 
 /// @brief Returns the min between two integers.
 /// @param mA First integer.
 /// @param mB Second integer.
-inline int vlm_getMin(int mA, int mB) { return mA < mB ? mA : mB; }
+inline int vlm_getMinI(int mA, int mB) { return mA < mB ? mA : mB; }
 
 // TODO: docs
 inline int vlm_getFactorial(int mValue)

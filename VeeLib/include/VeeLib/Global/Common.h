@@ -19,11 +19,25 @@
 
 #define VL_EXPECT(x) do{ if(!(x)){ printf("Test << " #x " failed! >>\n"); exit(1); } } while(false);
 
-// Prefixes:
+#if (__linux || __unix || __posix)
+	#define VL_OS_LINUX
+#elif (_WIN64 || _WIN32)
+	#define VL_OS_WINDOWS
+#else
+	#define VL_OS_UNKNOWN
+#endif
+
+//	Prefixes:
 //		vlu_:		misc utility functions
 //		vlm_:		math functions
 //		vlc_:		console functions
 //		vla_:		array functions
 //		vldpr_:		deprecated functions
+
+//	Suffixes:
+//		I:			integer
+//		C:			char
+//		F:			float
+//		D:			double
 
 #endif

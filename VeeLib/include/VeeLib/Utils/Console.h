@@ -13,22 +13,47 @@
 
 enum Style_impl
 {
-	vlc_StyleNone = 0, vlc_StyleBold = 1, vlc_StyleDim = 2, vlc_StyleUnderline = 3, vlc_StyleBlink = 4, vlc_StyleReverseFGBG = 5, vlc_StyleHidden = 6,
-	vlc_StyleResetBold = 7, vlc_StyleResetDim = 8, vlc_StyleResetUnderline = 9, vlc_StyleResetBlink = 10, vlc_StyleResetReverse = 11, vlc_StyleResetHidden = 12
+	vlc_StyleNone			= 0,
+	vlc_StyleBold			= 1,
+	vlc_StyleDim			= 2,
+	vlc_StyleUnderline		= 3,
+	vlc_StyleBlink			= 4,
+	vlc_StyleReverseFGBG	= 5,
+	vlc_StyleHidden			= 6,
+	vlc_StyleResetBold		= 7,
+	vlc_StyleResetDim		= 8,
+	vlc_StyleResetUnderline	= 9,
+	vlc_StyleResetBlink		= 10,
+	vlc_StyleResetReverse	= 11,
+	vlc_StyleResetHidden	= 12
 };
 enum Color_impl
 {
-	vlc_ColorDefault = 0, vlc_ColorBlack = 1, vlc_ColorRed = 2, vlc_ColorGreen = 3, vlc_ColorYellow = 4, vlc_ColorBlue = 5,
-	vlc_ColorMagenta = 6, vlc_ColorCyan = 7, vlc_ColorLightGray = 8, vlc_ColorDarkGray = 9, vlc_ColorLightRed = 10, vlc_ColorLightGreen = 11,
-	vlc_ColorLightYellow = 12, vlc_ColorLightBlue = 13, vlc_ColorLightMagenta = 14, vlc_ColorLightCyan = 15, vlc_ColorLightWhite = 16
+	vlc_ColorDefault		= 0,
+	vlc_ColorBlack			= 1,
+	vlc_ColorRed			= 2,
+	vlc_ColorGreen			= 3,
+	vlc_ColorYellow			= 4,
+	vlc_ColorBlue			= 5,
+	vlc_ColorMagenta		= 6,
+	vlc_ColorCyan			= 7,
+	vlc_ColorLightGray		= 8,
+	vlc_ColorDarkGray		= 9,
+	vlc_ColorLightRed		= 10,
+	vlc_ColorLightGreen		= 11,
+	vlc_ColorLightYellow	= 12,
+	vlc_ColorLightBlue		= 13,
+	vlc_ColorLightMagenta	= 14,
+	vlc_ColorLightCyan		= 15,
+	vlc_ColorLightWhite		= 16
 };
 
 typedef enum Style_impl Style;
 typedef enum Color_impl Color;
 
-#if (__linux || __unix || __posix)
+#ifdef VL_OS_LINUX
 	#include "VeeLib/Utils/Console/UtilsConsoleImplUnix.h"
-#elif (_WIN64 || _WIN32)
+#elif VL_OS_WINDOWS
 	#include "VeeLib/Utils/Console/UtilsConsoleImplWin.h"
 #else
 	#include "VeeLib/Utils/Console/UtilsConsoleImplNull.h"
@@ -47,19 +72,19 @@ inline void vlc_setColorBG(Color mColor) 	{ printf("%s", vlc_getColorBGStr(mColo
 inline void vlc_setFmt(Style mStyle, Color mColor) 	{ vlc_resetFmt(); vlc_setStyle(mStyle); vlc_setColorFG(mColor); }
 
 /// @brief Gets and returns an integer value using scanf.
-inline int vlc_getScanfInt() { int result; scanf("%d", &result); return result; }
+inline int vlc_getScanfI() { int result; scanf("%d", &result); return result; }
 
 /// @brief Gets and returns a char value using scanf.
-inline char vlc_getScanfChar() { char result; scanf("%c", &result); return result; }
+inline char vlc_getScanfC() { char result; scanf("%c", &result); return result; }
 
 /// @brief Gets and returns a float value using scanf.
-inline float vlc_getScanfFloat() { float result; scanf("%f", &result); return result; }
+inline float vlc_getScanfF() { float result; scanf("%f", &result); return result; }
 
 /// @brief Gets and returns a double value using scanf.
-inline double vlc_getScanfDouble() { double result; scanf("%f", &result); return result; }
+inline double vlc_getScanfD() { double result; scanf("%f", &result); return result; }
 
 /// @brief Portable-way to wait for the user to enter anything in the console.
-inline void vlc_waitForAnyKey()	{ char temp; scanf("%c", &temp); scanf("%c", &temp); }
+inline void vlc_waitForAnyKey()	{ vlc_getScanfC(); vlc_getScanfC(); }
 
 /// @brief Clears the console screen bt printing 50*4 newlines.
 inline void vlc_clearScreen() { int i; for(i = 0; i < 25; ++i) printf("\n\n\n\n\n\n\n\n\n\n\n"); }
@@ -92,7 +117,7 @@ inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnP
 
 		vlc_resetFmt();
 
-		int choice = vlc_getScanfInt();
+		int choice = vlc_getScanfI();
 
 		if(choice >= mChoiceCount) break;
 

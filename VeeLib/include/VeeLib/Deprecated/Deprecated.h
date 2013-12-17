@@ -13,8 +13,8 @@
 /// @param mValue Number to reverse.
 inline int vldpr_getReversedNaive(int mValue)
 {
-	int result = 0, numberOfDigits = vlm_getNumberOfDigits(mValue), k;
-	for(k = 0; k < numberOfDigits; ++k) result += vlm_getDigitFromRightAt(mValue, k) * pow(10, (numberOfDigits - k - 1));
+	int result = 0, numberOfDigits = vlm_getNumberOfDigitsI(mValue), k;
+	for(k = 0; k < numberOfDigits; ++k) result += vlm_getDigitFromRightAtI(mValue, k) * pow(10, (numberOfDigits - k - 1));
 	return result;
 }
 

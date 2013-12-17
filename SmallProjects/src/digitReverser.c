@@ -15,14 +15,14 @@ void runTests();
 void choiceNewVersion()
 {
 	printf("Insert an integer: ");
-	int number = vlc_getScanfInt(), reverse = vlm_getReversed(number);
+	int number = vlc_getScanfI(), reverse = vlm_getReversedI(number);
 	printf("\nThe reversed integer is: %d\nThe number is %spalindrome!", reverse, number == reverse ? "" : "not ");
 }
 
 void choiceNaiveVersion()
 {
 	printf("Insert an integer: ");
-	int number = vlc_getScanfInt(), reverse = vldpr_getReversedNaive(number);
+	int number = vlc_getScanfI(), reverse = vldpr_getReversedNaive(number);
 	printf("\nThe reversed integer is: %d\nThe number is %spalindrome!", reverse, number == reverse ? "" : "not ");
 }
 
@@ -30,7 +30,7 @@ void choiceNaivePrintfVersion()
 {
 	printf("Insert an integer: \nThe reversed integer is: ");
 
-	int number = vlc_getScanfInt();
+	int number = vlc_getScanfI();
 	while(number != 0)
 	{
 		printf("%d", number % 10);
@@ -45,7 +45,7 @@ void choiceSequenceMinMax()
 	bool increasing = true;
 
 	int number, min, max, prevNumber, evenCount = 0;
-	number = min = max = prevNumber = vlc_getScanfInt();
+	number = min = max = prevNumber = vlc_getScanfI();
 
 	if(min == -1 && max == -1) { printf("The entered sequence is empty."); return; }
 
@@ -58,7 +58,7 @@ void choiceSequenceMinMax()
 		max = vlm_getMaxI(max, number);
 
 		prevNumber = number;
-		number = vlc_getScanfInt();
+		number = vlc_getScanfI();
 	}
 
 	printf("Min: %d\tMax: %d\tEven count: %d\nThe sequence is in %sincreasing order\n", min, max, evenCount, increasing ? "" : "not in ");
@@ -67,13 +67,13 @@ void choiceSequenceMinMax()
 void choiceCountMultipleOf()
 {
 	printf("Enter lower bound (inclusive)\n");
-	int lb = vlc_getScanfInt();
+	int lb = vlc_getScanfI();
 
 	printf("Enter upper bound (exclusive)\n");
-	int ub = vlc_getScanfInt();
+	int ub = vlc_getScanfI();
 
 	printf("Enter divisor\n");
-	int divisor = vlc_getScanfInt();
+	int divisor = vlc_getScanfI();
 
 	vlc_clearScreen();
 
@@ -90,10 +90,10 @@ void choiceCountMultipleOf()
 void choicePowOf2()
 {
 	printf("Enter power base\n");
-	int base = vlc_getScanfInt();
+	int base = vlc_getScanfI();
 
 	printf("Enter how many powers to calculate\n");
-	int count = vlc_getScanfInt();
+	int count = vlc_getScanfI();
 
 	vlc_clearScreen();
 
@@ -104,22 +104,22 @@ void choicePowOf2()
 void choiceFactorial()
 {
 	printf("Enter number\n");
-	int number = vlc_getScanfInt();
+	int number = vlc_getScanfI();
 
 	vlc_clearScreen();
 
 	printf("%d\n", vlm_getFactorial(number));
 }
 
-void choiceFibonacci() { printf("%d", vlm_getFibonacci(vlc_getScanfInt())); }
+void choiceFibonacci() { printf("%d", vlm_getFibonacci(vlc_getScanfI())); }
 
 void choiceFindLog()
 {
 	printf("Insert base\n");
-	int base = vlc_getScanfInt();
+	int base = vlc_getScanfI();
 
 	printf("Insert argument\n");
-	int arg = vlc_getScanfInt();
+	int arg = vlc_getScanfI();
 
 	int result = -1;
 
@@ -139,10 +139,10 @@ void choiceFunctionExercise()
 	float tolerance = 0.0001f;
 
 	printf("Enter lower bound (inclusive)\n");
-	float lb = vlc_getScanfFloat();
+	float lb = vlc_getScanfF();
 
 	printf("Enter upper bound (exclusive)\n");
-	float ub = vlc_getScanfFloat();
+	float ub = vlc_getScanfF();
 
 	float mb, sinLb, sinUb, sinMb;
 
@@ -345,7 +345,7 @@ void choiceVExercise3()
 	#define SIZE_A 11
 
 	printf("\nInsert desired sum: ");
-	int desiredSum = vlc_getScanfInt();
+	int desiredSum = vlc_getScanfI();
 	printf("\n");
 
 	int a[SIZE_A] = { 1, 2, 3, 4, 5, 6, 1, 7, 8, 9, 10 };
@@ -429,23 +429,23 @@ int main()
 
 void runTests()
 {
-	VL_EXPECT(vlm_getNumberOfDigits(1000) == 4);
-	VL_EXPECT(vlm_getNumberOfDigits(111) == 3);
-	VL_EXPECT(vlm_getNumberOfDigits(452890) == 6);
-	VL_EXPECT(vlm_getNumberOfDigits(-3) == 1);
-	VL_EXPECT(vlm_getNumberOfDigits(-36324) == 5);
-	VL_EXPECT(vlm_getNumberOfDigits(0) == 1);
-	VL_EXPECT(vlm_getNumberOfDigits(1) == 1);
+	VL_EXPECT(vlm_getNumberOfDigitsI(1000) == 4);
+	VL_EXPECT(vlm_getNumberOfDigitsI(111) == 3);
+	VL_EXPECT(vlm_getNumberOfDigitsI(452890) == 6);
+	VL_EXPECT(vlm_getNumberOfDigitsI(-3) == 1);
+	VL_EXPECT(vlm_getNumberOfDigitsI(-36324) == 5);
+	VL_EXPECT(vlm_getNumberOfDigitsI(0) == 1);
+	VL_EXPECT(vlm_getNumberOfDigitsI(1) == 1);
 
-	VL_EXPECT(vlm_getDigitFromRightAt(1234, 0) == 4);
-	VL_EXPECT(vlm_getDigitFromRightAt(1234, 1) == 3);
-	VL_EXPECT(vlm_getDigitFromRightAt(1234, 2) == 2);
-	VL_EXPECT(vlm_getDigitFromRightAt(1234, 3) == 1);
+	VL_EXPECT(vlm_getDigitFromRightAtI(1234, 0) == 4);
+	VL_EXPECT(vlm_getDigitFromRightAtI(1234, 1) == 3);
+	VL_EXPECT(vlm_getDigitFromRightAtI(1234, 2) == 2);
+	VL_EXPECT(vlm_getDigitFromRightAtI(1234, 3) == 1);
 
-	VL_EXPECT(vlm_getReversed(1234) == 4321);
-	VL_EXPECT(vlm_getReversed(12345) == 54321);
-	VL_EXPECT(vlm_getReversed(43211234) == 43211234);
-	VL_EXPECT(vlm_getReversed(152354) == 453251);
+	VL_EXPECT(vlm_getReversedI(1234) == 4321);
+	VL_EXPECT(vlm_getReversedI(12345) == 54321);
+	VL_EXPECT(vlm_getReversedI(43211234) == 43211234);
+	VL_EXPECT(vlm_getReversedI(152354) == 453251);
 
 	VL_EXPECT(vldpr_getReversedNaive(1234) == 4321);
 	VL_EXPECT(vldpr_getReversedNaive(12345) == 54321);

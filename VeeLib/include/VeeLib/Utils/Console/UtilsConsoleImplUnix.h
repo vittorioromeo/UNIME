@@ -34,7 +34,7 @@ inline int vlc_impl_getColorFGCode(Color mColor)
 	return codes[int(mColor)];
 }
 inline int vlc_impl_getColorBGCode(Color mColor) { return vlc_impl_getColorFGCode(mColor) + 10; }
-inline int vlc_impl_getModCode(Style mStyle)
+inline int vlc_impl_getStyleCode(Style mStyle)
 {
 	static int codes[] =
 	{
@@ -63,7 +63,7 @@ inline Color* vlc_impl_getLastColorBG()	{ static Color lastColorBG = vlc_ColorDe
 inline const char* vlc_impl_getFmtString()
 {
 	static char buffer[255];
-	int modCode = vlc_impl_getModCode(*vlc_impl_getLastStyle());
+	int modCode = vlc_impl_getStyleCode(*vlc_impl_getLastStyle());
 	int colorFGCode = vlc_impl_getColorFGCode(*vlc_impl_getLastColorFG());
 	int colorBGCode = vlc_impl_getColorBGCode(*vlc_impl_getLastColorBG());
 	sprintf(buffer, "%s%d;%d;%d%s", VLC_FMT_PREFIX, modCode, colorFGCode, colorBGCode, VLC_FMT_POSTFIX);

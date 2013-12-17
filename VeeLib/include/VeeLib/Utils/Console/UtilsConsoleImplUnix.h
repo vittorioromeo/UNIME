@@ -31,7 +31,7 @@ inline int vlc_impl_getColorFGCode(Color mColor)
 		97		// 16 = Color::LightWhite
 	};
 
-	return codes[int(mColor)];
+	return codes[(int)(mColor)];
 }
 inline int vlc_impl_getColorBGCode(Color mColor) { return vlc_impl_getColorFGCode(mColor) + 10; }
 inline int vlc_impl_getStyleCode(Style mStyle)
@@ -53,7 +53,7 @@ inline int vlc_impl_getStyleCode(Style mStyle)
 		28	// 12 = Style::ResetHidden
 	};
 
-	return codes[int(mStyle)];
+	return codes[(int)(mStyle)];
 }
 
 inline Style* vlc_impl_getLastStyle()	{ static Style lastStyle = vlc_StyleNone;		return &lastStyle; }

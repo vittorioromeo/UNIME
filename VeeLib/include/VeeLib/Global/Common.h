@@ -27,6 +27,8 @@
 	#define VL_OS_UNKNOWN
 #endif
 
+typedef int ArrayIdx;
+
 //	Prefixes:
 //		vlu_:		misc utility functions
 //		vlm_:		math functions

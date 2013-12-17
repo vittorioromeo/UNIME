@@ -90,7 +90,7 @@ inline void vlc_waitForAnyKey()	{ vlc_getScanfC(); vlc_getScanfC(); }
 inline void vlc_clearScreen() { int i; for(i = 0; i < 25; ++i) printf("\n\n\n\n\n\n\n\n\n\n\n"); }
 
 // TODO: docs
-inline void vlc_showMenu(int mChoiceCount, const char** mChoiceDescs, void(*mFnPtrs[])())
+inline void vlc_showMenu(size_t mChoiceCount, const char** mChoiceDescs, void(*mFnPtrs[])())
 {
 	while(true)
 	{

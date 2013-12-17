@@ -9,52 +9,71 @@
 #include "VeeLib/Utils/Utility.h"
 #include "VeeLib/Utils/Math.h"
 
-inline int vla_getMinValueIdxI(int* mArray, int mLB, int mUB)
+inline ArrayIdx vla_getMinValueIdxI(int* mArray, size_t mLB, size_t mUB)
 {
 	// This functions returns the index of the smallest value in an
 	// integer array, in the interval [mLB; mUB).
 
-	int result = mLB, i;
+	ArrayIdx result = mLB, i;
 	for(i = mLB; i < mUB; ++i) if(mArray[i] < mArray[result]) result = i;
 	return result;
 }
 
-inline void vla_sortSelectionI(int* mArray, int mSize)
+inline void vla_sortSelectionI(int* mArray, size_t mSize)
 {
-	int i;
-
 	// Swap the smallest value with the leftmost unsorted array value until the array is sorted.
+
+	ArrayIdx i;
 	for(i = 0; i < mSize - 1; ++i) vlu_swapI(&mArray[vla_getMinValueIdxI(mArray, i, mSize)], &mArray[i]);
 }
 
-inline void vla_shiftToEndI(int* mArray, int mSize, int mIdx)
+inline void vla_shiftToEndI(int* mArray, size_t mSize, int mIdx)
 {
 	// This function shifts an integer array's element towards the end of the array.
 
-	int i;
+	ArrayIdx i;
 	for(i = mIdx + 1; i < mSize; ++i) vlu_swapI(&mArray[i], &mArray[i - 1]);
 }
 
-inline void vla_uniquifyInPlaceI(int* mArray, int mSize, int* mNewSize)
+inline bool vla_isSortedI(int* mArray, size_t mSize)
 {
-	int newSize = mSize;
+	ArrayIdx i;
+	for(i = 0; i < mSize - 1; ++i) if(mArray[i] > mArray[i + 1]) return false;
+	return true;
+}
 
-	if(mSize >= 2)
+inline void vla_uniquifyI(int* mArray, size_t mSize, size_t* mNewSize)
+{
+	assert(vla_isSortedI(mArray, mSize));
+
+	ArrayIdx i, p = 0;
+	for(i = 1; i < mSize; ++i) if(mArray[i] != mArray[p]) mArray[++p] = mArray[i];
+	*mNewSize = p + 1;
+}
+
+inline ArrayIdx vla_linearSearchI(int* mArray, size_t mSize, int mValue)
+{
+	ArrayIdx i;
+	for(i = 0; i < mSize; ++i) if(mArray[i] == mValue) return i;
+	return -1;
+}
+
+inline ArrayIdx vla_binarySearchI(int* mArray, size_t mSize, int mValue)
+{
+	assert(vla_isSortedI(mArray, mSize));
+
+	ArrayIdx lb = 0, ub = mSize, mid;
+
+	while(lb <= ub)
 	{
-		int i, prev = mArray[0];
-		for(i = 1; i < mSize; ++i)
-		{
-			if(mArray[i] == prev)
-			{
-				vla_shiftToEndI(mArray, mSize, i);
-				--newSize;
-			}
+		mid = (lb + ub) / 2;
 
-			prev = mArray[i];
-		}
+		if(mArray[mid] > mValue) ub = mid - 1;
+		else if(mArray[mid] < mValue) lb = mid + 1;
+		else return mid;
 	}
 
-	*mNewSize = newSize;
+	return -1;
 }
 
 #endif

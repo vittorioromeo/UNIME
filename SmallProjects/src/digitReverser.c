@@ -475,6 +475,8 @@ void runTests()
 	{
 		int array[] = { 2, 5, 1, 4, 7, 1 };
 
+		VL_EXPECT(vla_isSortedI(array, 6) == false);
+
 		vla_shiftToEndI(array, 6, 0);
 		VL_EXPECT(array[0] == 5);
 		VL_EXPECT(array[5] == 2);
@@ -487,15 +489,27 @@ void runTests()
 
 	{
 		int array[] = { 2, 5, 1, 4, 7, 1, 4 };
-		int newSize;
+		size_t newSize;
+
+		VL_EXPECT(vla_isSortedI(array, 7) == false);
 
 		vla_sortSelectionI(array, 7);
-		vla_uniquifyInPlaceI(array, 7, &newSize);
+		vla_uniquifyI(array, 7, &newSize);
 		VL_EXPECT(newSize == 5);
 		VL_EXPECT(array[0] == 1);
 		VL_EXPECT(array[1] == 2);
 		VL_EXPECT(array[2] == 4);
 		VL_EXPECT(array[3] == 5);
 		VL_EXPECT(array[4] == 7);
+
+		VL_EXPECT(vla_linearSearchI(array, 5, 4) == 2);
+		VL_EXPECT(vla_linearSearchI(array, 5, 7) == 4);
+		VL_EXPECT(vla_linearSearchI(array, 5, 99) == -1);
+
+		VL_EXPECT(vla_binarySearchI(array, 5, 4) == 2);
+		VL_EXPECT(vla_binarySearchI(array, 5, 7) == 4);
+		VL_EXPECT(vla_binarySearchI(array, 5, 99) == -1);
+
+		VL_EXPECT(vla_isSortedI(array, 5) == true);
 	}
 }

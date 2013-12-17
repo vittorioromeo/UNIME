@@ -7,11 +7,6 @@
 
 #include "VeeLib/Global/Common.h"
 
-inline void vlu_swapI(int* mA, int* mB)
-{
-	int temp = *mA;
-	*mA = *mB;
-	*mB = temp;
-}
+inline void vlu_swapI(int* mA, int* mB) { int temp = *mA; *mA = *mB; *mB = temp; }
 
 #endif

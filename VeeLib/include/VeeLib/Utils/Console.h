@@ -103,14 +103,14 @@ inline void vlc_showMenu(size_t mChoiceCount, const char** mChoiceDescs, void(*m
 		for(i = 0; i < mChoiceCount; ++i)
 		{
 			vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
-			printf("\n(%d): ", i);
+			printf("\n(%d)\t", i);
 
 			vlc_setFmt(vlc_StyleUnderline, vlc_ColorYellow);
 			printf("%s", mChoiceDescs[i]);
 		}
 
 		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
-		printf("\n(%d): ", i);
+		printf("\n(%d)\t", i);
 
 		vlc_setFmt(vlc_StyleUnderline, vlc_ColorYellow);
 		printf("%s", "EXIT");

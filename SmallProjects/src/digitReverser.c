@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <VeeLib/VeeLib.h>
 
-#define VL_CHOICE_COUNT 13
+#define VL_CHOICE_COUNT 14
 #define MAX_SIZE 100
 
 void runTests();
@@ -385,6 +385,91 @@ void choiceVExercise3()
 	#undef SIZE_A
 }
 
+bool isPrime(int mValue)
+{
+	int i;
+	for(i = 2; i < mValue; ++i) if(mValue % i == 0) return false;
+	return true;
+}
+
+void fillWithPrimes(int* mArray, int mSize)
+{
+	int i = 2, currentIdx = 0;
+	while(currentIdx < mSize)
+	{
+		if(isPrime(i)) mArray[currentIdx++] = i;
+		++i;
+	}
+}
+
+void factorize(int* mPrimesArray, int mPrimesArraySize, int* mOutputArray, int mValue)
+{
+	int i;
+	for(i = 0; i < mPrimesArraySize; ++i) mOutputArray[i] = 0;
+
+	int idxPrime = 0, idxOutput = 0;
+
+	while(idxPrime < mPrimesArraySize && mValue != 1)
+	{
+		if(mValue % mPrimesArray[idxPrime] == 0)
+		{
+			mValue /= mPrimesArray[idxPrime];
+			++mOutputArray[idxPrime];
+			++idxOutput;
+		}
+		else ++idxPrime;
+	}
+}
+
+#define PRIME_COUNT 1000
+
+int eulerFunction(int* mPrimesArray, int mPrimesArraySize, int mValue)
+{
+	// Returns the count of numbers coprime of mValue.
+
+	int outputArray[PRIME_COUNT];
+
+	factorize(mPrimesArray, mPrimesArraySize, outputArray, mValue);
+
+	printf("\nFactorized %d: ", mValue);
+	int i; for(i = 0; i < PRIME_COUNT; ++i) if(outputArray[i] > 0) printf("%d^%d, ", mPrimesArray[i], outputArray[i]);
+
+	int result = 1;
+	int idxFactor;
+	for(idxFactor = 0; idxFactor < PRIME_COUNT; ++idxFactor)
+	{
+		if(outputArray[idxFactor] == 0) continue;
+		result *= pow(mPrimesArray[idxFactor], outputArray[idxFactor]) - pow(mPrimesArray[idxFactor], outputArray[idxFactor] - 1);
+	}
+
+	printf("\nRESULT: %d", result);
+	printf("\n\n");
+	return -1;
+}
+
+
+void choiceEuler()
+{
+
+	#define OUTPUT_ARRAY_SIZE 100
+
+	printf("Generating %d primes...\n\n", PRIME_COUNT);
+
+	int primeArray[PRIME_COUNT];
+	fillWithPrimes(primeArray, PRIME_COUNT);
+	prettyPrintArray(primeArray, PRIME_COUNT);
+
+	while(true)
+	{
+		int choice = vlc_getScanfI();
+		vlc_clearScreen();
+
+		if(choice == -1) return;
+
+		printf("%d", eulerFunction(primeArray, PRIME_COUNT, choice));
+	}
+}
+
 int main()
 {
 	runTests();
@@ -403,7 +488,8 @@ int main()
 		"Find function using bisection",
 		"Find intersection of two vectors",
 		"Find union of two vectors",
-		"Given a vector, does the sum of two number exist?"
+		"Given a vector, does the sum of two number exist?",
+		"Euler function",
 	};
 
 	void(*fnPtrs[VL_CHOICE_COUNT])() =
@@ -420,7 +506,8 @@ int main()
 		&choiceFunctionExercise,
 		&choiceVExercise1,
 		&choiceVExercise2,
-		&choiceVExercise3
+		&choiceVExercise3,
+		&choiceEuler
 	};
 
 	vlc_showMenu(VL_CHOICE_COUNT, choiceDescs, fnPtrs);

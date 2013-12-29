@@ -9,8 +9,7 @@
 #include "VeeLib/Utils/Utility.h"
 
 /// @brief Returns the number of digits in an integer.
-/// @details Internally repeatedly divides the number by 10
-///		     mathematically - does not make use of arrays.
+/// @details Internally repeatedly divides the number by 10 mathematically - does not make use of arrays.
 /// @param mValue Number to use.
 inline int vlm_getNumberOfDigitsI(int mValue)
 {
@@ -22,8 +21,7 @@ inline int vlm_getNumberOfDigitsI(int mValue)
 }
 
 /// @brief Returns a digit in a specific position in a number
-/// @details Internally uses pow and division. The position
-///		     of the digit is counted from the right of the number.
+/// @details Internally uses pow and division. The position of the digit is counted from the right of the number.
 /// @param mValue Number to use.
 /// @param mPosFromRight Position of the digit, from the right. (0 == last digit)
 inline int vlm_getDigitFromRightAtI(int mValue, int mPosFromRight)
@@ -52,14 +50,22 @@ inline int vlm_getReversedI(int mValue)
 }
 
 /// @brief Returns the max between two integers.
-/// @param mA First integer.
-/// @param mB Second integer.
 inline int vlm_getMaxI(int mA, int mB) { return mA > mB ? mA : mB; }
 
 /// @brief Returns the min between two integers.
-/// @param mA First integer.
-/// @param mB Second integer.
 inline int vlm_getMinI(int mA, int mB) { return mA < mB ? mA : mB; }
+
+/// @brief Returns the max between two floats.
+inline float vlm_getMaxF(float mA, float mB) { return mA > mB ? mA : mB; }
+
+/// @brief Returns the min between two floats.
+inline float vlm_getMinF(float mA, float mB) { return mA < mB ? mA : mB; }
+
+/// @brief Returns the max between two doubles.
+inline double vlm_getMaxD(double mA, double mB) { return mA > mB ? mA : mB; }
+
+/// @brief Returns the min between two doubles.
+inline double vlm_getMinD(double mA, double mB) { return mA < mB ? mA : mB; }
 
 // TODO: docs
 inline int vlm_getFactorial(int mValue)

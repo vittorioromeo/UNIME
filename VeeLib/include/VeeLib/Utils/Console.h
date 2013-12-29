@@ -86,7 +86,7 @@ inline double vlc_getScanfD() { double result; scanf("%f", &result); return resu
 /// @brief Portable-way to wait for the user to enter anything in the console.
 inline void vlc_waitForAnyKey()	{ vlc_getScanfC(); vlc_getScanfC(); }
 
-/// @brief Clears the console screen bt printing 50*4 newlines.
+/// @brief Clears the console screen bt printing 25*8 newlines.
 inline void vlc_clearScreen() { int i; for(i = 0; i < 25; ++i) printf("\n\n\n\n\n\n\n\n\n\n\n"); }
 
 // TODO: docs

@@ -67,20 +67,27 @@ inline double vlm_getMaxD(double mA, double mB) { return mA > mB ? mA : mB; }
 /// @brief Returns the min between two doubles.
 inline double vlm_getMinD(double mA, double mB) { return mA < mB ? mA : mB; }
 
-// TODO: docs
-inline int vlm_getFactorial(int mValue)
+/// @brief Returns the factorial of mValue;
+inline int vlm_getFactorialI(int mValue)
 {
+	assert(mValue > 0);
+
 	if(mValue == 0 || mValue == 1) return 1;
 	int last;
 	for(last = mValue - 1; last > 0; --last) mValue *= last;
 	return mValue;
 }
 
-inline int vlm_getFibonacci(int mValue)
+/// @brief Returns the mValue-th fibonacci number.
+inline int vlm_getFibonacciI(int mValue)
 {
-	int n1 = 1, n2 = 1, result = 0, i;
+	assert(mValue > 0);
 
-	for(i = 0; i < mValue; ++i)
+	if(mValue < 2) return mValue;
+
+	int n1 = 0, n2 = 1, result = 0, i;
+
+	for(i = 2; i <= mValue; ++i)
 	{
 		result = n1 + n2;
 		n1 = n2;

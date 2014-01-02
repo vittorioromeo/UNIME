@@ -108,10 +108,10 @@ void choiceFactorial()
 
 	vlc_clearScreen();
 
-	printf("%d\n", vlm_getFactorial(number));
+	printf("%d\n", vlm_getFactorialI(number));
 }
 
-void choiceFibonacci() { printf("%d", vlm_getFibonacci(vlc_getScanfI())); }
+void choiceFibonacci() { printf("%d", vlm_getFibonacciI(vlc_getScanfI())); }
 
 void choiceFindLog()
 {
@@ -598,5 +598,15 @@ void runTests()
 		VL_EXPECT(vla_binarySearchI(array, 5, 99) == -1);
 
 		VL_EXPECT(vla_isSortedI(array, 5) == true);
+	}
+
+	{
+		VL_EXPECT(vlm_getFibonacciI(0) == 0);
+		VL_EXPECT(vlm_getFibonacciI(1) == 1);
+		VL_EXPECT(vlm_getFibonacciI(2) == 1);
+		VL_EXPECT(vlm_getFibonacciI(3) == 2);
+		VL_EXPECT(vlm_getFibonacciI(4) == 3);
+		VL_EXPECT(vlm_getFibonacciI(5) == 5);
+		VL_EXPECT(vlm_getFibonacciI(6) == 8);
 	}
 }

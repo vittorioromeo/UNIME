@@ -1,39 +1,12 @@
 #include <iostream>
 #include <SSVUtils/SSVUtils.hpp>
 
-enum class Token
-{
-	Num,
-	POpen,
-	PClose,
-	OpAdd,
-	OpSub
-};
-
-enum class Grammar
-{
-	Expr,
-	Op
-};
-
+enum class Token{Num, POpen, PClose, OpAdd, OpSub};
+enum class Grammar{Expr, Op};
 using Tkn = Token;
 using Gmr = Grammar;
 
 enum class PsltType{Tkn, Gmr};
-struct TagTkn { };
-struct TagGmr { };
-
-template<typename, typename> class Parselet;
-
-template<typename, typename, typename> struct PsltTypeHelper;
-template<typename TT, typename TG> struct PsltTypeHelper<TT, TG, TT>
-{
-	inline static Parselet<TT, TG> getParselet(TT mTkn) noexcept { return {TagTkn{}, mTkn}; }
-};
-template<typename TT, typename TG> struct PsltTypeHelper<TT, TG, TG>
-{
-	inline static Parselet<TT, TG> getParselet(TG mGmr) noexcept { return {TagGmr{}, mGmr}; }
-};
 
 template<typename TT, typename TG> class Parselet
 {
@@ -41,17 +14,17 @@ template<typename TT, typename TG> class Parselet
 		PsltType type;
 		union { TT tkn; TG gmr; };
 
-	public:
+	public:		
 		inline Parselet() noexcept { }
-		inline Parselet(TagTkn, TT mTkn) noexcept : type{PsltType::Tkn}, tkn{mTkn} { }
-		inline Parselet(TagGmr, TG mGmr) noexcept : type{PsltType::Gmr}, gmr{mGmr} { }
+		inline Parselet(TT mTkn) noexcept : type{PsltType::Tkn}, tkn{mTkn} { }
+		inline Parselet(TG mGmr) noexcept : type{PsltType::Gmr}, gmr{mGmr} { }
 
 		inline PsltType getType() const noexcept { return type; }
 		inline TT getTkn() const noexcept { assert(type == PsltType::Tkn); return tkn; }
 		inline TG getGmr() const noexcept { assert(type == PsltType::Gmr); return gmr; }
 
 		inline bool operator!=(const Parselet& mP) const noexcept 
-		{ 
+		{ 			
 			if(type != mP.type) return true;
 			if(type == PsltType::Tkn && tkn != mP.tkn) return true;	
 			if(type == PsltType::Gmr && gmr != mP.gmr) return true;
@@ -59,15 +32,10 @@ template<typename TT, typename TG> class Parselet
 		}
 };
 
-template<typename TT, typename TG, typename T> inline Parselet<TT, TG> makeParselet(T mElement) noexcept
+SSVU_TEST(ParseletTests)
 {
-	return PsltTypeHelper<TT, TG, T>::getParselet(mElement);
-}
-
-SSVU_TEST("Parselet tests")
-{
-	auto pt(makeParselet<Tkn, Gmr>(Tkn::Num));
-	auto pg(makeParselet<Tkn, Gmr>(Gmr::Expr));
+	Parselet<Tkn, Gmr> pt{Tkn::Num};
+	Parselet<Tkn, Gmr> pg{Gmr::Expr};
 
 	EXPECT(pt.getType() == PsltType::Tkn);
 	EXPECT(pg.getType() == PsltType::Gmr);
@@ -80,39 +48,25 @@ template<typename TT, typename TG> class GmrExpansion
 		TG gmr;
 		std::vector<Parselet<TT, TG>> parselets;
 
-		template<typename T1, typename T2, typename... TArgs> 
-			inline void createParselet(T1 mArg1, T2 mArg2, TArgs... mArgs)
+		template<typename T1, typename T2, typename... TArgs> inline void createParselet(T1 mArg1, T2 mArg2, TArgs... mArgs)
 		{
 			createParselet<T1>(mArg1);
 			createParselet<T2, TArgs...>(mArg2, mArgs...);
 		}
-		template<typename T> inline void createParselet(T mArg)
-		{
-			parselets.emplace_back(makeParselet<TT, TG>(mArg));
-		}
+		template<typename T> inline void createParselet(T mArg) { parselets.emplace_back(mArg); }
 
 	public:
-		template<typename... TArgs> inline GmrExpansion(TG mGmr, TArgs... mArgs) noexcept : gmr{mGmr} 
-		{ 
- 			createParselet(mArgs...); 
-		}
+		template<typename... TArgs> inline GmrExpansion(TG mGmr, TArgs... mArgs) noexcept : gmr{mGmr}  { createParselet(mArgs...); }
 
 		inline TG getGmr() const noexcept { return gmr; }
 		inline const decltype(parselets)& getParselets() const noexcept { return parselets; }
 };
 
-template<typename TT, typename TG, typename... TArgs> 
-	inline GmrExpansion<TT, TG> makeGmrExpansion(TG mGmr, TArgs... mArgs)
+SSVU_TEST(GmrExpansionTests)
 {
-	GmrExpansion<TT, TG> gmrExpansion{mGmr, mArgs...};
-	return gmrExpansion;
-}
-
-SSVU_TEST("GmrExpansion tests")
-{
-	auto gmr1(makeGmrExpansion<Tkn, Gmr>(Gmr::Expr, Gmr::Expr, Gmr::Op, Gmr::Op));
-	auto gmr2(makeGmrExpansion<Tkn, Gmr>(Gmr::Expr, Tkn::POpen, Gmr::Op, Tkn::PClose));
-	auto gmr3(makeGmrExpansion<Tkn, Gmr>(Gmr::Expr, Gmr::Op));
+	GmrExpansion<Tkn, Gmr> gmr1{Gmr::Expr, Gmr::Expr, Gmr::Op, Gmr::Op};
+	GmrExpansion<Tkn, Gmr> gmr2{Gmr::Expr, Tkn::POpen, Gmr::Op, Tkn::PClose};
+	GmrExpansion<Tkn, Gmr> gmr3{Gmr::Expr, Gmr::Op};
 
 	EXPECT(gmr1.getParselets().size() == 3);
 	EXPECT(gmr2.getParselets().size() == 3);
@@ -131,23 +85,15 @@ template<typename TT, typename TG> class GmrRules
  			expansions.emplace_back(std::forward<TArgs>(mArgs)...);
  		}
 		inline const decltype(expansions)& getExpansions() const noexcept { return expansions; }
-		inline std::vector<const GmrExpansion<TT, TG>*> getExpansionsFor(Gmr mGmr)
-		{
-			std::vector<const GmrExpansion<TT, TG>*> result;
-			for(const auto& e : expansions) if(e.getGmr() == mGmr) result.emplace_back(&e);
-			return result;
-		}
 };
 
-SSVU_TEST("GmrRules tests")
+SSVU_TEST(GmrRulesTests)
 {
 	GmrRules<Tkn, Gmr> gr1;
 	gr1.createExpansion(Gmr::Expr, Gmr::Expr, Gmr::Op, Gmr::Op);
 	gr1.createExpansion(Gmr::Expr, Gmr::Op);
 	gr1.createExpansion(Gmr::Op, Gmr::Op);
 	EXPECT(gr1.getExpansions().size() == 3); 
-	EXPECT(gr1.getExpansionsFor(Gmr::Expr).size() == 2);
-	EXPECT(gr1.getExpansionsFor(Gmr::Op).size() == 1);
 }
 SSVU_TEST_END();
 
@@ -167,10 +113,6 @@ template<typename TT, typename TG> class Node
 		{
 			children.emplace_back(new Node(std::forward<TArgs>(mArgs)...));
 		}
-		template<typename T> inline void emplaceChild(const T& mChild)
-		{
-			children.emplace_back(mChild);
-		}
 		inline const decltype(parselet)& getParselet() const noexcept { return parselet; }
 		inline const decltype(children)& getChildren() const noexcept { return children; } 
 };
@@ -183,8 +125,7 @@ template<typename TT, typename TG> class Parser
 		GmrRules<TT, TG> rules;
 
 	private: 
-		std::vector<ParseletType> tokenStack;
-		std::vector<ParseletType> parseStack;
+		std::vector<ParseletType> tokenStack, parseStack;
 		std::vector<NodeType> nodeStack;
 
 		inline void shift()
@@ -197,7 +138,7 @@ template<typename TT, typename TG> class Parser
 		inline bool parseStackMatchesExpansion(std::size_t mStartAt, const GmrExpansion<TT, TG>& mGmrExpansion)
 		{
 			const auto& expSize(mGmrExpansion.getParselets().size());
-			if(expSize + mStartAt> parseStack.size()) return false;
+			if(expSize + mStartAt > parseStack.size()) return false;
 			
 			for(auto i(0u); i < expSize; ++i) 
 				if(mGmrExpansion.getParselets().at(i) != parseStack[mStartAt + i]) 
@@ -220,22 +161,20 @@ template<typename TT, typename TG> class Parser
 						ssvu::lo("matches!") << "yes!" << std::endl;
 
 						for(auto i(0u); i < r.getParselets().size(); ++i) parseStack.pop_back();
-						parseStack.emplace_back(makeParselet<TT, TG>(r.getGmr())); 	
+						parseStack.emplace_back(r.getGmr()); 	
 
 						// Reduce node stack by N
 						const auto& n(r.getParselets().size());
 						std::vector<NodeType> removedNodes;
-						for(auto k(0u); k < n; ++k)
-							removedNodes.emplace_back(std::move(nodeStack[k]));
+						for(auto k(0u); k < n; ++k) removedNodes.emplace_back(std::move(nodeStack[k]));
 
 						for(auto k(0u); k < n; ++k) nodeStack.pop_back();
 
 						// Create new node for reduction
-						nodeStack.emplace_back(makeParselet<TT, TG>(r.getGmr()));
+						nodeStack.emplace_back(r.getGmr());
 
 						// Add removed nodes as children
-						for(auto& n : removedNodes)
-							nodeStack.back().createChild(std::move(n));
+						for(auto& n : removedNodes) nodeStack.back().createChild(std::move(n));
 
 						reduceRecursively(); return;
 					}
@@ -252,10 +191,7 @@ template<typename TT, typename TG> class Parser
 		}
 
 	public:
-		template<typename... TArgs> inline void createRule(TArgs... mArgs)
-		{
-			rules.createExpansion(mArgs...);
-		}	
+		template<typename... TArgs> inline void createRule(TArgs... mArgs) { rules.createExpansion(mArgs...); }	
 
 		inline void parse(const std::vector<TT>& mTkns)
 		{
@@ -268,7 +204,7 @@ template<typename TT, typename TG> class Parser
 			nodeStack.emplace_back();
 
 			// Push all tokens on the token stack
-			for(const auto& t : mTkns) tokenStack.emplace(std::begin(tokenStack), makeParselet<TT, TG>(t));
+			for(const auto& t : mTkns) tokenStack.emplace(std::begin(tokenStack), t);
 
 			while(!tokenStack.empty())
 			{
@@ -287,11 +223,9 @@ return;
 
 // GRAMMAR:
 //
-//	Expr 	-> 	Expr Op Term
+//	Expr 	-> 	Expr Op Expr
 //			->	POpen Expr PClose
-//  		-> 	Term
-//
-//	Term 	-> 	Num
+//  		-> 	Num
 //
 // 	Op 		->	OpAdd
 //			->	OpSub
@@ -359,12 +293,13 @@ namespace ssvu
 	};
 }
 
+
 int main()
 {
 	SSVU_TEST_RUN_ALL();
 	ssvu::lo() << "Start" << std::endl;
 
-	std::vector<Tkn> tkns
+	/*std::vector<Tkn> tkns
 	{
 		Tkn::Num,
 		Tkn::OpAdd,
@@ -377,14 +312,32 @@ int main()
 		Tkn::OpAdd,
 		Tkn::Num,
 		Tkn::PClose
-	};
+	};*/
 
-	/*std::vector<Tkn> tkns
+	std::vector<Tkn> tkns
 	{
 		Tkn::Num,
 		Tkn::OpAdd,
 		Tkn::Num
-	};*/
+	};
+
+	// Desired CST:
+	/*
+				Expr
+		  T------|-------T
+		Expr 	Op 		Expr
+		  |		 |       |
+		  |	   OpAdd     |
+		 Num            Num
+	*/	
+
+	// Desired AST:
+	/*
+			(+)
+		T----|
+		|    |
+       Num  Num
+	*/
 
 	Parser<Tkn, Gmr> parser;
 

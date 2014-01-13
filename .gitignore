@@ -22,4 +22,7 @@
 */build/*
 */_RELEASE/*
 
-*.user
+*.user/Random/parser
+/Random/parser
+/SmallProjects/CMakeLists.txt.user
+/VeeLib/CMakeLists.txt.user

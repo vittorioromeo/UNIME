@@ -101,9 +101,11 @@ template<typename TT, typename TG> class Node
 {
 	public:
 		using ParseletType = Parselet<TT, TG>;
+		int depth{0};
 
 	private:
 		Parselet<TT, TG> parselet;
+		Node* parent{nullptr};
 		std::vector<std::unique_ptr<Node>> children;
 
 	public:
@@ -111,7 +113,10 @@ template<typename TT, typename TG> class Node
 		template<typename... TArgs> inline Node(TArgs&&... mArgs) : parselet(std::forward<TArgs>(mArgs)...) { }
 		template<typename... TArgs> inline void createChild(TArgs&&... mArgs)
 		{
-			children.emplace_back(new Node(std::forward<TArgs>(mArgs)...));
+			auto result(new Node(std::forward<TArgs>(mArgs)...));
+			result->depth = depth + 1;
+			result->parent = this;
+			children.emplace_back(result);
 		}
 		inline const decltype(parselet)& getParselet() const noexcept { return parselet; }
 		inline const decltype(children)& getChildren() const noexcept { return children; } 
@@ -130,8 +135,9 @@ template<typename TT, typename TG> class Parser
 
 		inline void shift()
 		{
-			// Pop a token from tokenStack and push it on parseStack
+			// Pop a token from tokenStack and push it on parseStack and nodeStack
 			parseStack.emplace_back(tokenStack.back());
+			nodeStack.emplace(std::begin(nodeStack),tokenStack.back());
 			tokenStack.pop_back();
 		}
 
@@ -187,7 +193,7 @@ template<typename TT, typename TG> class Parser
 		{
 			ssvu::lo("tokenStack") 	<< tokenStack << std::endl;
 			ssvu::lo("parseStack") 	<< parseStack << std::endl;
-			ssvu::lo("nodeStack") 	<< nodeStack << std::endl << std::endl;
+			ssvu::lo("nodeStack") 	<< std::endl << nodeStack << std::endl << std::endl;
 		}
 
 	public:
@@ -199,9 +205,6 @@ template<typename TT, typename TG> class Parser
 			tokenStack.clear();
 			parseStack.clear();
 			nodeStack.clear();
-
-			// Add root node
-			nodeStack.emplace_back();
 
 			// Push all tokens on the token stack
 			for(const auto& t : mTkns) tokenStack.emplace(std::begin(tokenStack), t);
@@ -281,14 +284,33 @@ namespace ssvu
 	};
 	template<typename TT, typename TG> struct Stringifier<Node<TT, TG>> 
 	{ 
+		template<bool TFmt> inline static void PrintPretty(std::ostream& mStream, const Node<TT, TG>& mValue, std::string& mIndent, bool mLast)
+		{	
+	       Internal::callStringifyImpl<TFmt>(mStream, mIndent.c_str());
+	       
+	       if(mLast)
+	       {
+	       		Internal::callStringifyImpl<TFmt>(mStream, "\\-");	          
+	           	mIndent += "  ";
+	       }
+	       else
+	       {
+	       		Internal::callStringifyImpl<TFmt>(mStream, "|-");	           
+	           	mIndent += "| ";
+	       }
+	       Internal::callStringifyImpl<TFmt>(mStream, mValue.getParselet());
+	       Internal::callStringifyImpl<TFmt>(mStream, "\n");
+
+			for(auto i(0u); i < mValue.getChildren().size(); ++i) Stringifier<Node<TT, TG>>::PrintPretty<TFmt>(mStream, *(mValue.getChildren().at(i).get()), mIndent,  i == mValue.getChildren().size() - 1);
+
+	  	}	
+
 		template<bool TFmt> inline static void impl(std::ostream& mStream, const Node<TT, TG>& mValue)
 		{
-			Internal::callStringifyImpl<TFmt>(mStream, mValue.getParselet());
-			if(mValue.getChildren().size() == 0) return;
+			Internal::callStringifyImpl<TFmt>(mStream, "\n\n");
 
-			Internal::callStringifyImpl<TFmt>(mStream, "{");
-			for(const auto& c : mValue.getChildren()) Internal::callStringifyImpl<TFmt>(mStream, *c.get());
-			Internal::callStringifyImpl<TFmt>(mStream, "}");
+			std::string derp{"\t"};
+			Stringifier<Node<TT, TG>>::PrintPretty<TFmt>(mStream, mValue, derp, true);
 		}
 	};
 }
@@ -299,7 +321,7 @@ int main()
 	SSVU_TEST_RUN_ALL();
 	ssvu::lo() << "Start" << std::endl;
 
-	/*std::vector<Tkn> tkns
+	std::vector<Tkn> tkns
 	{
 		Tkn::Num,
 		Tkn::OpAdd,
@@ -312,14 +334,14 @@ int main()
 		Tkn::OpAdd,
 		Tkn::Num,
 		Tkn::PClose
-	};*/
+	};
 
-	std::vector<Tkn> tkns
+	/*std::vector<Tkn> tkns
 	{
 		Tkn::Num,
 		Tkn::OpAdd,
 		Tkn::Num
-	};
+	};*/
 
 	// Desired CST:
 	/*

@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <VeeLib/VeeLib.h>
 
-#define VL_CHOICE_COUNT 14
+#define VL_CHOICE_COUNT 15
 #define MAX_SIZE 100
 
 void runTests();
@@ -470,6 +470,92 @@ void choiceEuler()
 	}
 }
 
+struct Vec2i_impl { int x, y; };
+typedef struct Vec2i_impl Vec2i;
+
+Vec2i bezout(int mA, int mB)
+{
+	// Controllare che il MCD(mA, mB) = 1
+
+	#define MAX_VECS 100
+	Vec2i vecs[MAX_VECS];
+
+	// Setup initial vecs
+	vecs[0].x = 1; vecs[0].y = 0;
+	vecs[1].x = 0; vecs[1].y = 1;
+
+	int vA = vlm_getMaxI(mA, mB);
+	int vB = vlm_getMinI(mA, mB);
+
+	int quotient = vA / vB;
+	int rest = vA % vB;
+	int oldRest = rest;
+
+	int idx = 2;
+
+	while(rest != 0)
+	{
+		Vec2i newVec = vecs[idx - 1];
+		newVec.x *= quotient;
+		newVec.y *= quotient;
+
+		Vec2i subVec;
+		subVec.x = vecs[idx - 2].x - newVec.x;
+		subVec.y = vecs[idx - 2].y - newVec.y;
+
+		vecs[idx] = subVec;
+
+		// Pretty print :)
+		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+		printf("\t(%d, %d)", vecs[idx - 2].x, vecs[idx - 2].y);
+		vlc_resetFmt();
+		printf(" - ");
+		vlc_setFmt(vlc_StyleBold, vlc_ColorCyan);
+		printf("%d(%d, %d)", quotient, vecs[idx - 1].x, vecs[idx - 1].x);
+		vlc_resetFmt();
+		printf(" => ");
+		vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+		printf("(%d, %d)\n", vecs[idx].x, vecs[idx].y);
+		vlc_resetFmt();
+
+		vA = vB;
+		vB = rest;
+
+		quotient = vA / vB;
+
+		oldRest = rest;
+		rest = vA % vB;
+
+		++idx;
+	}
+
+	Vec2i result;
+
+	if(mA > mB)
+	{
+		result.x = vecs[idx - 1].x;
+		result.y = vecs[idx - 1].y;
+	}
+	else
+	{
+		result.x = vecs[idx - 1].y;
+		result.y = vecs[idx - 1].x;
+	}
+
+	return result;
+
+	#undef MAX_VECS
+}
+
+void choiceBezout()
+{
+	int a = vlc_getScanfI();
+	int b = vlc_getScanfI();
+
+	Vec2i result = bezout(a, b);
+	printf("ALPHA:%d \t BETA:%d", result.x, result.y);
+}
+
 int main()
 {
 	runTests();
@@ -490,6 +576,7 @@ int main()
 		"Find union of two vectors",
 		"Given a vector, does the sum of two number exist?",
 		"Euler function",
+		"Bezout"
 	};
 
 	void(*fnPtrs[VL_CHOICE_COUNT])() =
@@ -507,7 +594,8 @@ int main()
 		&choiceVExercise1,
 		&choiceVExercise2,
 		&choiceVExercise3,
-		&choiceEuler
+		&choiceEuler,
+		&choiceBezout
 	};
 
 	vlc_showMenu(VL_CHOICE_COUNT, choiceDescs, fnPtrs);

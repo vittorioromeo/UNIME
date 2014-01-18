@@ -470,15 +470,15 @@ void choiceEuler()
 	}
 }
 
-struct Vec2i_impl { int x, y; };
-typedef struct Vec2i_impl Vec2i;
+struct vlm_V2i_impl { int x, y; };
+typedef struct vlm_V2i_impl vlm_V2i;
 
-Vec2i bezout(int mA, int mB)
+vlm_V2i bezout(int mA, int mB)
 {
 	// Controllare che il MCD(mA, mB) = 1
 
 	#define MAX_VECS 100
-	Vec2i vecs[MAX_VECS];
+	vlm_V2i vecs[MAX_VECS];
 
 	// Setup initial vecs
 	vecs[0].x = 1; vecs[0].y = 0;
@@ -489,17 +489,16 @@ Vec2i bezout(int mA, int mB)
 
 	int quotient = vA / vB;
 	int rest = vA % vB;
-	int oldRest = rest;
 
 	int idx = 2;
 
 	while(rest != 0)
 	{
-		Vec2i newVec = vecs[idx - 1];
+		vlm_V2i newVec = vecs[idx - 1];
 		newVec.x *= quotient;
 		newVec.y *= quotient;
 
-		Vec2i subVec;
+		vlm_V2i subVec;
 		subVec.x = vecs[idx - 2].x - newVec.x;
 		subVec.y = vecs[idx - 2].y - newVec.y;
 
@@ -522,14 +521,12 @@ Vec2i bezout(int mA, int mB)
 		vB = rest;
 
 		quotient = vA / vB;
-
-		oldRest = rest;
 		rest = vA % vB;
 
 		++idx;
 	}
 
-	Vec2i result;
+	vlm_V2i result;
 
 	if(mA > mB)
 	{
@@ -552,7 +549,7 @@ void choiceBezout()
 	int a = vlc_getScanfI();
 	int b = vlc_getScanfI();
 
-	Vec2i result = bezout(a, b);
+	vlm_V2i result = bezout(a, b);
 	printf("ALPHA:%d \t BETA:%d", result.x, result.y);
 }
 

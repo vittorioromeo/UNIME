@@ -7,9 +7,9 @@
 
 #include "VeeLib/Global/Common.h"
 
-inline void vlu_swapI(int* mA, int* mB)			{ int temp = *mA; *mA = *mB; *mB = temp; } \
-inline void vlu_swapC(char* mA, char* mB)		{ char temp = *mA; *mA = *mB; *mB = temp; } \
-inline void vlu_swapF(float* mA, float* mB)		{ float temp = *mA; *mA = *mB; *mB = temp; } \
-inline void vlu_swapD(double* mA, double* mB)	{ double temp = *mA; *mA = *mB; *mB = temp; } \
+inline void vlu_swapI(int* mA, int* mB)			{ int temp = *mA; *mA = *mB; *mB = temp; }
+inline void vlu_swapC(char* mA, char* mB)		{ char temp = *mA; *mA = *mB; *mB = temp; }
+inline void vlu_swapF(float* mA, float* mB)		{ float temp = *mA; *mA = *mB; *mB = temp; }
+inline void vlu_swapD(double* mA, double* mB)	{ double temp = *mA; *mA = *mB; *mB = temp; }
 
 #endif

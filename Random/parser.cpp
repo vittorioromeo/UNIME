@@ -109,7 +109,6 @@ template<typename TT, typename TG> class Node
 		std::vector<std::unique_ptr<Node>> children;
 
 	public:
-		inline Node() noexcept { }
 		template<typename... TArgs> inline Node(TArgs&&... mArgs) : parselet(std::forward<TArgs>(mArgs)...) { }
 		template<typename... TArgs> inline void createChild(TArgs&&... mArgs)
 		{
@@ -137,7 +136,7 @@ template<typename TT, typename TG> class Parser
 		{
 			// Pop a token from tokenStack and push it on parseStack and nodeStack
 			parseStack.emplace_back(tokenStack.back());
-			nodeStack.emplace(std::begin(nodeStack),tokenStack.back());
+			nodeStack.emplace_back(tokenStack.back());
 			tokenStack.pop_back();
 		}
 
@@ -166,16 +165,20 @@ template<typename TT, typename TG> class Parser
 					{
 						ssvu::lo("matches!") << "yes!" << std::endl;
 
+						// Remove base nodes from parse stack and substitue them with exapansion
 						for(auto i(0u); i < r.getParselets().size(); ++i) parseStack.pop_back();
 						parseStack.emplace_back(r.getGmr()); 	
 
-						// Reduce node stack by N
+						// Pop N nodes from node stack into removedNodes
 						const auto& n(r.getParselets().size());
 						std::vector<NodeType> removedNodes;
-						for(auto k(0u); k < n; ++k) removedNodes.emplace_back(std::move(nodeStack[k]));
-
-						for(auto k(0u); k < n; ++k) nodeStack.pop_back();
-
+						for(auto k(0u); k < n; ++k)
+						{
+							NodeType node{std::move(nodeStack.back())};
+							removedNodes.emplace_back(std::move(node));
+							nodeStack.pop_back();							
+						}
+						 
 						// Create new node for reduction
 						nodeStack.emplace_back(r.getGmr());
 
@@ -284,25 +287,23 @@ namespace ssvu
 	};
 	template<typename TT, typename TG> struct Stringifier<Node<TT, TG>> 
 	{ 
-		template<bool TFmt> inline static void PrintPretty(std::ostream& mStream, const Node<TT, TG>& mValue, std::string& mIndent, bool mLast)
+		template<bool TFmt> inline static void printNode(std::ostream& mStream, const Node<TT, TG>& mValue, int mDepth)
 		{	
-	       Internal::callStringifyImpl<TFmt>(mStream, mIndent.c_str());
-	       
-	       if(mLast)
-	       {
-	       		Internal::callStringifyImpl<TFmt>(mStream, "\\-");	          
-	           	mIndent += "  ";
-	       }
-	       else
-	       {
-	       		Internal::callStringifyImpl<TFmt>(mStream, "|-");	           
-	           	mIndent += "| ";
-	       }
-	       Internal::callStringifyImpl<TFmt>(mStream, mValue.getParselet());
-	       Internal::callStringifyImpl<TFmt>(mStream, "\n");
+			for(auto i(0u); i < mDepth; ++i) Internal::callStringifyImpl<TFmt>(mStream, "|\t");
 
-			for(auto i(0u); i < mValue.getChildren().size(); ++i) Stringifier<Node<TT, TG>>::PrintPretty<TFmt>(mStream, *(mValue.getChildren().at(i).get()), mIndent,  i == mValue.getChildren().size() - 1);
+			Internal::callStringifyImpl<TFmt>(mStream, "|------(+) ");	    
+	       	Internal::callStringifyImpl<TFmt>(mStream, mValue.getParselet());	       	
+	       	Internal::callStringifyImpl<TFmt>(mStream, "\n");
 
+			for(auto i(0u); i < mValue.getChildren().size(); ++i) 
+			{
+				Stringifier<Node<TT, TG>>::printNode<TFmt>(mStream, *(mValue.getChildren().at(i).get()), mDepth + 1);
+			 	if(i == mValue.getChildren().size() - 1)
+			 	{
+			 		for(auto i(0u); i < mDepth + 1; ++i) Internal::callStringifyImpl<TFmt>(mStream, "|\t");
+					Internal::callStringifyImpl<TFmt>(mStream, "\n");			 			
+			 	}
+			}
 	  	}	
 
 		template<bool TFmt> inline static void impl(std::ostream& mStream, const Node<TT, TG>& mValue)
@@ -310,7 +311,7 @@ namespace ssvu
 			Internal::callStringifyImpl<TFmt>(mStream, "\n\n");
 
 			std::string derp{"\t"};
-			Stringifier<Node<TT, TG>>::PrintPretty<TFmt>(mStream, mValue, derp, true);
+			Stringifier<Node<TT, TG>>::printNode<TFmt>(mStream, mValue, 0);
 		}
 	};
 }
@@ -321,7 +322,7 @@ int main()
 	SSVU_TEST_RUN_ALL();
 	ssvu::lo() << "Start" << std::endl;
 
-	std::vector<Tkn> tkns
+	/*std::vector<Tkn> tkns
 	{
 		Tkn::Num,
 		Tkn::OpAdd,
@@ -334,14 +335,16 @@ int main()
 		Tkn::OpAdd,
 		Tkn::Num,
 		Tkn::PClose
-	};
+	};*/
 
-	/*std::vector<Tkn> tkns
+	std::vector<Tkn> tkns
 	{
 		Tkn::Num,
 		Tkn::OpAdd,
-		Tkn::Num
-	};*/
+		Tkn::POpen,
+		Tkn::Num,
+		Tkn::PClose
+	};
 
 	// Desired CST:
 	/*

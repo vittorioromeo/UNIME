@@ -129,12 +129,31 @@ SSVU_TEST(SyllabizeTests)
 }
 SSVU_TEST_END();
 
+std::string GetStdoutFromCommand(std::string mCmd) 
+{
+    std::string result;
+    FILE* stream;
+    char buffer[256];
+    mCmd += " 2>&1";
+
+    stream = popen(mCmd.c_str(), "r");
+
+    if(stream) 
+    {
+    	while(!feof(stream)) if(fgets(buffer, sizeof(buffer), stream) != NULL) data += buffer;
+    	pclose(stream);
+    }
+    
+    return data;
+}
+
+
 inline std::string getCmdOutput(const std::string& mStr)
 {
 	std::string result;
 	std::string file;
 	FILE* pipe{popen(mStr.c_str(), "r")};
-	char buffer[10000];
+	char buffer[256];
 	while(fgets(buffer, sizeof(buffer), pipe) != NULL)
 	{
 		file = buffer;
@@ -150,8 +169,7 @@ inline std::string getRndImgUrlFromJson(const std::string& mGoogleResults)
 	auto obj(ssvuj::getFromString(mGoogleResults));
 	const auto& responseData(ssvuj::getObj(obj, "responseData"));
 	const auto& results(ssvuj::getObj(responseData, "results"));
-	auto resultCount(ssvuj::getObjSize(results));
-	const auto& rndResult(ssvuj::getObj(results, ssvu::getRnd(0ul, std::min(4ul, resultCount))));
+	const auto& rndResult(ssvuj::getObj(results, ssvu::getRnd(0ul, std::min(10ul, ssvuj::getObjSize(results)))));
 	
 	return ssvuj::getExtr<std::string>(rndResult, "unescapedUrl");
 }
@@ -194,34 +212,37 @@ int main()
 	auto getGoogleResult([&curlPrefix, &getSanitized](const std::string& mStr){ return getCmdOutput(curlPrefix + getSanitized(mStr) + R"(')") + "}"; });
 	auto getRndImgUrl([&getGoogleResult](const std::string& mStr){ return getRndImgUrlFromJson(getGoogleResult(mStr)); });
 
-
-
-	auto rebusWord1(getRndWord());
-	auto rebusWord2(getRndWord());
-
-	ssvu::lo() << rebusWord1 << std::endl; 
-	ssvu::lo() << rebusWord2 << std::endl;
-
-	auto url1(getRndImgUrl(rebusWord1));
-	auto url2(getRndImgUrl(rebusWord2));
-
-	auto ext1(getExtension(url1));
-	auto ext2(getExtension(url2));
-
-	auto path1("/media/veeData/Temp/img1" + ext1);
-	auto path2("/media/veeData/Temp/img2" + ext2);
+	std::vector<std::string> words, urls, extensions, paths;
 	std::string pathOutput{"/media/veeData/Temp/rebusOutput.png"};
 
-	ssvu::lo() << url1 << " -> " << path1 << std::endl;
-	ssvu::lo() << url2 << " -> " << path2 << std::endl;
+	words.emplace_back("test");
+	words.emplace_back("test");	
 
-	getCmdOutput(R"(curl ')" + url1 + R"(' > ')" + path1 + R"(')");
-	getCmdOutput(R"(curl ')" + url2 + R"(' > ')" + path2 + R"(')");
+	for(const auto& w : words) urls.emplace_back(getRndImgUrl(w));
+	for(const auto& u : urls) extensions.emplace_back(getExtension(u));
+	for(auto i(0u); i < words.size(); ++i) 
+	{
+		paths.emplace_back("/media/veeData/img" + ssvu::toStr(i) + getExtension(urls[i]));
+		ssvu::lo() << urls[i] << " -> " << paths[i] << std::endl;
+		getCmdOutput(R"(curl ')" + urls[i] + R"(' > ')" + paths[i] + R"(')");
+	}
+	
+	std::string lenString, pathString;
+	for(auto i(0u); i < words.size(); ++i) 
+	{ 
+		lenString += ssvu::toStr(words[i].size());
+		pathString += paths[i];
+		if(i != words.size() - 1)
+		{
+			lenString += ", ";
+		 	pathString += " ";
+		}
+	}
 
-	getCmdOutput(R"(montage )" + path1 + " " + path2 + R"( -tile 2x1 -geometry 1000x600 )" + pathOutput);
+	std::string imgSize{ssvu::toStr(paths.size() * 400)};
 
-  	getCmdOutput("convert " + pathOutput + " -background Khaki label:'(" + ssvu::toStr(rebusWord1.size()) + ", " 
-  		+ ssvu::toStr(rebusWord2.size()) + ")' -gravity Center -font Sans -pointsize 55 -append " + pathOutput);
+	getCmdOutput(R"(montage )" + pathString + R"( -tile )" + ssvu::toStr(words.size()) + R"(x1 -geometry )" + imgSize + "x600 " + pathOutput);
+  	getCmdOutput("convert -pointsize 48 " + pathOutput + " -background Khaki label:'(" + lenString + ")' -gravity Center -append " + pathOutput);
 
 	return 0;
 }

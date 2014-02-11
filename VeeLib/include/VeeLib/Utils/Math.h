@@ -53,7 +53,7 @@ inline int vlm_getReversedI(int mValue)
 inline int vlm_getSignUI(unsigned int mValue) { return mValue > 0; }
 
 /// @brief Returns the sign of a value. (unsigned long version)
-inline int vlm_getSignUI(unsigned long mValue) { return mValue > 0; }
+inline int vlm_getSignUL(unsigned long mValue) { return mValue > 0; }
 
 /// @brief Returns the sign of a value. (int version)
 inline int vlm_getSignI(int mValue) { return (0 < mValue) - (mValue < 0); }

@@ -89,7 +89,10 @@ inline void vlc_waitForAnyKey()	{ vlc_getScanfC(); vlc_getScanfC(); }
 /// @brief Clears the console screen bt printing 25*8 newlines.
 inline void vlc_clearScreen() { int i; for(i = 0; i < 25; ++i) printf("\n\n\n\n\n\n\n\n\n\n\n"); }
 
-// TODO: docs
+/// @brief Displays a multi-choice menu that leads to the execution of a user-chosen function.
+/// @param mChoiceCount Number of possible choices.
+/// @param mChoiceDescs Array containing labels for the menu choices.
+/// @param mFnPtrs Array containing function pointers for the menu choices.
 inline void vlc_showMenu(size_t mChoiceCount, const char** mChoiceDescs, void(*mFnPtrs[])())
 {
 	while(true)

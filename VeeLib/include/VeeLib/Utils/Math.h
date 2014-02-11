@@ -49,11 +49,35 @@ inline int vlm_getReversedI(int mValue)
 	return result;
 }
 
+/// @brief Returns the sign of a value. (unsigned int version)
+inline int vlm_getSignUI(unsigned int mValue) { return mValue > 0; }
+
+/// @brief Returns the sign of a value. (unsigned long version)
+inline int vlm_getSignUI(unsigned long mValue) { return mValue > 0; }
+
+/// @brief Returns the sign of a value. (int version)
+inline int vlm_getSignI(int mValue) { return (0 < mValue) - (mValue < 0); }
+
+/// @brief Returns the sign of a value. (long version)
+inline int vlm_getSignL(long mValue) { return (0 < mValue) - (mValue < 0); }
+
+/// @brief Returns the sign of a value. (float version)
+inline int vlm_getSignF(float mValue) { return (0 < mValue) - (mValue < 0); }
+
+/// @brief Returns the sign of a value. (double version)
+inline int vlm_getSignD(double mValue) { return (0 < mValue) - (mValue < 0); }
+
 /// @brief Returns the max between two integers.
 inline int vlm_getMaxI(int mA, int mB) { return mA > mB ? mA : mB; }
 
 /// @brief Returns the min between two integers.
 inline int vlm_getMinI(int mA, int mB) { return mA < mB ? mA : mB; }
+
+/// @brief Returns the max between two longs.
+inline int vlm_getMaxL(long mA, long mB) { return mA > mB ? mA : mB; }
+
+/// @brief Returns the min between two longs.
+inline int vlm_getMinL(long mA, long mB) { return mA < mB ? mA : mB; }
 
 /// @brief Returns the max between two floats.
 inline float vlm_getMaxF(float mA, float mB) { return mA > mB ? mA : mB; }

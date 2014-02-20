@@ -140,21 +140,20 @@ std::string GetStdoutFromCommand(std::string mCmd)
 
     if(stream) 
     {
-    	while(!feof(stream)) if(fgets(buffer, sizeof(buffer), stream) != NULL) data += buffer;
+    	while(!feof(stream)) if(fgets(buffer, sizeof(buffer), stream) != NULL) result += buffer;
     	pclose(stream);
     }
     
-    return data;
+    return result;
 }
 
 
 inline std::string getCmdOutput(const std::string& mStr)
 {
-	std::string result;
-	std::string file;
+	std::string result, file;
 	FILE* pipe{popen(mStr.c_str(), "r")};
 	char buffer[256];
-	while(fgets(buffer, sizeof(buffer), pipe) != NULL)
+	while(fgets(buffer, sizeof(buffer), pipe) != nullptr)
 	{
 		file = buffer;
 		result += file.substr(0, file.size() - 1);
@@ -182,6 +181,19 @@ inline std::string getExtension(std::string mPath)
 	return toSanitize.substr(0, mPath.find_first_of('?'));
 }
 
+inline void readFileLineByLine(std::vector<std::string>& mTarget, const std::string& mPath)
+{	
+	std::ifstream fs{"/media/veeData/Temp/itaDict.txt"};
+	for(std::string temp; std::getline(fs, temp);) mTarget.emplace_back(std::move(temp));
+}
+
+inline std::vector<std::string> getReadFileLineByLine(const std::string& mPath)
+{
+	std::vector<std::string> result;
+	readFileLineByLine(result, mPath);
+	return result;
+}
+
 int main() 
 {
 	SSVU_TEST_RUN_ALL();
@@ -189,12 +201,7 @@ int main()
 	
 
 	ssvu::lo("Dictionary") << "Loading dictionary" << std::endl;
-
-	std::vector<std::string> dictionary;	
-	std::ifstream dictFile("/media/veeData/Temp/itaDict.txt");
-	std::string temp;
-	while(dictFile >> temp) dictionary.emplace_back(std::move(temp));
-
+	auto dictionary(getReadFileLineByLine("/media/veeData/Temp/itaDict.txt"));
 	ssvu::lo("Dictionary") << "Done" << std::endl;
 
 
@@ -205,7 +212,7 @@ int main()
 
 
 	//ssvu::lo("Dictionary") << "10 random words" << std::endl;
-	//for(auto i(0u); i < 10; ++i) ssvu::lo() << getSyllabized(getRndWord()) << std::endl;
+	for(auto i(0u); i < 10; ++i) ssvu::lo() << getSyllabized(getRndWord()) << std::endl;
 
 
 	std::string curlPrefix{R"(curl 'https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=)"}; 

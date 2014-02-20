@@ -194,9 +194,9 @@ template<typename TT, typename TG> class Parser
 
 		inline void debugPrint()
 		{
-			ssvu::lo("tokenStack") 	<< tokenStack << std::endl;
-			ssvu::lo("parseStack") 	<< parseStack << std::endl;
-			ssvu::lo("nodeStack") 	<< std::endl << nodeStack << std::endl << std::endl;
+			ssvu::lo("tokenStack") 	<< tokenStack << "\n";
+			ssvu::lo("parseStack") 	<< parseStack << "\n";
+			ssvu::lo("nodeStack") 	<< "\n" << nodeStack << "\n" << std::endl;
 		}
 
 	public:

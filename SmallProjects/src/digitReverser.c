@@ -686,7 +686,6 @@ void runTests()
 	}
 
 	{
-		VL_EXPECT(vlm_getFibonacciI(0) == 0);
 		VL_EXPECT(vlm_getFibonacciI(1) == 1);
 		VL_EXPECT(vlm_getFibonacciI(2) == 1);
 		VL_EXPECT(vlm_getFibonacciI(3) == 2);

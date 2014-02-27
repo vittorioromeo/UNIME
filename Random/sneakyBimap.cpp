@@ -11,25 +11,30 @@ namespace Internal
         inline bool operator()(const T* mA, const T* mB) const noexcept { return *mA < *mB; }
     };
 
-    /*
-    template<typename T> struct InvPair
-    {
-        using Second = typename T::first_type;
-        using First = typename T::second_type;
-        Second second;
-        First first;
-    };
+    template<typename T> using PtrSet = std::set<const T*, Internal::PtrComparator<T>>;
 
-    template<typename T> inline InvPair<T>& getInvPair(T& mPair) noexcept { return reinterpret_cast<InvPair<T>&>(mPair); }
-    */
+    template<typename T1, typename T2, typename T> struct BimapHelper;
+    template<typename T1, typename T2> struct BimapHelper<T1, T2, T1>
+    {
+        using Current = T1;
+        using Other = T2;
+        template<typename TBimap> inline static const PtrSet<T1>& getSetCurrent(TBimap& mBimap) noexcept { return mBimap.set1; }
+    };
+    template<typename T1, typename T2> struct BimapHelper<T1, T2, T2>
+    {
+        using Current = T2;
+        using Other = T1;
+        template<typename TBimap> inline static const PtrSet<T2>& getSetCurrent(TBimap& mBimap) noexcept { return mBimap.set2; }
+    };    
 }   
 
 template<typename T1, typename T2> class SneakyBimap
 {
+    template<typename, typename, typename> friend struct Internal::BimapHelper;
+
     public:
         using BMPair = std::pair<T1, T2>;
-        using Storage = std::vector<ssvu::Uptr<BMPair>>;
-        template<typename T> using PtrSet = std::set<const T*, Internal::PtrComparator<T>>;
+        using Storage = std::vector<ssvu::Uptr<BMPair>>;        
 
         using iterator = typename Storage::iterator;
         using const_iterator = typename Storage::const_iterator;
@@ -38,22 +43,22 @@ template<typename T1, typename T2> class SneakyBimap
 
     private:           
         Storage storage;
-        PtrSet<T1> set1;
-        PtrSet<T2> set2;
+        Internal::PtrSet<T1> set1;
+        Internal::PtrSet<T2> set2;
 
-        template<typename T> inline BMPair& getPairImpl(const T* mPtr) const noexcept
+        template<typename T> inline constexpr BMPair& getPairImpl(const T* mPtr) const noexcept
         {
-            static_assert(std::is_standard_layout<BMPair>::value, "BMPair must have standard layout");
+            SSVU_ASSERT_STATIC(std::is_standard_layout<BMPair>::value, "BMPair must have standard layout");
             return *(const_cast<BMPair*>(reinterpret_cast<const BMPair*>(mPtr)));
         }
         
-        inline const char* getPairBasePtr(const T2* mItem) const noexcept
+        inline constexpr const char* getPairBasePtr(const T2* mItem) const noexcept
         {
             return reinterpret_cast<const char*>(mItem) - offsetof(BMPair, second);            
         }
         
-        inline BMPair& getPair(const T1* mItem) const noexcept   { return getPairImpl(mItem); }
-        inline BMPair& getPair(const T2* mItem) const noexcept   { return getPairImpl(getPairBasePtr(mItem)); }
+        inline constexpr BMPair& getPair(const T1* mItem) const noexcept   { return getPairImpl(mItem); }
+        inline constexpr BMPair& getPair(const T2* mItem) const noexcept   { return getPairImpl(getPairBasePtr(mItem)); }
         
         inline T2& getItem(const T1* mItem) noexcept    { return getPair(mItem).second; }
         inline T1& getItem(const T2* mItem) noexcept    { return getPair(mItem).first; }
@@ -61,53 +66,55 @@ template<typename T1, typename T2> class SneakyBimap
         inline const T2& getItem(const T1* mItem) const noexcept    { return getPair(mItem).second; }
         inline const T1& getItem(const T2* mItem) const noexcept    { return getPair(mItem).first; }
 
+        template<typename T> auto atImpl(const T& mKey) const noexcept -> const typename Internal::BimapHelper<T1, T2, T>::Other&
+        {
+            const auto& set(Internal::BimapHelper<T1, T2, T>::getSetCurrent(*this));
+            const auto& itr(this->find(mKey));
+            if(itr == std::end(set)) throw std::out_of_range{"mKey was not found in set"};
+            return getItem(*itr);
+        }
+
+        template<typename T> inline void eraseImpl(const T& mKey) 
+        {
+            SSVU_ASSERT(this->has(mKey)); 
+
+            const auto& pair(getPair(*this->find(mKey)));
+
+            set1.erase(&pair.first);
+            set2.erase(&pair.second);
+
+            ssvu::eraseRemoveIf(storage, [&pair](const ssvu::Uptr<std::pair<T1, T2>>& mI){ return mI.get() == &pair; });
+
+            SSVU_ASSERT(!this->has(mKey)); 
+        }
+
     public:        
-        template<typename TA1, typename TA2> inline void emplace(TA1&& mArg1, TA2&& mArg2)
+        template<typename TA1, typename TA2> inline std::pair<T1, T2>& emplace(TA1&& mArg1, TA2&& mArg2)
         {
-            assert(!this->has(mArg1) && !this->has(mArg2));
+            SSVU_ASSERT(!this->has(mArg1) && !this->has(mArg2));
 
-            auto pair(std::make_unique<std::pair<T1, T2>>(std::forward<TA1>(mArg1), std::forward<TA2>(mArg2)));
-            set1.emplace(&(pair->first));
-            set2.emplace(&(pair->second));
-            storage.emplace_back(std::move(pair));
+            auto& pair(ssvu::getEmplaceUptr<std::pair<T1, T2>>(storage, std::forward<TA1>(mArg1), std::forward<TA2>(mArg2)));
+            set1.emplace(&pair.first);
+            set2.emplace(&pair.second);
+
+            return pair;
         }
-        inline void insert(const BMPair& mPair)
-        {
-            this->emplace(mPair.first, mPair.second);
-        }
+        inline std::pair<T1, T2>& insert(const BMPair& mPair) { return this->emplace(mPair.first, mPair.second); }
 
-        template<typename T> inline void erase(const T& mKey) 
-        {
-            assert(this->has(mKey)); 
+        inline void erase(const T1& mKey) { this->eraseImpl(mKey); }
+        inline void erase(const T2& mKey) { this->eraseImpl(mKey); }
 
-            const auto& pairPtr(getPair(&mKey));
-            
-            set1.erase(&(pairPtr->first));
-            set2.erase(&(pairPtr->second));
-
-            ssvu::eraseRemoveIf(storage, [&pairPtr](const ssvu::Uptr<std::pair<T1, T2>>& mI){ return mI.get() == pairPtr; });
-
-            assert(!this->has(mKey)); 
-        }
-
-        inline const T2& at(const T1& mKey) const noexcept
-        {
-            const auto& itr(set1.find(&mKey));
-            if(itr == std::end(set1)) throw std::out_of_range{"mKey was not found in set1"};
-            return getItem(*itr);
-        }
-        inline const T1& at(const T2& mKey) const noexcept
-        {
-            const auto& itr(set2.find(&mKey));
-            if(itr == std::end(set2)) throw std::out_of_range{"mKey was not found in set2"};
-            return getItem(*itr);
-        }
+        inline const T2& at(const T1& mKey) const noexcept  { return this->atImpl(mKey); }
+        inline const T1& at(const T2& mKey) const noexcept  { return this->atImpl(mKey); }
         
-        inline T2& operator[](const T1& mKey) noexcept  { assert(this->has(mKey)); return getItem(*set1.find(&mKey)); }
-        inline T1& operator[](const T2& mKey) noexcept  { assert(this->has(mKey)); return getItem(*set2.find(&mKey)); }
+        inline T2& operator[](const T1& mKey) noexcept  { return this->has(mKey) ? this->get(mKey) : this->emplace(mKey, T2{}).second; }
+        inline T1& operator[](const T2& mKey) noexcept  { return this->has(mKey) ? this->get(mKey) : this->emplace(T1{}, mKey).first; }
 
-        inline const T2& operator[](const T1& mKey) const noexcept  { assert(this->has(mKey)); return getItem(*set1.find(&mKey)); }
-        inline const T1& operator[](const T2& mKey) const noexcept  { assert(this->has(mKey)); return getItem(*set2.find(&mKey)); }
+        inline T2& get(const T1& mKey) noexcept  { SSVU_ASSERT(this->has(mKey)); return getItem(*this->find(mKey)); }
+        inline T1& get(const T2& mKey) noexcept  { SSVU_ASSERT(this->has(mKey)); return getItem(*this->find(mKey)); }
+
+        inline const T2& operator[](const T1& mKey) const noexcept  { return this->get(mKey); }
+        inline const T1& operator[](const T2& mKey) const noexcept  { return this->get(mKey); }
 
         inline void clear() noexcept { storage.clear(); set1.clear(); set2.clear(); }
 
@@ -210,6 +217,30 @@ SSVU_TEST(SneakyBimapTests)
     SSVUT_EXPECT(!sb.has("melon"));
     SSVUT_EXPECT(!sb.has("cucumber"));
     SSVUT_EXPECT(!sb.has("banana"));
+
+    sb["yolo"] = 15;
+
+    SSVUT_EXPECT(!sb.empty());
+    SSVUT_EXPECT(sb.size() == 1);
+    SSVUT_EXPECT(!sb.has(10));
+    SSVUT_EXPECT(sb.has(15));    
+    SSVUT_EXPECT(!sb.has("melon"));
+    SSVUT_EXPECT(sb.has("yolo"));
+    SSVUT_EXPECT(sb["yolo"] == 15);
+
+    sb["yolo"] = 25;
+
+    SSVUT_EXPECT(sb.has("yolo"));
+    SSVUT_EXPECT(!sb.has(15));
+    SSVUT_EXPECT(sb.has(25));    
+    SSVUT_EXPECT(sb["yolo"] == 25);
+
+    sb.erase("yolo");
+
+    SSVUT_EXPECT(!sb.has("yolo"));
+    SSVUT_EXPECT(!sb.has(15));
+    SSVUT_EXPECT(!sb.has(25));    
+    SSVUT_EXPECT(sb.empty());
 }
 SSVU_TEST_END();
 

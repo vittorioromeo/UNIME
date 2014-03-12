@@ -471,77 +471,81 @@ void choiceEuler()
 }
 
 struct vlm_V2i_impl { int x, y; };
+struct vlm_V3i_impl { int x, y, z; };
 typedef struct vlm_V2i_impl vlm_V2i;
+typedef struct vlm_V3i_impl vlm_V3i;
 
 vlm_V2i bezout(int mA, int mB)
 {
-	// Controllare che il MCD(mA, mB) = 1
+	if(mA < mB) return bezout(mB, mA);
 
-	#define MAX_VECS 100
-	vlm_V2i vecs[MAX_VECS];
+	// TODO: assert MCD(mA, mB) == 1
+
+	vlm_V2i vecs[3];
 
 	// Setup initial vecs
 	vecs[0].x = 1; vecs[0].y = 0;
 	vecs[1].x = 0; vecs[1].y = 1;
 
-	int vA = vlm_getMaxI(mA, mB);
-	int vB = vlm_getMinI(mA, mB);
-
-	int quotient = vA / vB;
-	int rest = vA % vB;
+	int quotient = mA / mB;
+	int rest = mA % mB;
 
 	int idx = 2;
 
 	while(rest != 0)
 	{
-		vlm_V2i newVec = vecs[idx - 1];
+		int idxFirst =		(idx - 2) % 3;
+		int idxPrev =		(idx - 1) % 3;
+		int idxCurrent =	(idx - 0) % 3;
+
+		vlm_V2i newVec = vecs[idxPrev];
 		newVec.x *= quotient;
 		newVec.y *= quotient;
 
 		vlm_V2i subVec;
-		subVec.x = vecs[idx - 2].x - newVec.x;
-		subVec.y = vecs[idx - 2].y - newVec.y;
+		subVec.x = vecs[idxFirst].x - newVec.x;
+		subVec.y = vecs[idxFirst].y - newVec.y;
 
-		vecs[idx] = subVec;
+		vecs[idxCurrent] = subVec;
 
 		// Pretty print :)
 		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
-		printf("\t(%d, %d)", vecs[idx - 2].x, vecs[idx - 2].y);
+		printf("\t(%d, %d)", vecs[idxFirst].x, vecs[idxFirst].y);
 		vlc_resetFmt();
 		printf(" - ");
 		vlc_setFmt(vlc_StyleBold, vlc_ColorCyan);
-		printf("%d(%d, %d)", quotient, vecs[idx - 1].x, vecs[idx - 1].x);
+		printf("%d(%d, %d)", quotient, vecs[idxPrev].x, vecs[idxPrev].x);
 		vlc_resetFmt();
 		printf(" => ");
 		vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
-		printf("(%d, %d)\n", vecs[idx].x, vecs[idx].y);
+		printf("(%d, %d) [REST: %d]\n", vecs[idxCurrent].x, vecs[idxCurrent].y, rest);
 		vlc_resetFmt();
 
-		vA = vB;
-		vB = rest;
+		mA = mB;
+		mB = rest;
 
-		quotient = vA / vB;
-		rest = vA % vB;
+		quotient = mA / mB;
+		rest = mA % mB;
 
 		++idx;
 	}
 
 	vlm_V2i result;
 
+	int idxPrev = (idx - 1) % 3;
+
 	if(mA > mB)
 	{
-		result.x = vecs[idx - 1].x;
-		result.y = vecs[idx - 1].y;
+		result.x = vecs[idxPrev].x;
+		result.y = vecs[idxPrev].y;
 	}
 	else
 	{
-		result.x = vecs[idx - 1].y;
-		result.y = vecs[idx - 1].x;
+		result.x = vecs[idxPrev].y;
+		result.y = vecs[idxPrev].x;
 	}
 
 	return result;
-
-	#undef MAX_VECS
 }
 
 void choiceBezout()

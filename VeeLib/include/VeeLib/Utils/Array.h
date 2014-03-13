@@ -14,8 +14,8 @@ inline ArrayIdx vla_getMinValueIdxI(int* mArray, size_t mLB, size_t mUB)
 	// This functions returns the index of the smallest value in an
 	// integer array, in the interval [mLB; mUB).
 
-	ArrayIdx result = mLB, i;
-	for(i = mLB; i < mUB; ++i) if(mArray[i] < mArray[result]) result = i;
+	ArrayIdx result;
+	for(result = mLB; mLB < mUB; ++mLB) if(mArray[mLB] < mArray[result]) result = mLB;
 	return result;
 }
 

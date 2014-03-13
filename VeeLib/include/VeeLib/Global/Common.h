@@ -27,6 +27,9 @@
 	#define VL_OS_UNKNOWN
 #endif
 
+/// @brief Calculates the size of an array at compile-time.
+#define VL_GET_ARRAY_SIZE(mArray) (sizeof(mArray) / sizeof(mArray[0]))
+
 typedef int ArrayIdx;
 
 //	Prefixes:

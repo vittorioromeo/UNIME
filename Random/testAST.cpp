@@ -20,8 +20,6 @@ namespace Eng
 			TokenData<TL> data;
 
 		public:
-			inline Token(const Token&) = default;
-			inline Token(Token&&) = default;
 			inline Token(const TokenType<TL>& mType) noexcept : type{mType} { }
 			inline Token(const TokenType<TL>& mType, const TokenData<TL>& mData) : Token{mType}, data{mData} { }
 
@@ -29,10 +27,18 @@ namespace Eng
 			inline const TokenData<TL>& getData() const noexcept { return data; }
 	};
 
+	template<typename TL> class ASTNode;
+
 	template<typename TL> class ASTImpl 
 	{
+		template<typename> friend class ASTNode;
+
+		private:
+			ASTNode<TL>* node;
+
 		public:
 			inline virtual ~ASTImpl() { }
+			inline ASTNode<TL>* getNode() const noexcept { return node; }
 	};
 
 	template<typename TL> class ASTTokenNodeImpl : public ASTImpl<TL>
@@ -58,7 +64,7 @@ namespace Eng
 			inline ASTNode(ASTNode&&) = default;
 
 			inline void setType(ASTType<TL> mType) { type = mType; }
-			template<typename T> inline void setImpl(T mImpl) { impl = std::move(mImpl); }
+			template<typename T> inline void setImpl(T mImpl) { impl = std::move(mImpl); impl->node = this; }
 
 			inline const ASTType<TL>& getType() const noexcept { return type; }
 
@@ -127,38 +133,6 @@ namespace Eng
 
 	template<typename TL> using ParseletUptrVec = std::vector<ssvu::Uptr<ParseletBase<TL>>>;
 
-	/*
-	template<typename TL> union ParseletUnion
-	{
-		Token<TL> token;
-		ASTNode<TL> node;
-
-		inline ParseletUnion(Token<TL> mToken) : token{std::move(mToken)} { }
-		inline ParseletUnion(ASTNode<TL> mNode) : node{std::move(mNode)} { }
-		inline ParseletUnion(ParseletUnion&&) = default;
-
-		inline ~ParseletUnion() { }
-	};
-
-	template<typename TL> class Parselet
-	{
-		private:
-			ParseletType type;
-			ParseletUnion<TL> pu;
-
-		public:
-			inline Parselet(Token<TL> mToken) noexcept : type{ParseletType::Token}, pu{std::move(mToken)} { } 
-			inline Parselet(ASTNode<TL> mNode) noexcept : type{ParseletType::Node}, pu{std::move(mNode)} { }
-			inline Parselet(Parselet&& mOther) noexcept : type{std::move(mOther.type)}, pu{std::move(mOther.pu)} { }
-
-			inline ParseletType getType() const noexcept	{ return type; }
-			inline decltype(pu.token)& getToken() noexcept 	{ SSVU_ASSERT(type == ParseletType::Token); return pu.token; }
-			inline decltype(pu.node)& getNode() noexcept 	{ SSVU_ASSERT(type == ParseletType::Node); return pu.node; }
-	};
-
-	template<typename TL> using Parselet = variant<Token<TL>, ASTNode<TL>>;
-	*/
-
 	template<typename TL> class RulePart
 	{
 		private:
@@ -175,7 +149,7 @@ namespace Eng
 
 			inline ParseletType getType() const noexcept 					{ return type; }
 			inline const decltype(tokenType)& getTokenType() const noexcept	{ SSVU_ASSERT(type == ParseletType::Token); return tokenType; }
-			inline const decltype(astType)& getASTType() const noexcept 	{ SSVU_ASSERT(type == ParseletType::Token); return astType; }
+			inline const decltype(astType)& getASTType() const noexcept 	{ SSVU_ASSERT(type == ParseletType::Node); return astType; }
 
 			inline bool operator==(const RulePart<TL>& mRhs) const noexcept
 			{
@@ -259,7 +233,8 @@ namespace Eng
 		private:
 			RuleSet<TL> ruleSet;
 			std::vector<Token<TL>> sourceStack;
-			ParseletUptrVec<TL> parseStack, nodeStack;
+			ParseletUptrVec<TL> parseStack;
+			std::vector<ParseletBase<TL>*> nodeStack;
 
 		public:
 			inline decltype(ruleSet)& getRuleSet() noexcept { return ruleSet; }		
@@ -272,8 +247,8 @@ namespace Eng
 				auto tkn(sourceStack.back());
 
 				// Push it both on parse and node stacks
-				ssvu::getEmplaceUptr<ParseletToken<TL>>(parseStack, tkn);
-				ssvu::getEmplaceUptr<ParseletToken<TL>>(nodeStack, tkn);				
+				auto& pRef(ssvu::getEmplaceUptr<ParseletToken<TL>>(parseStack, tkn));
+				nodeStack.emplace_back(&pRef);
 
 				// Pop from source stack
 				sourceStack.pop_back();
@@ -290,11 +265,15 @@ namespace Eng
 
 					if(parseletToCheck->isToken())
 					{	
+						if(mRule.getPartAt(i).getType() != ParseletType::Token) return false;
+
 						auto& pToken(parseletToCheck->getAsToken());
 						if(mRule.getPartAt(i).getTokenType() != pToken.getToken().getType()) return false;
 					}
 					else
 					{	
+						if(mRule.getPartAt(i).getType() != ParseletType::Node) return false;
+
 						auto& pNode(parseletToCheck->getAsNode());
 						if(mRule.getPartAt(i).getASTType() != pNode.getNode().getType()) return false;
 					}	
@@ -305,32 +284,7 @@ namespace Eng
 
 			inline void makeReduction(const Rule<TL>& mRule)
 			{
-				ParseletUptrVec<TL> removedNodes;
-				for(auto k(0u); k < mRule.getSize(); ++k)
-				{
-					removedNodes.emplace_back(std::move(nodeStack.back()));
-					nodeStack.pop_back();							
-				}
-				 
-				// Create new node for reduction
-				ASTNode<TL> newNode;
-				newNode.setType(mRule.getResult());
 				
-				// Add removed nodes as children
-				for(auto& n : removedNodes) 
-				{
-					ASTNode<TL> child;
-
-					if(n->isToken())
-					{
-						child.setImpl(std::move(std::make_unique<ASTTokenNodeImpl<TL>>(n->getAsToken().getToken())));
-					}
-					
-					newNode.emplaceChild(std::move(child));
-				}
-				
-
-				nodeStack.emplace_back(std::move(std::make_unique<ParseletNode<TL>>(std::move(newNode))));
 			}
 
 			inline void reduceRecursively()
@@ -357,10 +311,41 @@ namespace Eng
 						ASTNode<TL> reductionResult;
 						reductionResult.setType(r->getResult());
 						reductionResult.setImpl(std::move(r->getFunc()(usedParselets)));						
-						parseStack.emplace_back(std::move(std::make_unique<ParseletNode<TL>>(std::move(reductionResult)))); 	
+
+						std::vector<ParseletBase<TL>*> removedNodes;
+						for(auto k(0u); k < r->getSize(); ++k)
+						{
+							removedNodes.emplace_back(nodeStack.back());
+							nodeStack.pop_back();							
+						}
+						 
+						
+						// Add removed nodes as children
+						for(auto& n : removedNodes) 
+						{
+
+							if(n->isToken())
+							{
+								ASTNode<TL> child;
+								child.setImpl(std::move(std::make_unique<ASTTokenNodeImpl<TL>>(n->getAsToken().getToken())));
+								reductionResult.emplaceChild(std::move(child));
+							}
+							else
+							{
+								reductionResult.emplaceChild(std::move(n->getAsNode().getNode()));
+							}
+							
+						}
+						
+						auto& pRef(ssvu::getEmplaceUptr<ParseletNode<TL>>(parseStack, std::move(reductionResult)));
+						nodeStack.emplace_back(&pRef);
+
+
+
+
 
 						// Pop N nodes from node stack into removedNodes, then try reducing further
-						makeReduction(*r); reduceRecursively(); return;						
+						reduceRecursively(); return;						
 					}
 				}
 			}
@@ -373,14 +358,16 @@ namespace Eng
 				nodeStack.clear();
 
 				// Push all tokens on the token stack
-				//for(const auto& t : mTokens) sourceStack.emplace(std::begin(sourceStack), t);
+				for(const auto& t : mTokens) sourceStack.emplace(std::begin(sourceStack), t);
 
 				while(!sourceStack.empty())
 				{
 					shift();
 					reduceRecursively();
-				}
+				}				
 			}
+
+			inline decltype(nodeStack)& getNodeStack() { return nodeStack; }
 	};
 }
 
@@ -405,7 +392,7 @@ namespace Lang
 
 	struct ASTExpr : public Eng::ASTImpl<Spec>
 	{	
-		inline virtual void eval() { }
+		inline virtual void eval() { ssvu::lo() << "ASTExpr"; }
 	};
 
 	struct ASTNumber : public ASTExpr
@@ -414,7 +401,7 @@ namespace Lang
 
 		inline ASTNumber(int mValue) : value{mValue} { }
 
-		inline void eval() override { }
+		inline void eval() override { ssvu::lo() << "ASTNumber: " << value; }
 	};
 }
 
@@ -422,6 +409,12 @@ int main()
 { 
 	using namespace Eng;
 	using namespace Lang;
+
+ASTNode<Spec> node;
+node.setImpl(std::move(std::make_unique<ASTNumber>(1)));
+node.getImplAs<ASTExpr>().eval();
+
+return 0;
 
 	Parser<Spec> parser;
 	auto& ruleSet(parser.getRuleSet());
@@ -445,6 +438,12 @@ int main()
 	};	
 
 	parser.run(src);
+
+	auto& b(parser.getNodeStack().back());
+	b->getAsNode().getNode().getImplAs<ASTExpr>().eval();
+	ssvu::lo() << int(b->getAsNode().getNode().getType());
+
+	ssvu::lo() << std::endl;
 
 	return 0;
 }

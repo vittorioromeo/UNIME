@@ -13,6 +13,13 @@ namespace Eng
 	template<typename TL> using TokenData 	= typename TL::TokenData;
 	template<typename TL> using ASTType 	= typename TL::ASTType;
 
+	template<typename TL> class ASTNode;
+	template<typename TL> class ASTImpl;
+
+	template<typename TL> using ASTNodePtr = ASTNode<TL>*;
+	template<typename TL> using ASTNodeUptr = ssvu::Uptr<ASTNode<TL>>;
+	template<typename TL> using ASTImplPtr = ASTImpl<TL>*;
+	template<typename TL> using ASTImplUptr = ssvu::Uptr<ASTImpl<TL>>;
 
 	template<typename TL> class Token
 	{
@@ -28,8 +35,7 @@ namespace Eng
 			inline const TokenData<TL>& getData() const noexcept { return data; }
 	};
 
-	template<typename TL> class ASTNode;
-	template<typename TL> using ASTNodePtr = ASTNode<TL>*;
+	
 
 	template<typename TL> class ASTImpl 
 	{
@@ -60,7 +66,7 @@ namespace Eng
 	{
 		private:
 			ASTType<TL> type;
-			ssvu::Uptr<ASTImpl<TL>> impl;
+			ASTImplUptr<TL> impl;
 			ASTNodePtr<TL> parent{nullptr};
 			std::vector<ASTNodePtr<TL>> children;
 
@@ -136,8 +142,6 @@ namespace Eng
 			inline ASTNode<TL>& getNode() { return *node; }		
 			inline bool isToken() override { return false; }
 	};
-
-	template<typename TL> using ParseletUptrVec = std::vector<ssvu::Uptr<ParseletBase<TL>>>;
 
 	template<typename TL> class RulePart
 	{
@@ -237,13 +241,12 @@ namespace Eng
 	template<typename TL> class Parser
 	{
 		private:
-			std::vector<ssvu::Uptr<ParseletBase<TL>>> parseletManager;
 			std::vector<ssvu::Uptr<ASTNode<TL>>> nodeManager;
 
 			RuleSet<TL> ruleSet;
-			std::vector<Token<TL>> sourceStack;
-			std::vector<ParseletBase<TL>*> parseStack;
-			std::vector<ParseletBase<TL>*> nodeStack;
+			std::vector<ASTNodePtr> sourceStack;
+			std::vector<ASTNodePtr> parseStack;
+			std::vector<ASTNodePtr> nodeStack;
 
 		public:
 			inline decltype(ruleSet)& getRuleSet() noexcept { return ruleSet; }		
@@ -252,17 +255,11 @@ namespace Eng
 			{
 				SSVU_ASSERT(!sourceStack.empty());
 
-				// Take top of source stack
-				auto tkn(sourceStack.back());
+				// Push source stack top node both on parse and node stacks
+				parseStack.emplace_back(sourceStack.back());
+				nodeStack.emplace_back(sourceStack.back());
 
-				// Create a parselet with the taken node
-				auto& parselet(ssvu::getEmplaceUptr<ParseletToken<TL>>(parseletManager, tkn));
-
-				// Push it both on parse and node stacks
-				parseStack.emplace_back(&parselet);
-				nodeStack.emplace_back(&parselet);
-
-				// Pop from source stack
+				// Pop it from source stack
 				sourceStack.pop_back();
 			}
 
@@ -369,7 +366,6 @@ namespace Eng
 			inline void run(const std::vector<Token<TL>>& mTokens)
 			{	
 				// Clear memory
-				parseletManager.clear();
 				nodeManager.clear();
 
 				// Reset parser state
@@ -377,9 +373,18 @@ namespace Eng
 				parseStack.clear();
 				nodeStack.clear();
 
-				// Push all tokens on the token stack
-				for(const auto& t : mTokens) sourceStack.emplace(std::begin(sourceStack), t);
+				// Create nodes for tokens and push them on the source stack
+				for(const auto& t : mTokens) 
+				{
+					auto tokenImpl(std::make_unique<ASTTokenNodeImpl<TL>>(t));
+					auto& tokenNode(ssvu::getEmplaceUptr<ASTNode<TL>>(nodeManager));
+					// set type? 
+					tokenNode.setImpl(std::move(tokenImpl));
+	
+					sourceStack.emplace(std::begin(sourceStack), &tokenNode);
+				}
 
+				// Do magic!
 				while(!sourceStack.empty())
 				{
 					shift();

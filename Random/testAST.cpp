@@ -52,7 +52,7 @@ namespace Eng
 			ASTNodePtr<TL> node{nullptr};
 
 		public:
-			template<typename T> inline void setTypeId() noexcept { typeId = Eng::getASTTypeId<T>(); }
+			inline void setTypeId(ASTTypeId mId) noexcept { typeId = mId; }
 			inline virtual ~ASTImpl() { }
 			inline ASTNode<TL>& getNode() const noexcept 
 			{ 
@@ -67,14 +67,13 @@ namespace Eng
 			Token<TL> token;
 
 		public:
-			inline ASTTokenNodeImpl(Token<TL> mToken) : token{std::move(mToken)} { this->template setTypeId<ASTTokenNodeImpl<TL>>(); }
+			inline ASTTokenNodeImpl(Token<TL> mToken) : token{std::move(mToken)} { }
 			inline decltype(token)& getToken() noexcept { return token; }
 	};
 
 	template<typename TL> class ASTNode
 	{
 		private:
-			
 			ASTImplUptr<TL> impl;
 			ASTNodePtr<TL> parent{nullptr};
 			std::vector<ASTNodePtr<TL>> children;
@@ -220,6 +219,14 @@ namespace Eng
 			inline const decltype(rules)& getRules() const noexcept { return rules; }
 	};
 
+
+	template<typename TL, typename T, typename... TArgs> inline ASTImplUptr<TL> createASTImpl(TArgs&&... mArgs)
+	{
+		auto ptr(new T(std::forward<TArgs>(mArgs)...));
+		ptr->setTypeId(Eng::getASTTypeId<T>());
+		return ASTImplUptr<TL>(ptr);
+	}	
+
 	template<typename TL> class Parser
 	{
 		private:
@@ -325,7 +332,7 @@ namespace Eng
 				// Create nodes for tokens and push them on the source stack
 				for(const auto& t : mTokens) 
 				{
-					auto tokenImpl(std::make_unique<ASTTokenNodeImpl<TL>>(t));
+					auto tokenImpl(createASTImpl<TL, ASTTokenNodeImpl<TL>>(t));
 					auto& tokenNode(ssvu::getEmplaceUptr<ASTNode<TL>>(nodeManager));
 					//tokenNode.setType(TL::astTokenType);
 					tokenNode.setImpl(std::move(tokenImpl));
@@ -361,7 +368,6 @@ namespace Lang
 
 	struct ASTExpr : public Eng::ASTImpl<Spec>
 	{	
-		inline ASTExpr() noexcept { setTypeId<ASTExpr>(); }
 		inline virtual int eval() 
 		{ 
 			auto& child(getNode().getChildren()[0]->getImplAs<ASTExpr>());
@@ -374,7 +380,7 @@ namespace Lang
 	{
 		int value;
 
-		inline ASTNumber(int mValue) : value{mValue} { setTypeId<ASTNumber>(); }
+		inline ASTNumber(int mValue) : value{mValue} { }
 
 		inline int eval() override 
 		{ 
@@ -384,8 +390,6 @@ namespace Lang
 
 	struct ASTParenthesizedExpr : public ASTExpr
 	{
-		inline ASTParenthesizedExpr() { setTypeId<ASTParenthesizedExpr>();}
-
 		inline int eval() override 
 		{ 
 			auto& inner(getNode().getChildren()[1]->getImplAs<ASTExpr>());
@@ -395,8 +399,6 @@ namespace Lang
 
 	struct ASTExprPlusExpr : public ASTExpr
 	{
-		inline ASTExprPlusExpr() {  setTypeId<ASTExprPlusExpr>(); }
-
 		inline int eval() override 
 		{ 
 			ssvu::lo("CIAO") << std::endl;
@@ -422,31 +424,31 @@ int main()
 	{
 		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
 		ssvu::lo("NUMB") << "" << std::endl;
-		return std::make_unique<ASTNumber>(15);
+		return createASTImpl<Spec, ASTNumber>(15);
 	});
 	ruleSet.createRule(RuleKey<Spec>{Tkn::POpen, getASTTypeId<ASTExpr>(), Tkn::PClose}, getASTTypeId<ASTParenthesizedExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
 	{
 		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
 		ssvu::lo("PEXPR") << "" << std::endl;
-		return std::make_unique<ASTParenthesizedExpr>();
+		return createASTImpl<Spec, ASTParenthesizedExpr>();
 	});
 	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTNumber>()}, getASTTypeId<ASTExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
 	{
 		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
 		ssvu::lo("EXPR") << "" << std::endl;
-		return std::make_unique<ASTExpr>();
+		return createASTImpl<Spec, ASTExpr>();
 	});
 	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTExprPlusExpr>()}, getASTTypeId<ASTExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
 	{
 		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
 		ssvu::lo("EXPR") << "" << std::endl;
-		return std::make_unique<ASTExpr>();
+		return createASTImpl<Spec, ASTExpr>();
 	});
 	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTExpr>(), Tkn::OpPlus, getASTTypeId<ASTExpr>()}, getASTTypeId<ASTExprPlusExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
 	{
 		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
 		ssvu::lo("PLUSEXPR") << "" << std::endl;
-		return std::make_unique<ASTExprPlusExpr>();
+		return createASTImpl<Spec, ASTExprPlusExpr>();
 	});
 	
 	//ruleSet.createRule(RuleKey<Spec>{ASTT::Expr, Tkn::Plus, ASTT::Expr}, ASTT::AddOp);

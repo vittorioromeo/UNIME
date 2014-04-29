@@ -11,23 +11,24 @@ namespace Eng
 	
 	template<typename T> inline const ASTTypeId& getASTTypeId() noexcept { static ASTTypeId id{Internal::getNextASTTypeId()}; return id; }
 
-
 	template<typename TTokenType, typename TTokenData> struct LangSpec
 	{
 		using TokenType = TTokenType;
 		using TokenData	= TTokenData;
 	};
 
-	template<typename TL> using TokenType 	= typename TL::TokenType;
-	template<typename TL> using TokenData 	= typename TL::TokenData;
+	template<typename TL> using TokenType = typename TL::TokenType;
+	template<typename TL> using TokenData = typename TL::TokenData;
 
 	template<typename TL> class ASTNode;
 	template<typename TL> class ASTImpl;
 
 	template<typename TL> using ASTNodePtr = ASTNode<TL>*;
-	template<typename TL> using ASTNodeUptr = ssvu::Uptr<ASTNode<TL>>;
 	template<typename TL> using ASTImplPtr = ASTImpl<TL>*;
+	template<typename TL> using ASTNodeUptr = ssvu::Uptr<ASTNode<TL>>;
 	template<typename TL> using ASTImplUptr = ssvu::Uptr<ASTImpl<TL>>;
+
+	template<typename TL, typename T, typename... TArgs> inline ASTImplUptr<TL> createASTImpl(TArgs&&... mArgs);
 
 	template<typename TL> class Token
 	{
@@ -46,13 +47,13 @@ namespace Eng
 	template<typename TL> class ASTImpl 
 	{
 		template<typename> friend class ASTNode;
+		template<typename TL2, typename T, typename... TArgs> friend ASTImplUptr<TL2> createASTImpl(TArgs&&... mArgs); 
 
 		private:
 			ASTTypeId typeId;
 			ASTNodePtr<TL> node{nullptr};
 
 		public:
-			inline void setTypeId(ASTTypeId mId) noexcept { typeId = mId; }
 			inline virtual ~ASTImpl() { }
 			inline ASTNode<TL>& getNode() const noexcept 
 			{ 
@@ -79,10 +80,6 @@ namespace Eng
 			std::vector<ASTNodePtr<TL>> children;
 
 		public:
-			inline ASTNode() = default;
-			inline ASTNode(const ASTNode&) = delete;
-			inline ASTNode(ASTNode&&) = default;
-
 			template<typename T> inline void setImpl(T mImpl) { impl = std::move(mImpl); impl->node = this; }
 
 			inline ASTTypeId getTypeId() const noexcept { return impl->typeId; }
@@ -104,12 +101,12 @@ namespace Eng
 			}
 	};
 
-	enum class ParseletType{Token, Node};
+	enum class RPType{Token, Node};
 
 	template<typename TL> class RulePart
 	{
 		private:
-			ParseletType type;
+			RPType type;
 			union
 			{
 				TokenType<TL> tokenType;
@@ -117,25 +114,25 @@ namespace Eng
 			};
 
 		public:
-			inline RulePart(TokenType<TL> mTokenType) noexcept : type{ParseletType::Token}, tokenType{mTokenType} { } 
-			inline RulePart(ASTTypeId mASTTypeId) noexcept : type{ParseletType::Node}, astTypeId{mASTTypeId} { }
+			inline RulePart(TokenType<TL> mTokenType) noexcept : type{RPType::Token}, tokenType{mTokenType} { } 
+			inline RulePart(ASTTypeId mASTTypeId) noexcept : type{RPType::Node}, astTypeId{mASTTypeId} { }
 
-			inline ParseletType getType() const noexcept 					{ return type; }
-			inline const decltype(tokenType)& getTokenType() const noexcept	{ SSVU_ASSERT(type == ParseletType::Token); return tokenType; }
-			inline ASTTypeId getASTTypeId() const noexcept 	{ SSVU_ASSERT(type == ParseletType::Node); return astTypeId; }
+			inline RPType getType() const noexcept 							{ return type; }
+			inline const decltype(tokenType)& getTokenType() const noexcept	{ SSVU_ASSERT(type == RPType::Token); return tokenType; }
+			inline ASTTypeId getASTTypeId() const noexcept 					{ SSVU_ASSERT(type == RPType::Node); return astTypeId; }
 
 			inline bool matchesNode(ASTNodePtr<TL> mNode) const 
 			{
 				if(mNode->getTypeId() == Eng::getASTTypeId<ASTTokenNodeImpl<TL>>())
 				{	
-					if(type != ParseletType::Token) return false;
+					if(type != RPType::Token) return false;
 
 					auto& pTokenImpl(mNode->template getImplAs<ASTTokenNodeImpl<TL>>());
 					if(tokenType != pTokenImpl.getToken().getType()) return false;
 				}
 				else
 				{						
-					if(type != ParseletType::Node) return false;
+					if(type != RPType::Node) return false;
 					if(astTypeId != mNode->getTypeId()) return false;
 				}	
 
@@ -145,8 +142,8 @@ namespace Eng
 			inline bool operator==(const RulePart<TL>& mRhs) const noexcept
 			{
 				if(type != mRhs.type) return false;
-				if(type == ParseletType::Token && tokenType == mRhs.tokenType) return true;
-				if(type == ParseletType::Node && astTypeId == mRhs.astTypeId) return true;
+				if(type == RPType::Token && tokenType == mRhs.tokenType) return true;
+				if(type == RPType::Node && astTypeId == mRhs.astTypeId) return true;
 				return false;
 			}
 			inline bool operator!=(const RulePart<TL>& mRhs) const noexcept { return !this->operator==(mRhs); }
@@ -187,22 +184,38 @@ namespace Eng
 				SSVU_ASSERT(ruleParts.size() > mIdx);
 				return ruleParts[mIdx]; 
 			}
-	};
+	};	
+
+	template<typename TL> class NodeCtx
+	{
+		private:
+			std::vector<ASTNodePtr<TL>>& usedNodes;
+
+		public:
+			inline NodeCtx(decltype(usedNodes)& mUsedNodes) : usedNodes(mUsedNodes) { }
+			template<typename T> T& getImplAs(std::size_t mIdx)
+			{
+				return usedNodes[mIdx]->template getImplAs<T>();
+			}
+	};	
 
 	template<typename TL> class Rule
 	{
+		public:
+			using RuleFunc = ssvu::Func<ASTImplUptr<TL>(NodeCtx<TL>&)>;
+
 		private:
 			RuleKey<TL> ruleKey;
 			ASTTypeId result;
-			ssvu::Func<ssvu::Uptr<ASTImpl<TL>>(const std::vector<ASTNodePtr<TL>>&)> func;
+			RuleFunc func;
 
 		public:
-			inline Rule(RuleKey<TL> mKey, ASTTypeId mResult, const decltype(func)& mFunc) : ruleKey{std::move(mKey)}, result{mResult}, func{mFunc} { }
+			inline Rule(RuleKey<TL> mKey, ASTTypeId mResult, const RuleFunc& mFunc) : ruleKey{std::move(mKey)}, result{mResult}, func{mFunc} { }
 			
 			inline ASTTypeId getResult() const noexcept { return result; }
 			inline std::size_t getSize() const noexcept { return ruleKey.getSize(); }
 			inline const RulePart<TL>& getPartAt(std::size_t mIdx) const noexcept { return ruleKey.getPartAt(mIdx); }
-			inline decltype(func)& getFunc() noexcept { return func; }
+			inline RuleFunc& getFunc() noexcept { return func; }
 	};
 
 	template<typename TL> class RuleSet
@@ -223,7 +236,7 @@ namespace Eng
 	template<typename TL, typename T, typename... TArgs> inline ASTImplUptr<TL> createASTImpl(TArgs&&... mArgs)
 	{
 		auto ptr(new T(std::forward<TArgs>(mArgs)...));
-		ptr->setTypeId(Eng::getASTTypeId<T>());
+		ptr->typeId = Eng::getASTTypeId<T>();
 		return ASTImplUptr<TL>(ptr);
 	}	
 
@@ -292,8 +305,9 @@ namespace Eng
 
 						// Create reduction result node						
 						auto& reductionResult(ssvu::getEmplaceUptr<ASTNode<TL>>(nodeManager));
-						//reductionResult.setTypeId<>(r->getResult());
-						reductionResult.setImpl(std::move(r->getFunc()(usedNodes)));	
+						
+						NodeCtx<TL> nodeCtx{usedNodes};
+						reductionResult.setImpl(std::move(r->getFunc()(nodeCtx)));	
 
 						// Remove base nodes from node stack (they will become children of the redution result node)
 						std::vector<ASTNodePtr<TL>> removedNodes;
@@ -333,8 +347,7 @@ namespace Eng
 				for(const auto& t : mTokens) 
 				{
 					auto tokenImpl(createASTImpl<TL, ASTTokenNodeImpl<TL>>(t));
-					auto& tokenNode(ssvu::getEmplaceUptr<ASTNode<TL>>(nodeManager));
-					//tokenNode.setType(TL::astTokenType);
+					auto& tokenNode(ssvu::getEmplaceUptr<ASTNode<TL>>(nodeManager));				
 					tokenNode.setImpl(std::move(tokenImpl));
 	
 					sourceStack.emplace(std::begin(sourceStack), &tokenNode);
@@ -368,10 +381,16 @@ namespace Lang
 
 	struct ASTExpr : public Eng::ASTImpl<Spec>
 	{	
+		inline virtual std::string getName() { return "ASTExpr"; }
 		inline virtual int eval() 
 		{ 
 			auto& child(getNode().getChildren()[0]->getImplAs<ASTExpr>());
 			return child.eval();	
+		}
+		inline virtual void toBytecode() 
+		{ 
+			auto& child(getNode().getChildren()[0]->getImplAs<ASTExpr>());
+			child.toBytecode();	
 		}
 	};
 			
@@ -382,33 +401,63 @@ namespace Lang
 
 		inline ASTNumber(int mValue) : value{mValue} { }
 
+		inline std::string getName() override { return "ASTNumber"; }
 		inline int eval() override 
 		{ 
 			return value;
 		}
+
+		inline void toBytecode() override { ssvu::lo() << "push Number" << std::endl; }
 	};
 
 	struct ASTParenthesizedExpr : public ASTExpr
 	{
-		inline int eval() override 
-		{ 
-			auto& inner(getNode().getChildren()[1]->getImplAs<ASTExpr>());
-			return inner.eval();	
-		}
+		ASTExpr* innerExpr{nullptr};
+
+		inline ASTParenthesizedExpr(ASTExpr& mInnerExpr) : innerExpr{&mInnerExpr} { }
+
+		inline std::string getName() override { return "ASTParenthesizedExpr"; }
+		inline int eval() override { return innerExpr->eval(); }
+		inline void toBytecode() override { innerExpr->toBytecode(); }
 	};
 
 	struct ASTExprPlusExpr : public ASTExpr
 	{
+		ASTExpr* lhs{nullptr};
+		ASTExpr* rhs{nullptr};
+
+		inline ASTExprPlusExpr(ASTExpr& mLhs, ASTExpr& mRhs) : lhs{&mLhs}, rhs{&mRhs} { }
+
+		inline std::string getName() override { return "ASTExprPlusExpr"; }
 		inline int eval() override 
 		{ 
-			ssvu::lo("CIAO") << std::endl;
-
-			auto& expr1(getNode().getChildren()[0]->getImplAs<ASTExpr>());
-			auto& expr2(getNode().getChildren()[2]->getImplAs<ASTExpr>());
-
-			return expr1.eval() + expr2.eval();
+			ssvu::lo("+EXP") << std::endl;
+			return lhs->eval() + rhs->eval();
 		}
+
+		inline void toBytecode() override { lhs->toBytecode(); rhs->toBytecode(); ssvu::lo() << "pop Sum" << std::endl; }
 	};
+}
+
+template<bool TFmt, typename TN> inline void printNode(std::ostream& mStream, TN& mValue, int mDepth)
+{	
+	for(auto i(0u); i < mDepth; ++i) ssvu::Internal::callStringifyImpl<TFmt>(mStream, "|\t");
+
+	ssvu::Internal::callStringifyImpl<TFmt>(mStream, "L______o> ");	    
+	ssvu::Internal::callStringifyImpl<TFmt>(mStream, mValue.getTypeId() < 4 ? mValue.template getImplAs<Lang::ASTExpr>().getName() 
+		: ssvu::toStr(int(mValue.template getImplAs<Eng::ASTTokenNodeImpl<Lang::Spec>>().getToken().getType())));	       	
+//ssvu::Internal::callStringifyImpl<TFmt>(mStream, mValue.getTypeId());	       	
+	ssvu::Internal::callStringifyImpl<TFmt>(mStream, "\n");
+
+	for(auto i(0u); i < mValue.getChildren().size(); ++i) 
+	{
+		printNode<TFmt>(mStream, *(mValue.getChildren().at(i)), mDepth + 1);
+	 	if(i == mValue.getChildren().size() - 1)
+	 	{
+	 		for(auto i(0u); i < mDepth + 1; ++i) ssvu::Internal::callStringifyImpl<TFmt>(mStream, "|\t");
+			ssvu::Internal::callStringifyImpl<TFmt>(mStream, "\n");			 			
+	 	}
+	}
 }
 
 int main() 
@@ -420,39 +469,32 @@ int main()
 	Parser<Spec> parser;
 	auto& ruleSet(parser.getRuleSet());
 
-	ruleSet.createRule(RuleKey<Spec>{Tkn::Number}, getASTTypeId<ASTNumber>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
+	ruleSet.createRule(RuleKey<Spec>{Tkn::Number}, getASTTypeId<ASTNumber>(), [](NodeCtx<Spec>& mCtx)
 	{
-		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
 		ssvu::lo("NUMB") << "" << std::endl;
 		return createASTImpl<Spec, ASTNumber>(15);
 	});
-	ruleSet.createRule(RuleKey<Spec>{Tkn::POpen, getASTTypeId<ASTExpr>(), Tkn::PClose}, getASTTypeId<ASTParenthesizedExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
-	{
-		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
+	ruleSet.createRule(RuleKey<Spec>{Tkn::POpen, getASTTypeId<ASTExpr>(), Tkn::PClose}, getASTTypeId<ASTParenthesizedExpr>(), [](NodeCtx<Spec>& mCtx)
+	{	
 		ssvu::lo("PEXPR") << "" << std::endl;
-		return createASTImpl<Spec, ASTParenthesizedExpr>();
+		return createASTImpl<Spec, ASTParenthesizedExpr>(mCtx.getImplAs<ASTExpr>(1));
 	});
-	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTNumber>()}, getASTTypeId<ASTExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
-	{
-		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
+	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTNumber>()}, getASTTypeId<ASTExpr>(), [](NodeCtx<Spec>& mCtx)
+	{	
 		ssvu::lo("EXPR") << "" << std::endl;
 		return createASTImpl<Spec, ASTExpr>();
 	});
-	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTExprPlusExpr>()}, getASTTypeId<ASTExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
-	{
-		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
+	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTExprPlusExpr>()}, getASTTypeId<ASTExpr>(), [](NodeCtx<Spec>& mCtx)
+	{	
 		ssvu::lo("EXPR") << "" << std::endl;
 		return createASTImpl<Spec, ASTExpr>();
 	});
-	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTExpr>(), Tkn::OpPlus, getASTTypeId<ASTExpr>()}, getASTTypeId<ASTExprPlusExpr>(), [](const std::vector<ASTNodePtr<Spec>>& mParselets)
-	{
-		//return std::make_unique<ASTNumber>(mParselets[0].getToken())
+	ruleSet.createRule(RuleKey<Spec>{getASTTypeId<ASTExpr>(), Tkn::OpPlus, getASTTypeId<ASTExpr>()}, getASTTypeId<ASTExprPlusExpr>(), [](NodeCtx<Spec>& mCtx)
+	{	
 		ssvu::lo("PLUSEXPR") << "" << std::endl;
-		return createASTImpl<Spec, ASTExprPlusExpr>();
+		return createASTImpl<Spec, ASTExprPlusExpr>(mCtx.getImplAs<ASTExpr>(0), mCtx.getImplAs<ASTExpr>(2));
 	});
 	
-	//ruleSet.createRule(RuleKey<Spec>{ASTT::Expr, Tkn::Plus, ASTT::Expr}, ASTT::AddOp);
-
 	std::vector<Token<Spec>> src
 	{
 		{Tkn::POpen},
@@ -468,19 +510,15 @@ int main()
 		{Tkn::PClose}
 	};
 
-	std::vector<Token<Spec>> src2
-	{
-		
-		{Tkn::Number}
-		
-	};	
-
 	parser.run(src);
 
 	auto& b(parser.getNodeStack().back());
-ssvu::lo("RESULT") <<	b->getImplAs<ASTExpr>().eval() << std::endl;
+	ssvu::lo("RESULT") <<	b->getImplAs<ASTExpr>().eval() << std::endl;
 	//ssvu::lo() << b->getAsNode().getNode().getChildren().size() << std::endl;
 	//ssvu::lo() << int(b->getAsNode().getNode().getType());
+	b->getImplAs<ASTExpr>().toBytecode();
+
+	printNode<true>(std::cout, *b, 0);
 
 	ssvu::lo() << std::endl;
 

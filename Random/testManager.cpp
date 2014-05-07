@@ -27,7 +27,6 @@ template<typename T> class Uncertain
 template<typename T> class Atom 
 {
 	template<typename> friend class Manager;
-	template<typename> friend class Handle;
 
 	private:
 		Idx ctrlIdx;
@@ -62,16 +61,6 @@ template<typename T> class Atom
 		inline Atom& operator=(const Atom&) = delete;
 };
 
-class Controller
-{
-	template<typename> friend class Manager;
-	template<typename> friend class Handle;
-
-	private:
-		Idx idx;
-		Ctr ctr;
-};
-
 template<typename T> class Handle
 {
 	template<typename> friend class Manager;
@@ -104,6 +93,8 @@ template<typename T> class Manager
 	template<typename> friend class Handle;
 
 	private:
+		struct Controller { Idx idx; Ctr ctr; };
+
 		std::vector<Atom<T>> atoms;
 		std::vector<Controller> controllers;
 		Idx size{0u};

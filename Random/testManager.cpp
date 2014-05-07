@@ -86,12 +86,12 @@ template<typename T> class Manager
 
 		inline void resizeIfNeeded()
 		{
-			constexpr std::size_t resizeAmount{10};
-
+			constexpr std::size_t resizeAmount{1};
 			// If the first free index is valid, return
 			auto oldSize(atoms.size());
 			if(oldSize > size) return;
 			
+
 			// Calculate new size and resize storage
 			resizeStorage(oldSize, oldSize + resizeAmount);
 		}
@@ -153,14 +153,14 @@ template<typename T> class Manager
 
 			// Starting from the end, update dead entities and their controllers
 			auto i(atoms.size() - 1);			
-			for(; atoms[i].state == AtomState::Dead && i > 0; --i)				
+			for(; i > 0 && atoms[i].state == AtomState::Dead; --i)				
 			{
 				atoms[i].state = AtomState::Unused;
 				++(getControllerFromAtom(atoms[i]).ctr);				
 			}
 						
 			// Starting from the beginning, update alive entities and their controllers
-			for(i = 0u; atoms[i].state == AtomState::Alive && i <= atoms.size(); ++i) 			
+			for(i = 0u; i <= atoms.size() && atoms[i].state == AtomState::Alive; ++i) 			
 				getControllerFromAtom(atoms[i]).idx = i;
 			
 			// Update current size
@@ -221,52 +221,55 @@ int main()
 {
 	Manager<std::string> test;
 
-	test.printState();
+	for(int k = 0; k < 2; ++k)
+	{
+		test.printState();
 
-	auto a0 = test.createAtom();
-	auto a1 = test.createAtom();
-	auto a2 = test.createAtom();
-	auto a3 = test.createAtom();
-	auto a4 = test.createAtom();
-	auto a5 = test.createAtom();
-	auto a6 = test.createAtom();
+		auto a0 = test.createAtom();
+		auto a1 = test.createAtom();
+		auto a2 = test.createAtom();
+		auto a3 = test.createAtom();
+		auto a4 = test.createAtom();
+		auto a5 = test.createAtom();
+		auto a6 = test.createAtom();
 
-	a0.get() = "hi";
-	a4.get() = "ciao";
-	a6.get() = "bye";
+		a0.get() = "hi";
+		a4.get() = "ciao";
+		a6.get() = "bye";
 
-	test.printState();
+		test.printState();
 
-	a2.destroy();
-	a3.destroy();
-	a5.destroy();
-	//test.atoms[2].alive = false;
-	//test.atoms[3].alive = false;
-	//test.atoms[5].alive = false;
+		a2.destroy();
+		a3.destroy();
+		a5.destroy();
+		//test.atoms[2].alive = false;
+		//test.atoms[3].alive = false;
+		//test.atoms[5].alive = false;
 
-	test.printState();
+		test.printState();
 
-	test.refresh();
+		test.refresh();
 
-	test.printState();
+		test.printState();
 
-	ssvu::lo("RESULT") << a0.get() << std::endl;
-	ssvu::lo("RESULT") << a4.get() << std::endl;
-	ssvu::lo("RESULT") << a6.get() << std::endl;
+		ssvu::lo("RESULT") << a0.get() << std::endl;
+		ssvu::lo("RESULT") << a4.get() << std::endl;
+		ssvu::lo("RESULT") << a6.get() << std::endl;
 
-	ssvu::lo("alive") << a0.isAlive() << std::endl;
-	ssvu::lo("alive") << a1.isAlive() << std::endl;
-	ssvu::lo("alive") << a2.isAlive() << std::endl;
-	ssvu::lo("alive") << a3.isAlive() << std::endl;
-	ssvu::lo("alive") << a4.isAlive() << std::endl;
-	ssvu::lo("alive") << a5.isAlive() << std::endl;
-	ssvu::lo("alive") << a6.isAlive() << std::endl;
+		ssvu::lo("alive") << a0.isAlive() << std::endl;
+		ssvu::lo("alive") << a1.isAlive() << std::endl;
+		ssvu::lo("alive") << a2.isAlive() << std::endl;
+		ssvu::lo("alive") << a3.isAlive() << std::endl;
+		ssvu::lo("alive") << a4.isAlive() << std::endl;
+		ssvu::lo("alive") << a5.isAlive() << std::endl;
+		ssvu::lo("alive") << a6.isAlive() << std::endl;
 
-	test.forEach([](std::string& mStr){ mStr += "bb"; });
+		test.forEach([](std::string& mStr){ mStr += "bb"; });
 
-	ssvu::lo("RESULT2") << a0.get() << std::endl;
-	ssvu::lo("RESULT2") << a4.get() << std::endl;
-	ssvu::lo("RESULT2") << a6.get() << std::endl;
-
+		ssvu::lo("RESULT2") << a0.get() << std::endl;
+		ssvu::lo("RESULT2") << a4.get() << std::endl;
+		ssvu::lo("RESULT2") << a6.get() << std::endl;
+	}
+	
 	return 0;
 }

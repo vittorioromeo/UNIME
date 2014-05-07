@@ -3,75 +3,79 @@
 using Idx = std::size_t;
 using Ctr = int;
 
-enum class AtomState : int {Alive = 0, Unused = 1, Dead = 2};
-
 template<typename> class Manager;
-template<typename> class Handle;
 
-template<typename T> class Uncertain
+namespace Internal
 {
-	private:
-		ssvu::AlignedStorageBasic<T> storage;
+	template<typename T> class Uncertain
+	{
+		private:
+			ssvu::AlignedStorageBasic<T> storage;
 
-	public:
-		template<typename... TArgs> inline void init(TArgs&&... mArgs) noexcept(ssvu::isNothrowConstructible<T>())
-		{
-			new (&storage) T(std::forward<TArgs>(mArgs)...);
-		}
-		inline void deinit() noexcept(ssvu::isNothrowDestructible<T>()) { get().~T(); }
+		public:
+			template<typename... TArgs> inline void init(TArgs&&... mArgs) noexcept(ssvu::isNothrowConstructible<T>())
+			{
+				new (&storage) T(std::forward<TArgs>(mArgs)...);
+			}
+			inline void deinit() noexcept(ssvu::isNothrowDestructible<T>()) { get().~T(); }
 
-		inline T& get() noexcept 				{ return reinterpret_cast<T&>(storage); }				
-		inline const T& get() const noexcept 	{ return reinterpret_cast<const T&>(storage); }				
-};
+			inline T& get() noexcept 				{ return reinterpret_cast<T&>(storage); }				
+			inline const T& get() const noexcept 	{ return reinterpret_cast<const T&>(storage); }				
+	};
 
-template<typename T> class Atom 
-{
-	template<typename> friend class Manager;
+	template<typename T> class Atom 
+	{
+		template<typename> friend class Manager;
 
-	private:
-		Idx ctrlIdx;
-		AtomState state{AtomState::Unused};
-		Uncertain<T> data;
+		private:
+			enum class State : int {Alive = 0, Unused = 1, Dead = 2};
+			Idx ctrlIdx;
+			State state{State::Unused};
+			Uncertain<T> data;
 
-		// Initializes the internal data
-		template<typename... TArgs> inline void initData(TArgs&&... mArgs) noexcept(ssvu::isNothrowConstructible<T>())
-		{
-			SSVU_ASSERT(state == AtomState::Unused);
-			data.init(std::forward<TArgs>(mArgs)...);
-		}
+			// Initializes the internal data
+			template<typename... TArgs> inline void initData(TArgs&&... mArgs) 
+				noexcept(noexcept(data.init(std::forward<TArgs>(mArgs)...)))
+			{
+				SSVU_ASSERT(state == State::Unused);
+				data.init(std::forward<TArgs>(mArgs)...);
+			}
 
-		// Deinitializes the internal data
-		inline void deinitData() noexcept(ssvu::isNothrowDestructible<T>())
-		{ 
-			SSVU_ASSERT(state != AtomState::Unused);
-			data.deinit();
-		}
+			// Deinitializes the internal data
+			inline void deinitData() noexcept(noexcept(data.deinit()))
+			{ 
+				SSVU_ASSERT(state != State::Unused);
+				data.deinit();
+			}
 
-	public:
-		inline Atom() = default;
-		inline Atom(Atom&&) = default;
-		inline Atom& operator=(Atom&&) = default;
+		public:
+			inline Atom() = default;
+			inline Atom(Atom&&) = default;
+			inline Atom& operator=(Atom&&) = default;
 
-		inline T& getData() noexcept 				{ SSVU_ASSERT(state != AtomState::Unused); return data.get(); }				
-		inline const T& getData() const noexcept 	{ SSVU_ASSERT(state != AtomState::Unused); return data.get(); }	
-		inline void setDead() noexcept 				{ state = AtomState::Dead; }
-		
-		// Disallow copies
-		inline Atom(const Atom&) = delete;
-		inline Atom& operator=(const Atom&) = delete;
-};
+			inline T& getData() noexcept 				{ SSVU_ASSERT(state != State::Unused); return data.get(); }				
+			inline const T& getData() const noexcept 	{ SSVU_ASSERT(state != State::Unused); return data.get(); }	
+			inline void setDead() noexcept 				{ state = State::Dead; }
+			
+			// Disallow copies
+			inline Atom(const Atom&) = delete;
+			inline Atom& operator=(const Atom&) = delete;
+	};
+}
 
 template<typename T> class Handle
 {
 	template<typename> friend class Manager;
 
 	private:
+		using AtomType = typename Internal::Atom<T>;
+
 		Manager<T>& manager;
 		Idx ctrlIdx;
 		Ctr ctr;
 
 		inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept 
-			: manager(mManager), ctrlIdx{mCtrlIdx}, ctr{mCtr} { }
+			: manager(mManager), ctrlIdx{mCtrlIdx}, ctr{mCtr} { }		
 
 		template<typename TT> inline TT getAtomImpl() noexcept
 		{
@@ -80,8 +84,8 @@ template<typename T> class Handle
 		}
 		
 	public:
-		inline Atom<T>& getAtom() noexcept 				{ return getAtomImpl<Atom<T>&>(); }
-		inline const Atom<T>& getAtom() const noexcept 	{ return getAtomImpl<const Atom<T>&>(); }
+		inline AtomType& getAtom() noexcept 			{ return getAtomImpl<AtomType&>(); }
+		inline const AtomType& getAtom() const noexcept { return getAtomImpl<const AtomType&>(); }
 		inline T& get() noexcept						{ return getAtom().getData(); }
 		inline const T& get() const noexcept			{ return getAtom().getData(); }
 		bool isAlive() const noexcept;
@@ -94,36 +98,37 @@ template<typename T> class Manager
 
 	private:
 		struct Controller { Idx idx; Ctr ctr; };
+		using AtomType = typename Internal::Atom<T>;
+		using AtomState = typename AtomType::State;
 
-		std::vector<Atom<T>> atoms;
+		std::vector<AtomType> atoms;
 		std::vector<Controller> controllers;
 		Idx size{0u};
 
-		inline void growStorage(std::size_t mOldSize, std::size_t mNewSize)
+		inline std::size_t getCapacity() const noexcept
 		{
-			SSVU_ASSERT(mNewSize >= 0 && mNewSize >= mOldSize);
+			return atoms.size();
+		}	
+
+		inline void growStorage(std::size_t mNewSize)
+		{
+			SSVU_ASSERT(mNewSize >= 0 && mNewSize >= getCapacity());
 
 			atoms.resize(mNewSize);
 			controllers.resize(mNewSize);
 
 			// Initialize resized storage
-			for(; mOldSize < mNewSize; ++mOldSize)
+			for(auto i(0u); i < mNewSize; ++i)
 			{
-				atoms[mOldSize].ctrlIdx = mOldSize;					
-				controllers[mOldSize].idx = mOldSize;
+				atoms[i].ctrlIdx = i;					
+				controllers[i].idx = i;
 			}
 		}
 
 		inline void growIfNeeded()
 		{
-			constexpr std::size_t resizeAmount{10};
-
-			// If the first free index is valid, return
-			auto oldSize(atoms.size());
-			if(oldSize > size) return;
-
-			// Calculate new size and grow storage
-			growStorage(oldSize, oldSize + resizeAmount);
+			constexpr std::size_t growAmount{10};
+			if(getCapacity() <= size) growStorage(getCapacity() + growAmount);
 		}
 
 		inline void destroy(Idx mCtrlIdx) noexcept
@@ -131,14 +136,8 @@ template<typename T> class Manager
 			getAtomFromController(controllers[mCtrlIdx]).setDead();
 		}
 
-		inline Controller& getControllerFromAtom(const Atom<T>& mAtom)
-		{
-			return controllers[mAtom.ctrlIdx];
-		}
-		inline Atom<T>& getAtomFromController(const Controller& mController)
-		{
-			return atoms[mController.idx];
-		}
+		inline Controller& getControllerFromAtom(const AtomType& mAtom) 		{ return controllers[mAtom.ctrlIdx]; }
+		inline AtomType& getAtomFromController(const Controller& mController) 	{ return atoms[mController.idx]; }
 
 		inline void cleanUpMemory()
 		{
@@ -162,10 +161,7 @@ template<typename T> class Manager
 			size = 0;
 		}
 
-		inline void reserve(std::size_t mSize) 
-		{ 
-			growStorage(atoms.size(), mSize); 
-		}
+		inline void reserve(std::size_t mCapacity) { growStorage(mCapacity); }
 
 		template<typename... TArgs> inline Handle<T> createAtom(TArgs&&... mArgs)
 		{
@@ -191,7 +187,7 @@ template<typename T> class Manager
 		inline void refresh()
 		{
 			// C++14: use polymorphic lambda
-			ssvu::sortStable(atoms, [](const Atom<T>& mA, const Atom<T>& mB){ return mA.state < mB.state; });
+			ssvu::sortStable(atoms, [](const AtomType& mA, const AtomType& mB){ return mA.state < mB.state; });
 
 			// Starting from the end, update dead entities and their controllers
 			auto i(atoms.size() - 1);			
@@ -217,7 +213,12 @@ template<typename T> class Manager
 		template<typename TFunc> inline void forEachAtom(TFunc mFunc)
 		{
 			for(auto i(0u); i < size; ++i) mFunc(atoms[i]);
-		}	
+		}
+
+		inline AtomType& getAtomAt(Idx mIdx) noexcept 				{ SSVU_ASSERT(mIdx < atoms.size()); return atoms[mIdx]; }
+		inline const AtomType& getAtomAt(Idx mIdx) const noexcept 	{ SSVU_ASSERT(mIdx < atoms.size()); return atoms[mIdx]; }
+		inline T& getDataAt(Idx mIdx) noexcept 						{ return getAtomAt(mIdx).getData(); }
+		inline const T& getDataAt(Idx mIdx) const noexcept 			{ return getAtomAt(mIdx).getData(); }
 
 		inline std::size_t getSize() const noexcept { return size; }
 

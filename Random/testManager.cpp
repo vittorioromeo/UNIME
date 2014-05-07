@@ -25,6 +25,10 @@ template<typename T> class Atom
 		{
 			impl = T(std::forward<TArgs>(mArgs)...);
 		}
+
+	public:
+		inline T& getImpl() noexcept 	{ return impl; }
+		inline void destroy() noexcept 	{ state = AtomState::Dead; }
 };
 
 class Controller
@@ -49,11 +53,10 @@ template<typename T> class Handle
 		inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept 
 			: manager(mManager), ctrlIdx{mCtrlIdx}, ctr{mCtr} { }
 		
-		Atom<T>& getAtom() noexcept;
-
 	public:
+		Atom<T>& getAtom() noexcept;
 		T& get() noexcept;
-		bool isAlive() noexcept;
+		bool isAlive() const noexcept;
 		void destroy() noexcept;
 };
 
@@ -64,7 +67,7 @@ template<typename T> class Manager
 	private:
 		std::vector<Atom<T>> atoms;
 		std::vector<Controller> controllers;
-		Idx lastFree{0u};
+		Idx size{0u};
 
 		inline void resizeStorage(std::size_t mOldSize, std::size_t mNewSize)
 		{
@@ -85,9 +88,9 @@ template<typename T> class Manager
 		{
 			constexpr std::size_t resizeAmount{10};
 
-			// If the last free index is valid, return
+			// If the first free index is valid, return
 			auto oldSize(atoms.size());
-			if(oldSize > lastFree) return;
+			if(oldSize > size) return;
 			
 			// Calculate new size and resize storage
 			resizeStorage(oldSize, oldSize + resizeAmount);
@@ -95,7 +98,16 @@ template<typename T> class Manager
 
 		inline void destroy(Idx mCtrlIdx) noexcept
 		{			
-			atoms[controllers[mCtrlIdx].idx].state = AtomState::Dead;
+			getAtomFromController(controllers[mCtrlIdx]).destroy();
+		}
+
+		inline Controller& getControllerFromAtom(const Atom<T>& mAtom)
+		{
+			return controllers[mAtom.ctrlIdx];
+		}
+		inline Atom<T>& getAtomFromController(const Controller& mController)
+		{
+			return atoms[mController.idx];
 		}
 
 	public:
@@ -105,7 +117,7 @@ template<typename T> class Manager
 		{
 			atoms.clear();
 			controllers.clear();
-			lastFree = 0;
+			size = 0;
 		}
 
 		inline void reserve(std::size_t mSize) 
@@ -115,16 +127,21 @@ template<typename T> class Manager
 
 		template<typename... TArgs> inline Handle<T> createAtom(TArgs&&... mArgs)
 		{
+			// `size` may be greater than the sizes of the vectors - resize vectors if needed 
 			resizeIfNeeded();
 
-			atoms[lastFree].initImpl(std::forward<TArgs>(mArgs)...);
-			atoms[lastFree].state = AtomState::Alive;
+			// `size` now is the first empty valid index - we create our atom there
+			atoms[size].initImpl(std::forward<TArgs>(mArgs)...);
+			atoms[size].state = AtomState::Alive;
 
-			auto cIdx(atoms[lastFree].ctrlIdx);
+			// Update the controller
+			auto cIdx(atoms[size].ctrlIdx);
 			auto& controller(controllers[cIdx]);
-			controller.idx = lastFree;
+			controller.idx = size;
 			++controller.ctr;
-			++lastFree;
+
+			// Update current size
+			++size;
 
 			return {*this, cIdx, controller.ctr};	
 		}	
@@ -134,22 +151,28 @@ template<typename T> class Manager
 			// C++14: use polymorphic lambda
 			ssvu::sortStable(atoms, [](const Atom<T>& mA, const Atom<T>& mB){ return mA.state < mB.state; });
 
-			auto rIdx(atoms.size() - 1);
-			for(; atoms[rIdx].state == AtomState::Dead && rIdx > 0; --rIdx)
+			// Starting from the end, update dead entities and their controllers
+			auto i(atoms.size() - 1);			
+			for(; atoms[i].state == AtomState::Dead && i > 0; --i)				
 			{
-				auto& controller(controllers[atoms[rIdx].ctrlIdx]);
-				++controller.ctr;				
+				atoms[i].state = AtomState::Unused;
+				++(getControllerFromAtom(atoms[i]).ctr);				
 			}
-
-			auto fIdx(0u);
-			for(; atoms[fIdx].state == AtomState::Alive && fIdx <= rIdx; ++fIdx) controllers[atoms[fIdx].ctrlIdx].idx = fIdx;
-			lastFree = fIdx;
+						
+			// Starting from the beginning, update alive entities and their controllers
+			for(i = 0u; atoms[i].state == AtomState::Alive && i <= atoms.size(); ++i) 			
+				getControllerFromAtom(atoms[i]).idx = i;
+			
+			// Update current size
+			size = i;
 		}
 
 		template<typename TFunc> inline void forEach(const TFunc& mFunc)
 		{
-			for(auto i(0u); i < lastFree; ++i) mFunc(atoms[i].impl);
+			for(auto i(0u); i < size; ++i) mFunc(atoms[i].impl);
 		}	
+
+		inline std::size_t getSize() const noexcept { return size; }
 
 		void printState()
 		{
@@ -175,15 +198,15 @@ template<typename T> class Manager
 template<typename T> inline Atom<T>& Handle<T>::getAtom() noexcept
 { 
 	SSVU_ASSERT(isAlive());
-	return manager.atoms[manager.controllers[ctrlIdx].idx];
+	return manager.getAtomFromController(manager.controllers[ctrlIdx]);
 }
 
 template<typename T> inline T& Handle<T>::get() noexcept
 { 	
-	return getAtom().impl;
+	return getAtom().getImpl();
 }
 
-template<typename T> inline bool Handle<T>::isAlive() noexcept
+template<typename T> inline bool Handle<T>::isAlive() const noexcept
 { 
 	return manager.controllers[ctrlIdx].ctr == ctr;
 }

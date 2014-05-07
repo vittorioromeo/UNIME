@@ -8,6 +8,8 @@ template<typename> class Handle;
 
 template<typename T> class Atom
 {
+	SSVU_ASSERT_STATIC(ssvu::isDefaultConstructible<T>(), "T must be default-constructible");
+
 	template<typename> friend class Manager;
 	template<typename> friend class Handle;
 
@@ -16,9 +18,11 @@ template<typename T> class Atom
 		bool alive{false};
 		T impl;
 
-	public:
-		template<typename... TArgs> inline Atom(Idx mCtrlIdx, TArgs&&... mArgs) 
-			: ctrlIdx{mCtrlIdx}, impl{std::forward<TArgs>(mArgs)...} { }
+		template<typename... TArgs> inline void initImpl(TArgs&&... mArgs) 
+			noexcept(noexcept(T(std::forward<TArgs>(mArgs)...)))
+		{
+			impl = T(std::forward<TArgs>(mArgs)...);
+		}
 };
 
 class Controller
@@ -29,9 +33,6 @@ class Controller
 	private:
 		Idx idx;
 		Ctr ctr;
-
-	public:
-		inline Controller(Idx mIdx) noexcept : idx{mIdx} { }
 };
 
 template<typename T> class Handle
@@ -46,12 +47,12 @@ template<typename T> class Handle
 		inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept 
 			: manager(mManager), ctrlIdx{mCtrlIdx}, ctr{mCtr} { }
 		
-		Atom<T>& getAtom();
+		Atom<T>& getAtom() noexcept;
 
 	public:
-		T& get();
-		bool isAlive();
-		void destroy();
+		T& get() noexcept;
+		bool isAlive() noexcept;
+		void destroy() noexcept;
 };
 
 template<typename T> class Manager
@@ -63,7 +64,22 @@ template<typename T> class Manager
 		std::vector<Controller> controllers;
 		Idx lastFree{0u};
 
-		inline void checkResize()
+		inline void resizeStorage(std::size_t mOldSize, std::size_t mNewSize)
+		{
+			SSVU_ASSERT(mNewSize >= 0);
+
+			atoms.resize(mNewSize);
+			controllers.resize(mNewSize);
+
+			// Initialize resized storage
+			for(; mOldSize < mNewSize; ++mOldSize)
+			{
+				atoms[mOldSize].ctrlIdx = mOldSize;					
+				controllers[mOldSize].idx = mOldSize;
+			}
+		}
+
+		inline void resizeIfNeeded()
 		{
 			constexpr std::size_t resizeAmount{10};
 
@@ -71,20 +87,11 @@ template<typename T> class Manager
 			auto oldSize(atoms.size());
 			if(oldSize > lastFree) return;
 			
-			// Calculate new size and reserve required memory
-			auto newSize(oldSize + resizeAmount);
-			atoms.reserve(newSize);
-			controllers.reserve(newSize);
-
-			// Initialize reserved memory
-			while(oldSize++ < newSize)
-			{
-				atoms.emplace_back(oldSize);					
-				controllers.emplace_back(oldSize);
-			}
+			// Calculate new size and resize storage
+			resizeStorage(oldSize, oldSize + resizeAmount);
 		}
 
-		inline void destroy(Idx mCtrlIdx)
+		inline void destroy(Idx mCtrlIdx) noexcept
 		{
 			atoms[controllers[mCtrlIdx].idx].alive = false;
 		}
@@ -92,19 +99,32 @@ template<typename T> class Manager
 	public:
 		inline Manager() { }
 
+		inline void clear() noexcept
+		{
+			atoms.clear();
+			controllers.clear();
+			lastFree = 0;
+		}
+
+		inline void reserve(std::size_t mSize) 
+		{ 
+			resizeStorage(atoms.size(), mSize); 
+		}
+
 		template<typename... TArgs> inline Handle<T> createAtom(TArgs&&... mArgs)
 		{
-			checkResize();
+			resizeIfNeeded();
 
-			atoms[lastFree].impl = T(std::forward<TArgs>(mArgs)...);
+			atoms[lastFree].initImpl(std::forward<TArgs>(mArgs)...);
 			atoms[lastFree].alive = true;
 
 			auto cIdx(atoms[lastFree].ctrlIdx);
-			controllers[cIdx].idx = lastFree;
-			++(controllers[cIdx].ctr);
+			auto& controller(controllers[cIdx]);
+			controller.idx = lastFree;
+			++controller.ctr;
 			++lastFree;
 
-			return {*this, cIdx, controllers[cIdx].ctr};	
+			return {*this, cIdx, controller.ctr};	
 		}	
 
 		inline void refresh()
@@ -116,13 +136,18 @@ template<typename T> class Manager
 			for(; !atoms[rIdx].alive && rIdx > 0; --rIdx)
 			{
 				auto& controller(controllers[atoms[rIdx].ctrlIdx]);
-				++(controller.ctr);
+				++controller.ctr;
 				controller.idx = -1;
 			}
 
 			for(auto fIdx(0u); fIdx <= rIdx; ++fIdx) controllers[atoms[fIdx].ctrlIdx].idx = fIdx;
-			lastFree = rIdx + 1; // ? check
+			lastFree = rIdx + 1;
 		}
+
+		template<typename TFunc> inline void forEach(const TFunc& mFunc)
+		{
+			for(auto i(0u); i < lastFree; ++i) mFunc(atoms[i].impl);
+		}	
 
 		void printState()
 		{
@@ -145,23 +170,23 @@ template<typename T> class Manager
 		}
 };
 
-template<typename T> inline Atom<T>& Handle<T>::getAtom()
+template<typename T> inline Atom<T>& Handle<T>::getAtom() noexcept
 { 
 	SSVU_ASSERT(isAlive());
 	return manager.atoms[manager.controllers[ctrlIdx].idx];
 }
 
-template<typename T> inline T& Handle<T>::get()
+template<typename T> inline T& Handle<T>::get() noexcept
 { 	
 	return getAtom().impl;
 }
 
-template<typename T> inline bool Handle<T>::isAlive()
+template<typename T> inline bool Handle<T>::isAlive() noexcept
 { 
 	return manager.controllers[ctrlIdx].ctr == ctr;
 }
 
-template<typename T> inline void Handle<T>::destroy()
+template<typename T> inline void Handle<T>::destroy() noexcept
 { 
 	return manager.destroy(ctrlIdx);
 }
@@ -211,6 +236,12 @@ int main()
 	ssvu::lo("alive") << a4.isAlive() << std::endl;
 	ssvu::lo("alive") << a5.isAlive() << std::endl;
 	ssvu::lo("alive") << a6.isAlive() << std::endl;
+
+	test.forEach([](std::string& mStr){ mStr += "bb"; });
+
+	ssvu::lo("RESULT2") << a0.get() << std::endl;
+	ssvu::lo("RESULT2") << a4.get() << std::endl;
+	ssvu::lo("RESULT2") << a6.get() << std::endl;
 
 	return 0;
 }

@@ -54,47 +54,6 @@ template<typename T> class Handle
 		void destroy();
 };
 
-template<typename T> class Storage
-{
-	template<typename> friend class Manager;
-	
-	private:
-		Atom<T>* atomArray{nullptr};
-		Controller* controllerArray{nullptr};
-		std::size_t capacity{0u};
-
-		inline ~Storage() 
-		{ 
-			deleteArrays();
-		}
-
-		inline void deleteArrays()
-		{
-			delete[] atomArray;
-			delete[] controllerArray;
-		}
-
-		inline void reserve(std::size_t mCapacity)
-		{
-			SSVU_ASSERT(mCapacity >= 0);
-			capacity = mCapacity;
-
-			auto newAtomArray{new Atom<T>[capacity]};
-			auto newControllerArray{new Controller[capacity]};
-
-			SSVU_ASSERT(newAtomArray != nullptr);
-			SSVU_ASSERT(newControllerArray != nullptr);
-
-			std::copy(atomArray, atomArray + capacity, newAtomArray);
-			std::copy(controllerArray, controllerArray + capacity, newControllerArray);
-
-			deleteArrays();
-
-			atomArray = newAtomArray;
-			controllerArray = newControllerArray;
-		}
-};
-
 template<typename T> class Manager
 {
 	template<typename> friend class Handle;
@@ -182,7 +141,7 @@ template<typename T> class Manager
 			ssvu::lo("ASTRS") << "\n";
 			std::size_t idx{0u};
 			for(const auto& a : atoms) std::cout << idx++ << ": " << a.impl << "\n";
-			std::cout << std::\endl;
+			std::cout << std::endl;
 		}
 };
 

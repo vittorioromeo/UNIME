@@ -29,7 +29,7 @@ namespace Internal
 
 		private:
 			enum class State : int {Alive = 0, Unused = 1, Dead = 2};
-			Idx ctrlIdx;
+			Idx markIdx;
 			State state{State::Unused};
 			Uncertain<T> data;
 
@@ -71,16 +71,16 @@ template<typename T> class Handle
 		using AtomType = typename Internal::Atom<T>;
 
 		Manager<T>& manager;
-		Idx ctrlIdx;
+		Idx markIdx;
 		Ctr ctr;
 
 		inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept 
-			: manager(mManager), ctrlIdx{mCtrlIdx}, ctr{mCtr} { }		
+			: manager(mManager), markIdx{mCtrlIdx}, ctr{mCtr} { }		
 
 		template<typename TT> inline TT getAtomImpl() noexcept
 		{
 			SSVU_ASSERT(isAlive());
-			return manager.getAtomFromController(manager.controllers[ctrlIdx]);
+			return manager.getAtomFromMark(manager.marks[markIdx]);
 		}
 		
 	public:
@@ -97,47 +97,41 @@ template<typename T> class Manager
 	template<typename> friend class Handle;
 
 	private:
-		struct Controller { Idx idx; Ctr ctr; };
+		struct Mark { Idx idx; Ctr ctr; };
 		using AtomType = typename Internal::Atom<T>;
 		using AtomState = typename AtomType::State;
 
 		std::vector<AtomType> atoms;
-		std::vector<Controller> controllers;
-		Idx size{0u};
+		std::vector<Mark> marks;
+		Idx size{0u}, next{0u};
 
-		inline std::size_t getCapacity() const noexcept
+		inline std::size_t getCapacity() const noexcept { return atoms.size(); }	
+
+		inline void growCapacity(std::size_t mAmount)
 		{
-			return atoms.size();
-		}	
+			auto oldSize(getCapacity()), newSize(oldSize + mAmount);
+			SSVU_ASSERT(newSize >= 0 && newSize >= oldSize);
 
-		inline void growStorage(std::size_t mNewSize)
-		{
-			SSVU_ASSERT(mNewSize >= 0 && mNewSize >= getCapacity());
-
-			atoms.resize(mNewSize);
-			controllers.resize(mNewSize);
+			atoms.resize(newSize);
+			marks.resize(newSize);
 
 			// Initialize resized storage
-			for(auto i(0u); i < mNewSize; ++i)
-			{
-				atoms[i].ctrlIdx = i;					
-				controllers[i].idx = i;
-			}
+			for(auto i(oldSize); i < newSize; ++i) atoms[i].markIdx = marks[i].idx = i;									
 		}
 
 		inline void growIfNeeded()
 		{
 			constexpr std::size_t growAmount{10};
-			if(getCapacity() <= size) growStorage(getCapacity() + growAmount);
+			if(getCapacity() <= next) growCapacity(growAmount);
 		}
 
 		inline void destroy(Idx mCtrlIdx) noexcept
 		{			
-			getAtomFromController(controllers[mCtrlIdx]).setDead();
+			getAtomFromMark(marks[mCtrlIdx]).setDead();
 		}
 
-		inline Controller& getControllerFromAtom(const AtomType& mAtom) 		{ return controllers[mAtom.ctrlIdx]; }
-		inline AtomType& getAtomFromController(const Controller& mController) 	{ return atoms[mController.idx]; }
+		inline Mark& getMarkFromAtom(const AtomType& mAtom)	{ return marks[mAtom.markIdx]; }
+		inline AtomType& getAtomFromMark(const Mark& mMark)	{ return atoms[mMark.idx]; }
 
 		inline void cleanUpMemory()
 		{
@@ -157,31 +151,31 @@ template<typename T> class Manager
 		{
 			cleanUpMemory();
 			atoms.clear();
-			controllers.clear();
-			size = 0;
+			marks.clear();
+			size = next = 0u;
 		}
 
-		inline void reserve(std::size_t mCapacity) { growStorage(mCapacity); }
+		inline void reserve(std::size_t mCapacity) { if(getCapacity() < mCapacity) growCapacity(mCapacity); }
 
 		template<typename... TArgs> inline Handle<T> createAtom(TArgs&&... mArgs)
 		{
-			// `size` may be greater than the sizes of the vectors - resize vectors if needed 
+			// `next` may be greater than the sizes of the vectors - resize vectors if needed 
 			growIfNeeded();
 
-			// `size` now is the first empty valid index - we create our atom there
-			atoms[size].initData(std::forward<TArgs>(mArgs)...);
-			atoms[size].state = AtomState::Alive;
+			// `next` now is the first empty valid index - we create our atom there
+			atoms[next].initData(std::forward<TArgs>(mArgs)...);
+			atoms[next].state = AtomState::Alive;
 
-			// Update the controller
-			auto cIdx(atoms[size].ctrlIdx);
-			auto& controller(controllers[cIdx]);
-			controller.idx = size;
-			++controller.ctr;
+			// Update the mark
+			auto cIdx(atoms[next].markIdx);
+			auto& mark(marks[cIdx]);
+			mark.idx = next;
+			++mark.ctr;
 
-			// Update current size
-			++size;
+			// Update next free index
+			++next;
 
-			return {*this, cIdx, controller.ctr};	
+			return {*this, cIdx, mark.ctr};	
 		}	
 
 		inline void refresh()
@@ -189,21 +183,21 @@ template<typename T> class Manager
 			// C++14: use polymorphic lambda
 			ssvu::sortStable(atoms, [](const AtomType& mA, const AtomType& mB){ return mA.state < mB.state; });
 
-			// Starting from the end, update dead entities and their controllers
+			// Starting from the end, update dead entities and their marks
 			auto i(atoms.size() - 1);			
 			for(; i > 0 && atoms[i].state == AtomState::Dead; --i)				
 			{
 				atoms[i].deinitData();
 				atoms[i].state = AtomState::Unused;
-				++(getControllerFromAtom(atoms[i]).ctr);				
+				++(getMarkFromAtom(atoms[i]).ctr);				
 			}
 						
-			// Starting from the beginning, update alive entities and their controllers
+			// Starting from the beginning, update alive entities and their marks
 			for(i = 0u; i <= atoms.size() && atoms[i].state == AtomState::Alive; ++i) 			
-				getControllerFromAtom(atoms[i]).idx = i;
+				getMarkFromAtom(atoms[i]).idx = i;
 			
-			// Update current size
-			size = i;
+			// Update size and next free index
+			size = next = i;
 		}
 
 		template<typename TFunc> inline void forEach(TFunc mFunc)
@@ -229,11 +223,11 @@ template<typename T> class Manager
 			std::cout << "\n";
 
 			ssvu::lo("CTIDX") << "";
-			for(const auto& a : controllers) std::cout << std::setw(4) << std::left << (int)a.idx << " ";
+			for(const auto& a : marks) std::cout << std::setw(4) << std::left << (int)a.idx << " ";
 			std::cout << "\n";
 
 			ssvu::lo("CTCTR") << "";
-			for(const auto& a : controllers) std::cout << std::setw(4) << std::left << (int)a.ctr << " ";
+			for(const auto& a : marks) std::cout << std::setw(4) << std::left << (int)a.ctr << " ";
 			std::cout << "\n\n";
 
 			ssvu::lo("ASTRS") << "\n";
@@ -245,12 +239,12 @@ template<typename T> class Manager
 
 template<typename T> inline bool Handle<T>::isAlive() const noexcept
 { 
-	return manager.controllers[ctrlIdx].ctr == ctr;
+	return manager.marks[markIdx].ctr == ctr;
 }
 
 template<typename T> inline void Handle<T>::destroy() noexcept
 { 
-	return manager.destroy(ctrlIdx);
+	return manager.destroy(markIdx);
 }
 
 
@@ -271,6 +265,10 @@ int main()
 			auto a4 = test.createAtom();
 			auto a5 = test.createAtom();
 			auto a6 = test.createAtom();
+
+			ssvu::lo("SIZE BEFORE REFRESH") << test.getSize() << std::endl;
+			test.refresh();
+			ssvu::lo("SIZE AFTER REFRESH") << test.getSize() << std::endl;
 
 			a0.get() = "hi";
 			a4.get() = "ciao";
@@ -329,6 +327,10 @@ int main()
 			auto a4 = test.createAtom("atom04");
 			auto a5 = test.createAtom("atom05");
 			auto a6 = test.createAtom("atom06");
+
+			ssvu::lo("SIZE BEFORE REFRESH") << test.getSize() << std::endl;
+			test.refresh();
+			ssvu::lo("SIZE AFTER REFRESH") << test.getSize() << std::endl;
 
 			a0.get().s += " mod";
 			a4.get().s += " mod";

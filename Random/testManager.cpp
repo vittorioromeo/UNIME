@@ -17,7 +17,8 @@ template<typename T> class Atom
 		T impl;
 
 	public:
-		template<typename... TArgs> inline Atom(Idx mCtrlIdx, TArgs&&... mArgs) : ctrlIdx{mCtrlIdx}, impl{std::forward<TArgs>(mArgs)...} { }
+		template<typename... TArgs> inline Atom(Idx mCtrlIdx, TArgs&&... mArgs) 
+			: ctrlIdx{mCtrlIdx}, impl{std::forward<TArgs>(mArgs)...} { }
 };
 
 class Controller
@@ -42,7 +43,9 @@ template<typename T> class Handle
 		Idx ctrlIdx;
 		Ctr ctr;
 
-		inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept : manager(mManager), ctrlIdx{mCtrlIdx}, ctr{mCtr} { }
+		inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept 
+			: manager(mManager), ctrlIdx{mCtrlIdx}, ctr{mCtr} { }
+		
 		Atom<T>& getAtom();
 
 	public:
@@ -51,35 +54,92 @@ template<typename T> class Handle
 		void destroy();
 };
 
+template<typename T> class Storage
+{
+	template<typename> friend class Manager;
+	
+	private:
+		Atom<T>* atomArray{nullptr};
+		Controller* controllerArray{nullptr};
+		std::size_t capacity{0u};
+
+		inline ~Storage() 
+		{ 
+			deleteArrays();
+		}
+
+		inline void deleteArrays()
+		{
+			delete[] atomArray;
+			delete[] controllerArray;
+		}
+
+		inline void reserve(std::size_t mCapacity)
+		{
+			SSVU_ASSERT(mCapacity >= 0);
+			capacity = mCapacity;
+
+			auto newAtomArray{new Atom<T>[capacity]};
+			auto newControllerArray{new Controller[capacity]};
+
+			SSVU_ASSERT(newAtomArray != nullptr);
+			SSVU_ASSERT(newControllerArray != nullptr);
+
+			std::copy(atomArray, atomArray + capacity, newAtomArray);
+			std::copy(controllerArray, controllerArray + capacity, newControllerArray);
+
+			deleteArrays();
+
+			atomArray = newAtomArray;
+			controllerArray = newControllerArray;
+		}
+};
+
 template<typename T> class Manager
 {
 	template<typename> friend class Handle;
 
-	public:
+	private:
 		std::vector<Atom<T>> atoms;
 		std::vector<Controller> controllers;
 		Idx lastFree{0u};
 
+		inline void checkResize()
+		{
+			constexpr std::size_t resizeAmount{10};
+
+			// If the last free index is valid, return
+			auto oldSize(atoms.size());
+			if(oldSize > lastFree) return;
+			
+			// Calculate new size and reserve required memory
+			auto newSize(oldSize + resizeAmount);
+			atoms.reserve(newSize);
+			controllers.reserve(newSize);
+
+			// Initialize reserved memory
+			while(oldSize++ < newSize)
+			{
+				atoms.emplace_back(oldSize);					
+				controllers.emplace_back(oldSize);
+			}
+		}
+
+		inline void destroy(Idx mCtrlIdx)
+		{
+			atoms[controllers[mCtrlIdx].idx].alive = false;
+		}
+
+	public:
 		inline Manager() { }
 
-		inline Handle<T> createAtom()
+		template<typename... TArgs> inline Handle<T> createAtom(TArgs&&... mArgs)
 		{
-			if(atoms.size() <= lastFree)
-			{
-				auto oldSize(atoms.size());
-				auto newSize(oldSize + 10);
-				atoms.reserve(newSize);
-				controllers.reserve(newSize);
+			checkResize();
 
-				for(auto i(oldSize); i < newSize; ++i)
-				{
-					atoms.emplace_back(i);					
-					controllers.emplace_back(i);
-				}
-			}
-
-			//atoms[lastFree] = Atom{};
+			atoms[lastFree].impl = T(std::forward<TArgs>(mArgs)...);
 			atoms[lastFree].alive = true;
+
 			auto cIdx(atoms[lastFree].ctrlIdx);
 			controllers[cIdx].idx = lastFree;
 			++(controllers[cIdx].ctr);
@@ -90,6 +150,7 @@ template<typename T> class Manager
 
 		inline void refresh()
 		{
+			// C++14: use polymorphic lambda
 			ssvu::sortStable(atoms, [](const Atom<T>& mA, const Atom<T>& mB){ return mA.alive > mB.alive; });
 
 			auto rIdx(atoms.size() - 1);
@@ -104,29 +165,24 @@ template<typename T> class Manager
 			lastFree = rIdx + 1; // ? check
 		}
 
-		inline void destroy(Idx mCtrlIdx)
-		{
-			atoms[controllers[mCtrlIdx].idx].alive = false;
-		}
-
 		void printState()
 		{
 			ssvu::lo("ATOMS") << "";
 			for(const auto& a : atoms) std::cout << std::setw(4) << std::left << (int)a.alive << " ";
-			std::cout << std::endl;
+			std::cout << "\n";
 
 			ssvu::lo("CTIDX") << "";
 			for(const auto& a : controllers) std::cout << std::setw(4) << std::left << (int)a.idx << " ";
-			std::cout << std::endl;
+			std::cout << "\n";
 
 			ssvu::lo("CTCTR") << "";
 			for(const auto& a : controllers) std::cout << std::setw(4) << std::left << (int)a.ctr << " ";
-			std::cout << std::endl << std::endl;
+			std::cout << "\n\n";
 
 			ssvu::lo("ASTRS") << "\n";
 			std::size_t idx{0u};
 			for(const auto& a : atoms) std::cout << idx++ << ": " << a.impl << "\n";
-			std::cout << std::endl;
+			std::cout << std::\endl;
 		}
 };
 

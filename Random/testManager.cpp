@@ -3,6 +3,8 @@
 using Idx = std::size_t;
 using Ctr = int;
 
+enum class AtomState : int {Alive = 0, Unused = 1, Dead = 2};
+
 template<typename> class Manager;
 template<typename> class Handle;
 
@@ -15,7 +17,7 @@ template<typename T> class Atom
 
 	private:
 		Idx ctrlIdx;
-		bool alive{false};
+		AtomState state{AtomState::Unused};
 		T impl;
 
 		template<typename... TArgs> inline void initImpl(TArgs&&... mArgs) 
@@ -92,8 +94,8 @@ template<typename T> class Manager
 		}
 
 		inline void destroy(Idx mCtrlIdx) noexcept
-		{
-			atoms[controllers[mCtrlIdx].idx].alive = false;
+		{			
+			atoms[controllers[mCtrlIdx].idx].state = AtomState::Dead;
 		}
 
 	public:
@@ -116,7 +118,7 @@ template<typename T> class Manager
 			resizeIfNeeded();
 
 			atoms[lastFree].initImpl(std::forward<TArgs>(mArgs)...);
-			atoms[lastFree].alive = true;
+			atoms[lastFree].state = AtomState::Alive;
 
 			auto cIdx(atoms[lastFree].ctrlIdx);
 			auto& controller(controllers[cIdx]);
@@ -130,18 +132,18 @@ template<typename T> class Manager
 		inline void refresh()
 		{
 			// C++14: use polymorphic lambda
-			ssvu::sortStable(atoms, [](const Atom<T>& mA, const Atom<T>& mB){ return mA.alive > mB.alive; });
+			ssvu::sortStable(atoms, [](const Atom<T>& mA, const Atom<T>& mB){ return mA.state < mB.state; });
 
 			auto rIdx(atoms.size() - 1);
-			for(; !atoms[rIdx].alive && rIdx > 0; --rIdx)
+			for(; atoms[rIdx].state == AtomState::Dead && rIdx > 0; --rIdx)
 			{
 				auto& controller(controllers[atoms[rIdx].ctrlIdx]);
-				++controller.ctr;
-				controller.idx = -1;
+				++controller.ctr;				
 			}
 
-			for(auto fIdx(0u); fIdx <= rIdx; ++fIdx) controllers[atoms[fIdx].ctrlIdx].idx = fIdx;
-			lastFree = rIdx + 1;
+			auto fIdx(0u);
+			for(; atoms[fIdx].state == AtomState::Alive && fIdx <= rIdx; ++fIdx) controllers[atoms[fIdx].ctrlIdx].idx = fIdx;
+			lastFree = fIdx;
 		}
 
 		template<typename TFunc> inline void forEach(const TFunc& mFunc)
@@ -152,7 +154,7 @@ template<typename T> class Manager
 		void printState()
 		{
 			ssvu::lo("ATOMS") << "";
-			for(const auto& a : atoms) std::cout << std::setw(4) << std::left << (int)a.alive << " ";
+			for(const auto& a : atoms) std::cout << std::setw(4) << std::left << (int)a.state << " ";
 			std::cout << "\n";
 
 			ssvu::lo("CTIDX") << "";

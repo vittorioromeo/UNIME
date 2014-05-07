@@ -27,8 +27,10 @@ namespace Internal
 	{
 		template<typename> friend class Manager;
 
-		private:
+		public:
 			enum class State : int {Alive = 0, Unused = 1, Dead = 2};
+
+		private:
 			Idx markIdx;
 			State state{State::Unused};
 			Uncertain<T> data;
@@ -67,9 +69,10 @@ template<typename T> class Handle
 {
 	template<typename> friend class Manager;
 
-	private:
+	public:
 		using AtomType = typename Internal::Atom<T>;
 
+	private:
 		Manager<T>& manager;
 		Idx markIdx;
 		Ctr ctr;
@@ -98,9 +101,12 @@ template<typename T> class Manager
 
 	private:
 		struct Mark { Idx idx; Ctr ctr; };
+
+	public:
 		using AtomType = typename Internal::Atom<T>;
 		using AtomState = typename AtomType::State;
 
+	private:
 		std::vector<AtomType> atoms;
 		std::vector<Mark> marks;
 		Idx size{0u}, next{0u};
@@ -214,7 +220,8 @@ template<typename T> class Manager
 		inline T& getDataAt(Idx mIdx) noexcept 						{ return getAtomAt(mIdx).getData(); }
 		inline const T& getDataAt(Idx mIdx) const noexcept 			{ return getAtomAt(mIdx).getData(); }
 
-		inline std::size_t getSize() const noexcept { return size; }
+		inline std::size_t getSizeCurrent() const noexcept 	{ return size; }
+		inline std::size_t getSizeNext() const noexcept 	{ return next; }
 
 		void printState()
 		{
@@ -266,9 +273,7 @@ int main()
 			auto a5 = test.createAtom();
 			auto a6 = test.createAtom();
 
-			ssvu::lo("SIZE BEFORE REFRESH") << test.getSize() << std::endl;
 			test.refresh();
-			ssvu::lo("SIZE AFTER REFRESH") << test.getSize() << std::endl;
 
 			a0.get() = "hi";
 			a4.get() = "ciao";
@@ -328,9 +333,7 @@ int main()
 			auto a5 = test.createAtom("atom05");
 			auto a6 = test.createAtom("atom06");
 
-			ssvu::lo("SIZE BEFORE REFRESH") << test.getSize() << std::endl;
 			test.refresh();
-			ssvu::lo("SIZE AFTER REFRESH") << test.getSize() << std::endl;
 
 			a0.get().s += " mod";
 			a4.get().s += " mod";

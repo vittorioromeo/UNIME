@@ -156,31 +156,6 @@ template<typename T> class Manager
 			}
 		}
 
-		inline void refreshDeadAtoms() noexcept
-		{
-			// Starting from the end, update dead entities and their marks
-			for(auto i(getCapacity() - 1); i > 0 && atoms[i].state == AtomState::Dead; --i)				
-			{
-				atoms[i].deinitData();
-				atoms[i].state = AtomState::Unused;
-				++(getMarkFromAtom(atoms[i]).ctr);				
-			}
-		}
-		inline void refreshAliveAtoms() noexcept
-		{
-			auto i(0u);
-
-			// Starting from the beginning, update alive entities and their marks			
-			for(; i <= getCapacity() && atoms[i].state == AtomState::Alive; ++i) 			
-				getMarkFromAtom(atoms[i]).idx = i;
-			
-			sizeNext = i; // Update next free index
-		}
-		inline void refreshNewAtoms() noexcept
-		{			
-			size = sizeNext; // Update size 			
-		}
-
 	public:
 		inline Manager() = default;
 		inline ~Manager() { cleanUpMemory(); }
@@ -218,13 +193,58 @@ template<typename T> class Manager
 
 		inline void refresh()
 		{
-			// C++14: use polymorphic lambda
-			ssvu::sortStable(atoms, [](const AtomType& mA, const AtomType& mB){ return mA.state < mB.state; });
+			auto lastK(0u);
+			Idx lastAlive{0u};
+			
+			// Find first alive and first dead atoms
+			for(auto i(0u); i < sizeNext; ++i)
+			{
+				if(atoms[i].state == AtomState::Alive) lastAlive = i;
+				else if(atoms[i].state == AtomState::Dead) 
+				{
+					lastK = i;
+					break;
+				}
+			}	
 
-			// Refresh methods must be called after sorting the storage
-			refreshDeadAtoms();
-			refreshAliveAtoms();
-			refreshNewAtoms();			
+			for(auto i(lastAlive + 1); i < sizeNext; ++i)
+			{
+				// Skip alive atoms
+				if(atoms[i].state == AtomState::Alive) continue;
+
+				// Found a dead atom - `i` now stores its index
+				// Look for an alive atom after the dead atom
+				for(auto k(lastK); true; ++k)
+				{
+					if(atoms[k].state == AtomState::Alive)
+					{
+						// Found an alive atom after dead `i` atom
+						std::swap(atoms[i], atoms[k]);
+						lastAlive = i;
+						lastK = k;
+						break;
+					}
+
+					// No more alive atoms, continue					
+					if(k == sizeNext) goto later;					
+				}
+			}
+
+			later:
+
+			// [lastAlive + 1, sizeNext) contains only dead atoms, clean them up
+			for(auto j(lastAlive + 1); j < sizeNext; ++j)				
+			{
+				atoms[j].deinitData();
+				atoms[j].state = AtomState::Unused;
+				++(getMarkFromAtom(atoms[j]).ctr);				
+			}	
+
+			// Starting from the beginning, update alive entities and their marks			
+			auto n(0u);
+			for(; n <= lastAlive; ++n) getMarkFromAtom(atoms[n]).idx = n;
+
+			size = sizeNext = n; // Update size 		
 		}
 
 		template<typename TFunc> inline void forEach(TFunc mFunc)
@@ -315,6 +335,7 @@ void doTest()
 
 			test.refresh();
 
+//ssvu::lo("BUG") << test.getSize() << std::endl;
 			SSVU_ASSERT(test.getSize() == 4);
 			SSVU_ASSERT(test.getSizeNext() == 4);
 

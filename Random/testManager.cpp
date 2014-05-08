@@ -114,7 +114,7 @@ template<typename T> class Manager
 	private:
 		std::vector<AtomType> atoms;
 		std::vector<Mark> marks;
-		Idx size{0u}, next{0u};
+		Idx size{0u}, sizeNext{0u};
 
 		inline std::size_t getCapacity() const noexcept { return atoms.size(); }	
 
@@ -133,7 +133,7 @@ template<typename T> class Manager
 		inline void growIfNeeded()
 		{
 			constexpr std::size_t growAmount{10};
-			if(getCapacity() <= next) growCapacity(growAmount);
+			if(getCapacity() <= sizeNext) growCapacity(growAmount);
 		}
 
 		inline void destroy(Idx mCtrlIdx) noexcept
@@ -172,11 +172,11 @@ template<typename T> class Manager
 			for(; i <= getCapacity() && atoms[i].state == AtomState::Alive; ++i) 			
 				getMarkFromAtom(atoms[i]).idx = i;
 			
-			next = i; // Update next free index
+			sizeNext = i; // Update next free index
 		}
 		inline void refreshNewAtoms() noexcept
 		{			
-			size = next; // Update size 			
+			size = sizeNext; // Update size 			
 		}
 
 	public:
@@ -188,28 +188,28 @@ template<typename T> class Manager
 			cleanUpMemory();
 			atoms.clear();
 			marks.clear();
-			size = next = 0u;
+			size = sizeNext = 0u;
 		}
 
 		inline void reserve(std::size_t mCapacity) { if(getCapacity() < mCapacity) growCapacity(mCapacity); }
 
 		template<typename... TArgs> inline Handle<T> create(TArgs&&... mArgs)
 		{
-			// `next` may be greater than the sizes of the vectors - resize vectors if needed 
+			// `sizeNext` may be greater than the sizes of the vectors - resize vectors if needed 
 			growIfNeeded();
 
-			// `next` now is the first empty valid index - we create our atom there
-			atoms[next].initData(std::forward<TArgs>(mArgs)...);
-			atoms[next].state = AtomState::Alive;
+			// `sizeNext` now is the first empty valid index - we create our atom there
+			atoms[sizeNext].initData(std::forward<TArgs>(mArgs)...);
+			atoms[sizeNext].state = AtomState::Alive;
 
 			// Update the mark
-			auto cIdx(atoms[next].markIdx);
+			auto cIdx(atoms[sizeNext].markIdx);
 			auto& mark(marks[cIdx]);
-			mark.idx = next;
+			mark.idx = sizeNext;
 			++mark.ctr;
 
-			// Update next free index
-			++next;
+			// Update sizeNext free index
+			++sizeNext;
 
 			return {*this, cIdx, mark.ctr};	
 		}	
@@ -239,8 +239,8 @@ template<typename T> class Manager
 		inline T& getDataAt(Idx mIdx) noexcept 						{ return getAtomAt(mIdx).getData(); }
 		inline const T& getDataAt(Idx mIdx) const noexcept 			{ return getAtomAt(mIdx).getData(); }
 
-		inline std::size_t getSizeCurrent() const noexcept 	{ return size; }
-		inline std::size_t getSizeNext() const noexcept 	{ return next; }
+		inline std::size_t getSize() const noexcept 	{ return size; }
+		inline std::size_t getSizeNext() const noexcept { return sizeNext; }
 
 		void printState()
 		{

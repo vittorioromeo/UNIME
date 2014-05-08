@@ -93,6 +93,11 @@ template<typename T> class Handle
 		inline const T& get() const noexcept			{ return getAtom().getData(); }
 		bool isAlive() const noexcept;
 		void destroy() noexcept;
+
+		inline T& operator*() noexcept 				{ return get(); }
+		inline const T& operator*() const noexcept 	{ return get(); }
+		inline T* operator->() noexcept 			{ return &(get()); }
+		inline const T* operator->() const noexcept { return &(get()); }
 };
 
 template<typename T> class Manager
@@ -149,6 +154,31 @@ template<typename T> class Manager
 				}			
 		}
 
+		inline void refreshDeadAtoms() noexcept
+		{
+			// Starting from the end, update dead entities and their marks
+			for(auto i(getCapacity() - 1); i > 0 && atoms[i].state == AtomState::Dead; --i)				
+			{
+				atoms[i].deinitData();
+				atoms[i].state = AtomState::Unused;
+				++(getMarkFromAtom(atoms[i]).ctr);				
+			}
+		}
+		inline void refreshAliveAtoms() noexcept
+		{
+			auto i(0u);
+
+			// Starting from the beginning, update alive entities and their marks			
+			for(; i <= getCapacity() && atoms[i].state == AtomState::Alive; ++i) 			
+				getMarkFromAtom(atoms[i]).idx = i;
+			
+			next = i; // Update next free index
+		}
+		inline void refreshNewAtoms() noexcept
+		{			
+			size = next; // Update size 			
+		}
+
 	public:
 		inline Manager() = default;
 		inline ~Manager() { cleanUpMemory(); }
@@ -163,7 +193,7 @@ template<typename T> class Manager
 
 		inline void reserve(std::size_t mCapacity) { if(getCapacity() < mCapacity) growCapacity(mCapacity); }
 
-		template<typename... TArgs> inline Handle<T> createAtom(TArgs&&... mArgs)
+		template<typename... TArgs> inline Handle<T> create(TArgs&&... mArgs)
 		{
 			// `next` may be greater than the sizes of the vectors - resize vectors if needed 
 			growIfNeeded();
@@ -189,21 +219,10 @@ template<typename T> class Manager
 			// C++14: use polymorphic lambda
 			ssvu::sortStable(atoms, [](const AtomType& mA, const AtomType& mB){ return mA.state < mB.state; });
 
-			// Starting from the end, update dead entities and their marks
-			auto i(atoms.size() - 1);			
-			for(; i > 0 && atoms[i].state == AtomState::Dead; --i)				
-			{
-				atoms[i].deinitData();
-				atoms[i].state = AtomState::Unused;
-				++(getMarkFromAtom(atoms[i]).ctr);				
-			}
-						
-			// Starting from the beginning, update alive entities and their marks
-			for(i = 0u; i <= atoms.size() && atoms[i].state == AtomState::Alive; ++i) 			
-				getMarkFromAtom(atoms[i]).idx = i;
-			
-			// Update size and next free index
-			size = next = i;
+			// Refresh methods must be called after sorting the storage
+			refreshDeadAtoms();
+			refreshAliveAtoms();
+			refreshNewAtoms();			
 		}
 
 		template<typename TFunc> inline void forEach(TFunc mFunc)
@@ -265,17 +284,17 @@ int main()
 		{
 			test.printState();
 
-			auto a0 = test.createAtom();
-			auto a1 = test.createAtom();
-			auto a2 = test.createAtom();
-			auto a3 = test.createAtom();
-			auto a4 = test.createAtom();
-			auto a5 = test.createAtom();
-			auto a6 = test.createAtom();
+			auto a0 = test.create();
+			auto a1 = test.create();
+			auto a2 = test.create();
+			auto a3 = test.create();
+			auto a4 = test.create();
+			auto a5 = test.create();
+			auto a6 = test.create();
 
 			test.refresh();
 
-			a0.get() = "hi";
+			*a0 = "hi";
 			a4.get() = "ciao";
 			a6.get() = "bye";
 
@@ -305,8 +324,8 @@ int main()
 
 			test.forEach([](std::string& mStr){ mStr += "bb"; });
 
-			ssvu::lo("RESULT2") << a0.get() << std::endl;
-			ssvu::lo("RESULT2") << a4.get() << std::endl;
+			ssvu::lo("RESULT2") << *a0 << std::endl;
+			ssvu::lo("RESULT2") << *a4 << std::endl;
 			ssvu::lo("RESULT2") << a6.get() << std::endl;
 		}		
 	}
@@ -325,19 +344,19 @@ int main()
 		{
 			test.printState();
 
-			auto a0 = test.createAtom("atom00");
-			auto a1 = test.createAtom("atom01");
-			auto a2 = test.createAtom("atom02");
-			auto a3 = test.createAtom("atom03");
-			auto a4 = test.createAtom("atom04");
-			auto a5 = test.createAtom("atom05");
-			auto a6 = test.createAtom("atom06");
+			auto a0 = test.create("atom00");
+			auto a1 = test.create("atom01");
+			auto a2 = test.create("atom02");
+			auto a3 = test.create("atom03");
+			auto a4 = test.create("atom04");
+			auto a5 = test.create("atom05");
+			auto a6 = test.create("atom06");
 
 			test.refresh();
 
 			a0.get().s += " mod";
-			a4.get().s += " mod";
-			a6.get().s += " mod";
+			a4->s += " mod";
+			a6->s += " mod";
 
 			test.printState();
 
@@ -366,8 +385,8 @@ int main()
 			test.forEach([](TestRes& mRes){ mRes.s += "bb"; });
 
 			ssvu::lo("RESULT2") << a0.get().s << std::endl;
-			ssvu::lo("RESULT2") << a4.get().s << std::endl;
-			ssvu::lo("RESULT2") << a6.get().s << std::endl;
+			ssvu::lo("RESULT2") << a4->s << std::endl;
+			ssvu::lo("RESULT2") << a6->s << std::endl;
 		}		
 	}
 	

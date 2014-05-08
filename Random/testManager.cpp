@@ -250,26 +250,6 @@ template<typename T> class Manager
 
 		inline std::size_t getSize() const noexcept 	{ return size; }
 		inline std::size_t getSizeNext() const noexcept { return sizeNext; }
-
-		void printState()
-		{
-			ssvu::lo("ATOMS") << "";
-			for(const auto& a : atoms) std::cout << std::setw(4) << std::left << (int)a.alive << " ";
-			std::cout << "\n";
-
-			ssvu::lo("CTIDX") << "";
-			for(const auto& a : marks) std::cout << std::setw(4) << std::left << (int)a.idx << " ";
-			std::cout << "\n";
-
-			ssvu::lo("CTCTR") << "";
-			for(const auto& a : marks) std::cout << std::setw(4) << std::left << (int)a.ctr << " ";
-			std::cout << "\n\n";
-
-			ssvu::lo("ASTRS") << "\n";
-			std::size_t idx{0u};
-			//forEach([&idx](std::string& mS){ std::cout << idx++ << ": " << mS << "\n"; });
-			std::cout << std::endl;
-		}
 };
 
 template<typename T> inline bool Handle<T>::isAlive() const noexcept
@@ -393,6 +373,24 @@ void doTest()
 			SSVU_ASSERT(aNew.isAlive());
 
 			SSVU_ASSERT(aNew->s == "hehe");
+
+			a0.destroy();		
+			test.refresh();
+
+			SSVU_ASSERT(!a0.isAlive());
+			SSVU_ASSERT(a1.isAlive());
+			SSVU_ASSERT(!a2.isAlive());
+			SSVU_ASSERT(!a3.isAlive());
+			SSVU_ASSERT(a4.isAlive());
+			SSVU_ASSERT(!a5.isAlive());
+			SSVU_ASSERT(a6.isAlive());
+			SSVU_ASSERT(aNew.isAlive());
+
+			SSVU_ASSERT(ctorCalls == 8);
+			SSVU_ASSERT(dtorCalls == 4);
+			SSVU_ASSERT(test.getSize() == 4);
+			SSVU_ASSERT(test.getSizeNext() == 4);
+
 			test.clear();
 
 			SSVU_ASSERT(ctorCalls == 8);

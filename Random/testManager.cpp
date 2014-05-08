@@ -27,26 +27,23 @@ namespace Internal
 	{
 		template<typename> friend class Manager;
 
-		public:
-			enum class State : int {Alive = 0, Unused = 1, Dead = 2};
-
 		private:
 			Idx markIdx;
-			State state{State::Unused};
+			bool alive{false};
 			Uncertain<T> data;
 
 			// Initializes the internal data
 			template<typename... TArgs> inline void initData(TArgs&&... mArgs) 
 				noexcept(noexcept(data.init(std::forward<TArgs>(mArgs)...)))
 			{
-				SSVU_ASSERT(state == State::Unused);
+				SSVU_ASSERT(!alive);
 				data.init(std::forward<TArgs>(mArgs)...);
 			}
 
 			// Deinitializes the internal data
 			inline void deinitData() noexcept(noexcept(data.deinit()))
 			{ 
-				SSVU_ASSERT(state != State::Unused);
+				SSVU_ASSERT(!alive);
 				data.deinit();
 			}
 
@@ -55,9 +52,9 @@ namespace Internal
 			inline Atom(Atom&&) = default;
 			inline Atom& operator=(Atom&&) = default;
 
-			inline T& getData() noexcept 				{ SSVU_ASSERT(state != State::Unused); return data.get(); }				
-			inline const T& getData() const noexcept 	{ SSVU_ASSERT(state != State::Unused); return data.get(); }	
-			inline void setDead() noexcept 				{ state = State::Dead; }
+			inline T& getData() noexcept 				{ SSVU_ASSERT(alive); return data.get(); }				
+			inline const T& getData() const noexcept 	{ SSVU_ASSERT(alive); return data.get(); }	
+			inline void setDead() noexcept 				{ alive = false; }
 			
 			// Disallow copies
 			inline Atom(const Atom&) = delete;
@@ -109,7 +106,6 @@ template<typename T> class Manager
 
 	public:
 		using AtomType = typename Internal::Atom<T>;
-		using AtomState = typename AtomType::State;
 
 	private:
 		std::vector<AtomType> atoms;
@@ -146,13 +142,12 @@ template<typename T> class Manager
 
 		inline void cleanUpMemory()
 		{
-			for(auto& a : atoms) 				
+			refresh();
+			for(auto i(0u); i < size; ++i) 				
 			{
-				if(a.state != AtomState::Unused) 
-				{
-					a.deinitData();
-					a.state = AtomState::Unused;
-				}			
+				SSVU_ASSERT(atoms[i].alive);
+				atoms[i].alive = false;						
+				atoms[i].deinitData();
 			}
 		}
 
@@ -177,7 +172,7 @@ template<typename T> class Manager
 
 			// `sizeNext` now is the first empty valid index - we create our atom there
 			atoms[sizeNext].initData(std::forward<TArgs>(mArgs)...);
-			atoms[sizeNext].state = AtomState::Alive;
+			atoms[sizeNext].alive = true;
 
 			// Update the mark
 			auto cIdx(atoms[sizeNext].markIdx);
@@ -197,19 +192,19 @@ template<typename T> class Manager
 			int iAlive{0}, iDead{0};
 			
 			// Find first alive and first dead atoms
-			while(iDead < sizeNext && atoms[iDead].state == AtomState::Alive) ++iDead;			
+			while(iDead < sizeNext && atoms[iDead].alive) ++iDead;			
 			iAlive = iDead - 1;
 
 			for(int i{iDead}; i < sizeNext; ++i)
 			{
 				// Skip alive atoms
-				if(atoms[i].state == AtomState::Alive) continue;
+				if(atoms[i].alive) continue;
 
 				// Found a dead atom - `i` now stores its index
 				// Look for an alive atom after the dead atom
 				for(int k{iDead + 1}; true; ++k)
 				{
-					if(atoms[k].state == AtomState::Alive)
+					if(atoms[k].alive)
 					{
 						// Found an alive atom after dead `i` atom
 						std::swap(atoms[i], atoms[k]);
@@ -229,7 +224,6 @@ template<typename T> class Manager
 			for(int j{iAlive + 1}; j < sizeNext; ++j)				
 			{
 				atoms[j].deinitData();
-				atoms[j].state = AtomState::Unused;
 				++(getMarkFromAtom(atoms[j]).ctr);				
 			}	
 
@@ -260,7 +254,7 @@ template<typename T> class Manager
 		void printState()
 		{
 			ssvu::lo("ATOMS") << "";
-			for(const auto& a : atoms) std::cout << std::setw(4) << std::left << (int)a.state << " ";
+			for(const auto& a : atoms) std::cout << std::setw(4) << std::left << (int)a.alive << " ";
 			std::cout << "\n";
 
 			ssvu::lo("CTIDX") << "";
@@ -289,16 +283,25 @@ template<typename T> inline void Handle<T>::destroy() noexcept
 }
 
 
-
+int ctorCalls, dtorCalls;
 
 void doTest()
 {
+	struct OTest
+	{ 
+		std::string s;
+		OTest() { ++ctorCalls; }
+		~OTest() { ++dtorCalls; }
+	}; 
+
 	for(int j = 0; j < 2; ++j)
 	{
-		Manager<std::string> test;
+		Manager<OTest> test;
 
 		for(int k = 0; k < 2; ++k)
 		{
+			ctorCalls = dtorCalls = 0;
+
 			auto a0 = test.create();
 			auto a1 = test.create();
 			auto a2 = test.create();
@@ -307,34 +310,41 @@ void doTest()
 			auto a5 = test.create();
 			auto a6 = test.create();
 
+			SSVU_ASSERT(ctorCalls == 7);
+			SSVU_ASSERT(dtorCalls == 0);
 			SSVU_ASSERT(test.getSize() == 0);
 			SSVU_ASSERT(test.getSizeNext() == 7);
 
 			test.refresh();
 
+			SSVU_ASSERT(ctorCalls == 7);
+			SSVU_ASSERT(dtorCalls == 0);
 			SSVU_ASSERT(test.getSize() == 7);
 			SSVU_ASSERT(test.getSizeNext() == 7);
 
-			*a0 = "hi";
-			a4.get() = "ciao";
-			a6.get() = "bye";
+			a0->s = "hi";
+			a4->s = "ciao";
+			a6->s = "bye";
 
 			a2.destroy();
 			a3.destroy();
 			a5.destroy();
 
+			SSVU_ASSERT(ctorCalls == 7);
+			SSVU_ASSERT(dtorCalls == 0);
 			SSVU_ASSERT(test.getSize() == 7);
 			SSVU_ASSERT(test.getSizeNext() == 7);
 
 			test.refresh();
 
-//ssvu::lo("BUG") << test.getSize() << std::endl;
+			SSVU_ASSERT(ctorCalls == 7);
+			SSVU_ASSERT(dtorCalls == 3);
 			SSVU_ASSERT(test.getSize() == 4);
 			SSVU_ASSERT(test.getSizeNext() == 4);
 
-			SSVU_ASSERT(*a0 == "hi");
-			SSVU_ASSERT(*a4 == "ciao");
-			SSVU_ASSERT(*a6 == "bye");
+			SSVU_ASSERT(a0->s == "hi");
+			SSVU_ASSERT(a4->s == "ciao");
+			SSVU_ASSERT(a6->s == "bye");
 
 			SSVU_ASSERT(a0.isAlive());
 			SSVU_ASSERT(a1.isAlive());
@@ -344,11 +354,11 @@ void doTest()
 			SSVU_ASSERT(!a5.isAlive());
 			SSVU_ASSERT(a6.isAlive());
 
-			test.forEach([](std::string& mStr){ mStr += "bb"; });
+			test.forEach([](OTest& mA){ mA.s += "bb"; });
 
-			SSVU_ASSERT(*a0 == "hibb");
-			SSVU_ASSERT(*a4 == "ciaobb");
-			SSVU_ASSERT(*a6 == "byebb");
+			SSVU_ASSERT(a0->s == "hibb");
+			SSVU_ASSERT(a4->s == "ciaobb");
+			SSVU_ASSERT(a6->s == "byebb");
 
 			SSVU_ASSERT(a0.isAlive());
 			SSVU_ASSERT(a1.isAlive());
@@ -359,13 +369,17 @@ void doTest()
 			SSVU_ASSERT(a6.isAlive());
 
 			auto aNew = test.create();
-			*aNew = "hehe";
+			aNew->s = "hehe";
 
+			SSVU_ASSERT(ctorCalls == 8);
+			SSVU_ASSERT(dtorCalls == 3);
 			SSVU_ASSERT(test.getSize() == 4);
 			SSVU_ASSERT(test.getSizeNext() == 5);
 
 			test.refresh();
 
+			SSVU_ASSERT(ctorCalls == 8);
+			SSVU_ASSERT(dtorCalls == 3);
 			SSVU_ASSERT(test.getSize() == 5);
 			SSVU_ASSERT(test.getSizeNext() == 5);
 
@@ -378,8 +392,11 @@ void doTest()
 			SSVU_ASSERT(a6.isAlive());
 			SSVU_ASSERT(aNew.isAlive());
 
-			SSVU_ASSERT(*aNew == "hehe");
+			SSVU_ASSERT(aNew->s == "hehe");
 			test.clear();
+
+			SSVU_ASSERT(ctorCalls == 8);
+			SSVU_ASSERT(dtorCalls == 8);
 		}		
 	}	
 }

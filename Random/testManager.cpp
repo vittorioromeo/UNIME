@@ -275,6 +275,105 @@ template<typename T> inline void Handle<T>::destroy() noexcept
 	return manager.destroy(markIdx);
 }
 
+
+
+
+void doTest()
+{
+	for(int j = 0; j < 2; ++j)
+	{
+		Manager<std::string> test;
+
+		for(int k = 0; k < 2; ++k)
+		{
+			auto a0 = test.create();
+			auto a1 = test.create();
+			auto a2 = test.create();
+			auto a3 = test.create();
+			auto a4 = test.create();
+			auto a5 = test.create();
+			auto a6 = test.create();
+
+			SSVU_ASSERT(test.getSize() == 0);
+			SSVU_ASSERT(test.getSizeNext() == 7);
+
+			test.refresh();
+
+			SSVU_ASSERT(test.getSize() == 7);
+			SSVU_ASSERT(test.getSizeNext() == 7);
+
+			*a0 = "hi";
+			a4.get() = "ciao";
+			a6.get() = "bye";
+
+			a2.destroy();
+			a3.destroy();
+			a5.destroy();
+
+			SSVU_ASSERT(test.getSize() == 7);
+			SSVU_ASSERT(test.getSizeNext() == 7);
+
+			test.refresh();
+
+			SSVU_ASSERT(test.getSize() == 4);
+			SSVU_ASSERT(test.getSizeNext() == 4);
+
+			SSVU_ASSERT(*a0 == "hi");
+			SSVU_ASSERT(*a4 == "ciao");
+			SSVU_ASSERT(*a6 == "bye");
+
+			SSVU_ASSERT(a0.isAlive());
+			SSVU_ASSERT(a1.isAlive());
+			SSVU_ASSERT(!a2.isAlive());
+			SSVU_ASSERT(!a3.isAlive());
+			SSVU_ASSERT(a4.isAlive());
+			SSVU_ASSERT(!a5.isAlive());
+			SSVU_ASSERT(a6.isAlive());
+
+			test.forEach([](std::string& mStr){ mStr += "bb"; });
+
+			SSVU_ASSERT(*a0 == "hibb");
+			SSVU_ASSERT(*a4 == "ciaobb");
+			SSVU_ASSERT(*a6 == "byebb");
+
+			SSVU_ASSERT(a0.isAlive());
+			SSVU_ASSERT(a1.isAlive());
+			SSVU_ASSERT(!a2.isAlive());
+			SSVU_ASSERT(!a3.isAlive());
+			SSVU_ASSERT(a4.isAlive());
+			SSVU_ASSERT(!a5.isAlive());
+			SSVU_ASSERT(a6.isAlive());
+
+			auto aNew = test.create();
+			*aNew = "hehe";
+
+			SSVU_ASSERT(test.getSize() == 4);
+			SSVU_ASSERT(test.getSizeNext() == 5);
+
+			test.refresh();
+
+			SSVU_ASSERT(test.getSize() == 5);
+			SSVU_ASSERT(test.getSizeNext() == 5);
+
+			SSVU_ASSERT(a0.isAlive());
+			SSVU_ASSERT(a1.isAlive());
+			SSVU_ASSERT(!a2.isAlive());
+			SSVU_ASSERT(!a3.isAlive());
+			SSVU_ASSERT(a4.isAlive());
+			SSVU_ASSERT(!a5.isAlive());
+			SSVU_ASSERT(a6.isAlive());
+			SSVU_ASSERT(aNew.isAlive());
+
+			SSVU_ASSERT(*aNew == "hehe");
+			test.clear();
+		}		
+	}	
+}
+
+
+
+
+
 volatile int state{0};
 
 template<typename T> struct OV : public T { bool alive{true}; };
@@ -391,122 +490,7 @@ void doBench()
 
 int main()
 {
+	doTest();
 	doBench();
-	return 0;
-
-	for(int j = 0; j < 2; ++j)
-	{
-		Manager<std::string> test;
-
-		for(int k = 0; k < 2; ++k)
-		{
-			test.printState();
-
-			auto a0 = test.create();
-			auto a1 = test.create();
-			auto a2 = test.create();
-			auto a3 = test.create();
-			auto a4 = test.create();
-			auto a5 = test.create();
-			auto a6 = test.create();
-
-			test.refresh();
-
-			*a0 = "hi";
-			a4.get() = "ciao";
-			a6.get() = "bye";
-
-			test.printState();
-
-			a2.destroy();
-			a3.destroy();
-			a5.destroy();
-
-			test.printState();
-
-			test.refresh();
-
-			test.printState();
-
-			ssvu::lo("RESULT") << a0.get() << std::endl;
-			ssvu::lo("RESULT") << a4.get() << std::endl;
-			ssvu::lo("RESULT") << a6.get() << std::endl;
-
-			ssvu::lo("alive") << a0.isAlive() << std::endl;
-			ssvu::lo("alive") << a1.isAlive() << std::endl;
-			ssvu::lo("alive") << a2.isAlive() << std::endl;
-			ssvu::lo("alive") << a3.isAlive() << std::endl;
-			ssvu::lo("alive") << a4.isAlive() << std::endl;
-			ssvu::lo("alive") << a5.isAlive() << std::endl;
-			ssvu::lo("alive") << a6.isAlive() << std::endl;
-
-			test.forEach([](std::string& mStr){ mStr += "bb"; });
-
-			ssvu::lo("RESULT2") << *a0 << std::endl;
-			ssvu::lo("RESULT2") << *a4 << std::endl;
-			ssvu::lo("RESULT2") << a6.get() << std::endl;
-		}		
-	}
-
-	struct TestRes 
-	{
-		std::string s;
-		TestRes(std::string mS) : s(std::move(mS)) { }
-	};
-
-	for(int j = 0; j < 2; ++j)
-	{
-		Manager<TestRes> test;
-
-		for(int k = 0; k < 2; ++k)
-		{
-			test.printState();
-
-			auto a0 = test.create("atom00");
-			auto a1 = test.create("atom01");
-			auto a2 = test.create("atom02");
-			auto a3 = test.create("atom03");
-			auto a4 = test.create("atom04");
-			auto a5 = test.create("atom05");
-			auto a6 = test.create("atom06");
-
-			test.refresh();
-
-			a0.get().s += " mod";
-			a4->s += " mod";
-			a6->s += " mod";
-
-			test.printState();
-
-			a2.destroy();
-			a3.destroy();
-			a5.destroy();
-
-			test.printState();
-
-			test.refresh();
-
-			test.printState();
-
-			ssvu::lo("RESULT") << a0.get().s << std::endl;
-			ssvu::lo("RESULT") << a4.get().s << std::endl;
-			ssvu::lo("RESULT") << a6.get().s << std::endl;
-
-			ssvu::lo("alive") << a0.isAlive() << std::endl;
-			ssvu::lo("alive") << a1.isAlive() << std::endl;
-			ssvu::lo("alive") << a2.isAlive() << std::endl;
-			ssvu::lo("alive") << a3.isAlive() << std::endl;
-			ssvu::lo("alive") << a4.isAlive() << std::endl;
-			ssvu::lo("alive") << a5.isAlive() << std::endl;
-			ssvu::lo("alive") << a6.isAlive() << std::endl;
-
-			test.forEach([](TestRes& mRes){ mRes.s += "bb"; });
-
-			ssvu::lo("RESULT2") << a0.get().s << std::endl;
-			ssvu::lo("RESULT2") << a4->s << std::endl;
-			ssvu::lo("RESULT2") << a6->s << std::endl;
-		}		
-	}
-	
 	return 0;
 }

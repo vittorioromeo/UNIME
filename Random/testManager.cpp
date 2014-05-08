@@ -147,11 +147,13 @@ template<typename T> class Manager
 		inline void cleanUpMemory()
 		{
 			for(auto& a : atoms) 				
+			{
 				if(a.state != AtomState::Unused) 
 				{
 					a.deinitData();
 					a.state = AtomState::Unused;
 				}			
+			}
 		}
 
 		inline void refreshDeadAtoms() noexcept

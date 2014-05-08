@@ -28,9 +28,9 @@ namespace Internal
 		template<typename> friend class Manager;
 
 		private:
+			Uncertain<T> data;
 			Idx markIdx;
 			bool alive{false};
-			Uncertain<T> data;
 
 			// Initializes the internal data
 			template<typename... TArgs> inline void initData(TArgs&&... mArgs) 
@@ -74,8 +74,8 @@ template<typename T> class Handle
 		Idx markIdx;
 		Ctr ctr;
 
-		inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept 
-			: manager(mManager), markIdx{mCtrlIdx}, ctr{mCtr} { }		
+		inline Handle(Manager<T>& mManager, Idx mMarkIdx, Ctr mCtr) noexcept 
+			: manager(mManager), markIdx{mMarkIdx}, ctr{mCtr} { }		
 
 		template<typename TT> inline TT getAtomImpl() noexcept
 		{
@@ -102,7 +102,7 @@ template<typename T> class Manager
 	template<typename> friend class Handle;
 
 	private:
-		struct Mark { Idx idx; Ctr ctr; };
+		struct Mark { Idx atomIdx; Ctr ctr; };
 
 	public:
 		using AtomType = typename Internal::Atom<T>;
@@ -114,31 +114,39 @@ template<typename T> class Manager
 
 		inline std::size_t getCapacity() const noexcept { return atoms.size(); }	
 
-		inline void growCapacity(std::size_t mAmount)
-		{
-			auto oldSize(getCapacity()), newSize(oldSize + mAmount);
-			SSVU_ASSERT(newSize >= 0 && newSize >= oldSize);
+		inline void growCapacityBy(std::size_t mAmount)
+		{		
+			auto i(getCapacity()), newCapacity(getCapacity() + mAmount);
+			SSVU_ASSERT(newCapacity >= 0 && newCapacity >= getCapacity());
 
-			atoms.resize(newSize);
-			marks.resize(newSize);
+			atoms.resize(newCapacity);
+			marks.resize(newCapacity);
 
 			// Initialize resized storage
-			for(auto i(oldSize); i < newSize; ++i) atoms[i].markIdx = marks[i].idx = i;									
+			for(; i < newCapacity; ++i) atoms[i].markIdx = marks[i].atomIdx = i;									
+		}
+
+		inline void growCapacityTo(std::size_t mCapacity) 
+		{ 
+			SSVU_ASSERT(getCapacity() < mCapacity) 
+			growCapacityBy(mCapacity - getCapacity());  
 		}
 
 		inline void growIfNeeded()
 		{
-			constexpr std::size_t growAmount{10};
-			if(getCapacity() <= sizeNext) growCapacity(growAmount);
+			constexpr float growMultiplier{2.f};
+			constexpr std::size_t growAmount{5};
+
+			if(getCapacity() <= sizeNext) growCapacityTo((getCapacity() + growAmount) * growMultiplier);		
 		}
 
-		inline void destroy(Idx mCtrlIdx) noexcept
+		inline void destroy(Idx mMarkIdx) noexcept
 		{			
-			getAtomFromMark(marks[mCtrlIdx]).setDead();
+			getAtomFromMark(marks[mMarkIdx]).setDead();
 		}
 
-		inline Mark& getMarkFromAtom(const AtomType& mAtom)	{ return marks[mAtom.markIdx]; }
-		inline AtomType& getAtomFromMark(const Mark& mMark)	{ return atoms[mMark.idx]; }
+		inline Mark& getMarkFromAtom(const AtomType& mAtom)	noexcept { return marks[mAtom.markIdx]; }
+		inline AtomType& getAtomFromMark(const Mark& mMark) noexcept { return atoms[mMark.atomIdx]; }
 
 		inline void cleanUpMemory()
 		{
@@ -158,12 +166,16 @@ template<typename T> class Manager
 		inline void clear() noexcept
 		{
 			cleanUpMemory();
-			atoms.clear();
-			marks.clear();
+			atoms.clear(); marks.clear();
 			size = sizeNext = 0u;
 		}
 
-		inline void reserve(std::size_t mCapacity) { if(getCapacity() < mCapacity) growCapacity(mCapacity); }
+		inline void reserve(std::size_t mCapacity) { if(getCapacity() < mCapacity) growCapacityTo(mCapacity); }
+
+		inline Handle<T> createHandleFromAtom(AtomType& mAtom) noexcept
+		{
+			return {*this, mAtom.markIdx, getMarkFromAtom(mAtom).ctr};	
+		}
 
 		template<typename... TArgs> inline Handle<T> create(TArgs&&... mArgs)
 		{
@@ -171,19 +183,19 @@ template<typename T> class Manager
 			growIfNeeded();
 
 			// `sizeNext` now is the first empty valid index - we create our atom there
-			atoms[sizeNext].initData(std::forward<TArgs>(mArgs)...);
-			atoms[sizeNext].alive = true;
+			auto& atom(atoms[sizeNext]);
+			atom.initData(std::forward<TArgs>(mArgs)...);
+			atom.alive = true;
 
 			// Update the mark
-			auto cIdx(atoms[sizeNext].markIdx);
-			auto& mark(marks[cIdx]);
-			mark.idx = sizeNext;
+			auto& mark(getMarkFromAtom(atom));
+			mark.atomIdx = sizeNext;
 			++mark.ctr;
 
-			// Update sizeNext free index
+			// Update next size
 			++sizeNext;
 
-			return {*this, cIdx, mark.ctr};	
+			return createHandleFromAtom(atom);
 		}	
 
 		inline void refresh()
@@ -216,11 +228,11 @@ template<typename T> class Manager
 					}
 
 					// No more alive atoms, continue					
-					if(iA == intSizeNext) goto later;					
+					if(iA == intSizeNext) goto tempLabel;					
 				}
 			}
 
-			later:
+			tempLabel:
 
 			// [iAlive + 1, sizeNext) contains only dead atoms, clean them up
 			for(int iD{iAlive + 1}; iD < intSizeNext; ++iD)				
@@ -231,7 +243,7 @@ template<typename T> class Manager
 
 			// Starting from the beginning, update alive entities and their marks			
 			int iA{0};
-			for(; iA <= iAlive; ++iA) getMarkFromAtom(atoms[iA]).idx = iA;
+			for(; iA <= iAlive; ++iA) getMarkFromAtom(atoms[iA]).atomIdx = iA;
 
 			size = sizeNext = iA; // Update size 		
 		}

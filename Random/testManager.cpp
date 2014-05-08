@@ -276,170 +276,164 @@ template<typename T> inline void Handle<T>::destroy() noexcept
 	return manager.destroy(markIdx);
 }
 
-
-int ctorCalls, dtorCalls;
-
-void doTest()
+SSVUT_TEST(HandleManager)
 {
+	int cc{0}, dd{0};
+
 	struct OTest
 	{ 
 		std::string s;
-		OTest() { ++ctorCalls; }
-		~OTest() { ++dtorCalls; }
-	}; 
+		int& rCC;
+		int& rDD;
 
-	for(int j = 0; j < 2; ++j)
+		OTest(int& mRCC, int& mRDD) : rCC(mRCC), rDD(mRDD) { ++rCC; }
+		~OTest() { ++rDD; }
+	};
+
+	Manager<OTest> mgr;
+
+	for(int k = 0; k < 2; ++k)
 	{
-		Manager<OTest> test;
+		cc = dd = 0;
 
-		for(int k = 0; k < 2; ++k)
-		{
-			ctorCalls = dtorCalls = 0;
+		auto a0(mgr.create(cc, dd));
+		auto a1(mgr.create(cc, dd));
+		auto a2(mgr.create(cc, dd));
+		auto a3(mgr.create(cc, dd));
+		auto a4(mgr.create(cc, dd));
+		auto a5(mgr.create(cc, dd));
+		auto a6(mgr.create(cc, dd));
 
-			auto a0 = test.create();
-			auto a1 = test.create();
-			auto a2 = test.create();
-			auto a3 = test.create();
-			auto a4 = test.create();
-			auto a5 = test.create();
-			auto a6 = test.create();
+		SSVUT_EXPECT(cc == 7);
+		SSVUT_EXPECT(dd == 0);
+		SSVUT_EXPECT(mgr.getSize() == 0);
+		SSVUT_EXPECT(mgr.getSizeNext() == 7);
 
-			SSVU_ASSERT(ctorCalls == 7);
-			SSVU_ASSERT(dtorCalls == 0);
-			SSVU_ASSERT(test.getSize() == 0);
-			SSVU_ASSERT(test.getSizeNext() == 7);
+		mgr.refresh();
 
-			test.refresh();
+		SSVUT_EXPECT(cc == 7);
+		SSVUT_EXPECT(dd == 0);
+		SSVUT_EXPECT(mgr.getSize() == 7);
+		SSVUT_EXPECT(mgr.getSizeNext() == 7);
 
-			SSVU_ASSERT(ctorCalls == 7);
-			SSVU_ASSERT(dtorCalls == 0);
-			SSVU_ASSERT(test.getSize() == 7);
-			SSVU_ASSERT(test.getSizeNext() == 7);
+		a0->s = "hi";
+		a4->s = "ciao";
+		a6->s = "bye";
 
-			a0->s = "hi";
-			a4->s = "ciao";
-			a6->s = "bye";
+		a2.destroy();
+		a3.destroy();
+		a5.destroy();
 
-			a2.destroy();
-			a3.destroy();
-			a5.destroy();
+		SSVUT_EXPECT(cc == 7);
+		SSVUT_EXPECT(dd == 0);
+		SSVUT_EXPECT(mgr.getSize() == 7);
+		SSVUT_EXPECT(mgr.getSizeNext() == 7);
 
-			SSVU_ASSERT(ctorCalls == 7);
-			SSVU_ASSERT(dtorCalls == 0);
-			SSVU_ASSERT(test.getSize() == 7);
-			SSVU_ASSERT(test.getSizeNext() == 7);
+		mgr.refresh();
 
-			test.refresh();
+		SSVUT_EXPECT(cc == 7);
+		SSVUT_EXPECT(dd == 3);
+		SSVUT_EXPECT(mgr.getSize() == 4);
+		SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
-			SSVU_ASSERT(ctorCalls == 7);
-			SSVU_ASSERT(dtorCalls == 3);
-			SSVU_ASSERT(test.getSize() == 4);
-			SSVU_ASSERT(test.getSizeNext() == 4);
+		SSVUT_EXPECT(a0->s == "hi");
+		SSVUT_EXPECT(a4->s == "ciao");
+		SSVUT_EXPECT(a6->s == "bye");
 
-			SSVU_ASSERT(a0->s == "hi");
-			SSVU_ASSERT(a4->s == "ciao");
-			SSVU_ASSERT(a6->s == "bye");
+		SSVUT_EXPECT(a0.isAlive());
+		SSVUT_EXPECT(a1.isAlive());
+		SSVUT_EXPECT(!a2.isAlive());
+		SSVUT_EXPECT(!a3.isAlive());
+		SSVUT_EXPECT(a4.isAlive());
+		SSVUT_EXPECT(!a5.isAlive());
+		SSVUT_EXPECT(a6.isAlive());
 
-			SSVU_ASSERT(a0.isAlive());
-			SSVU_ASSERT(a1.isAlive());
-			SSVU_ASSERT(!a2.isAlive());
-			SSVU_ASSERT(!a3.isAlive());
-			SSVU_ASSERT(a4.isAlive());
-			SSVU_ASSERT(!a5.isAlive());
-			SSVU_ASSERT(a6.isAlive());
+		mgr.forEach([](OTest& mA){ mA.s += "bb"; });
 
-			test.forEach([](OTest& mA){ mA.s += "bb"; });
+		SSVUT_EXPECT(a0->s == "hibb");
+		SSVUT_EXPECT(a4->s == "ciaobb");
+		SSVUT_EXPECT(a6->s == "byebb");
 
-			SSVU_ASSERT(a0->s == "hibb");
-			SSVU_ASSERT(a4->s == "ciaobb");
-			SSVU_ASSERT(a6->s == "byebb");
+		SSVUT_EXPECT(a0.isAlive());
+		SSVUT_EXPECT(a1.isAlive());
+		SSVUT_EXPECT(!a2.isAlive());
+		SSVUT_EXPECT(!a3.isAlive());
+		SSVUT_EXPECT(a4.isAlive());
+		SSVUT_EXPECT(!a5.isAlive());
+		SSVUT_EXPECT(a6.isAlive());
 
-			SSVU_ASSERT(a0.isAlive());
-			SSVU_ASSERT(a1.isAlive());
-			SSVU_ASSERT(!a2.isAlive());
-			SSVU_ASSERT(!a3.isAlive());
-			SSVU_ASSERT(a4.isAlive());
-			SSVU_ASSERT(!a5.isAlive());
-			SSVU_ASSERT(a6.isAlive());
+		auto aNew(mgr.create(cc, dd));
+		aNew->s = "hehe";
 
-			auto aNew = test.create();
-			aNew->s = "hehe";
+		SSVUT_EXPECT(cc == 8);
+		SSVUT_EXPECT(dd == 3);
+		SSVUT_EXPECT(mgr.getSize() == 4);
+		SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-			SSVU_ASSERT(ctorCalls == 8);
-			SSVU_ASSERT(dtorCalls == 3);
-			SSVU_ASSERT(test.getSize() == 4);
-			SSVU_ASSERT(test.getSizeNext() == 5);
+		mgr.refresh();
 
-			test.refresh();
+		SSVUT_EXPECT(cc == 8);
+		SSVUT_EXPECT(dd == 3);
+		SSVUT_EXPECT(mgr.getSize() == 5);
+		SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-			SSVU_ASSERT(ctorCalls == 8);
-			SSVU_ASSERT(dtorCalls == 3);
-			SSVU_ASSERT(test.getSize() == 5);
-			SSVU_ASSERT(test.getSizeNext() == 5);
+		SSVUT_EXPECT(a0.isAlive());
+		SSVUT_EXPECT(a1.isAlive());
+		SSVUT_EXPECT(!a2.isAlive());
+		SSVUT_EXPECT(!a3.isAlive());
+		SSVUT_EXPECT(a4.isAlive());
+		SSVUT_EXPECT(!a5.isAlive());
+		SSVUT_EXPECT(a6.isAlive());
+		SSVUT_EXPECT(aNew.isAlive());
 
-			SSVU_ASSERT(a0.isAlive());
-			SSVU_ASSERT(a1.isAlive());
-			SSVU_ASSERT(!a2.isAlive());
-			SSVU_ASSERT(!a3.isAlive());
-			SSVU_ASSERT(a4.isAlive());
-			SSVU_ASSERT(!a5.isAlive());
-			SSVU_ASSERT(a6.isAlive());
-			SSVU_ASSERT(aNew.isAlive());
+		SSVUT_EXPECT(aNew->s == "hehe");
 
-			SSVU_ASSERT(aNew->s == "hehe");
+		a0.destroy();		
+		mgr.refresh();
 
-			a0.destroy();		
-			test.refresh();
+		SSVUT_EXPECT(!a0.isAlive());
+		SSVUT_EXPECT(a1.isAlive());
+		SSVUT_EXPECT(!a2.isAlive());
+		SSVUT_EXPECT(!a3.isAlive());
+		SSVUT_EXPECT(a4.isAlive());
+		SSVUT_EXPECT(!a5.isAlive());
+		SSVUT_EXPECT(a6.isAlive());
+		SSVUT_EXPECT(aNew.isAlive());
 
-			SSVU_ASSERT(!a0.isAlive());
-			SSVU_ASSERT(a1.isAlive());
-			SSVU_ASSERT(!a2.isAlive());
-			SSVU_ASSERT(!a3.isAlive());
-			SSVU_ASSERT(a4.isAlive());
-			SSVU_ASSERT(!a5.isAlive());
-			SSVU_ASSERT(a6.isAlive());
-			SSVU_ASSERT(aNew.isAlive());
+		SSVUT_EXPECT(cc == 8);
+		SSVUT_EXPECT(dd == 4);
+		SSVUT_EXPECT(mgr.getSize() == 4);
+		SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
-			SSVU_ASSERT(ctorCalls == 8);
-			SSVU_ASSERT(dtorCalls == 4);
-			SSVU_ASSERT(test.getSize() == 4);
-			SSVU_ASSERT(test.getSizeNext() == 4);
+		auto aSuicide(mgr.create(cc, dd));
+		
+		SSVUT_EXPECT(cc == 9);
+		SSVUT_EXPECT(dd == 4);
+		SSVUT_EXPECT(mgr.getSize() == 4);
+		SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-			auto aSuicide = test.create();
-			
-			SSVU_ASSERT(ctorCalls == 9);
-			SSVU_ASSERT(dtorCalls == 4);
-			SSVU_ASSERT(test.getSize() == 4);
-			SSVU_ASSERT(test.getSizeNext() == 5);
+		aSuicide.destroy();
 
-			aSuicide.destroy();
+		SSVUT_EXPECT(cc == 9);
+		SSVUT_EXPECT(dd == 4);
+		SSVUT_EXPECT(mgr.getSize() == 4);
+		SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-			SSVU_ASSERT(ctorCalls == 9);
-			SSVU_ASSERT(dtorCalls == 4);
-			SSVU_ASSERT(test.getSize() == 4);
-			SSVU_ASSERT(test.getSizeNext() == 5);
+		mgr.refresh();
 
-			test.refresh();
+		SSVUT_EXPECT(cc == 9);
+		SSVUT_EXPECT(dd == 5);
+		SSVUT_EXPECT(mgr.getSize() == 4);
+		SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
-			SSVU_ASSERT(ctorCalls == 9);
-			SSVU_ASSERT(dtorCalls == 5);
-			SSVU_ASSERT(test.getSize() == 4);
-			SSVU_ASSERT(test.getSizeNext() == 4);
+		mgr.clear();
 
-			test.clear();
-
-			SSVU_ASSERT(ctorCalls == 9);
-			SSVU_ASSERT(dtorCalls == 9);
-		}		
-	}	
+		SSVUT_EXPECT(cc == 9);
+		SSVUT_EXPECT(dd == 9);
+	}		
 }
 
-
-
-
-
 volatile int state{0};
-
 template<typename T> struct OV : public T { bool alive{true}; };
 
 void doBench()
@@ -650,7 +644,7 @@ void doBench()
 
 int main()
 {
-	doTest();
+	SSVUT_RUN();
 	doBench();
 	return 0;
 }

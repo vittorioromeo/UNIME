@@ -193,35 +193,28 @@ template<typename T> class Manager
 
 		inline void refresh()
 		{
-			auto lastK(0u);
-			Idx lastAlive{0u};
+			// Type must be signed, to check with negative values later
+			int iAlive{0}, iDead{0};
 			
 			// Find first alive and first dead atoms
-			for(auto i(0u); i < sizeNext; ++i)
-			{
-				if(atoms[i].state == AtomState::Alive) lastAlive = i;
-				else if(atoms[i].state == AtomState::Dead) 
-				{
-					lastK = i;
-					break;
-				}
-			}	
+			while(iDead < sizeNext && atoms[iDead].state == AtomState::Alive) ++iDead;			
+			iAlive = iDead - 1;
 
-			for(auto i(lastAlive + 1); i < sizeNext; ++i)
+			for(int i{iDead}; i < sizeNext; ++i)
 			{
 				// Skip alive atoms
 				if(atoms[i].state == AtomState::Alive) continue;
 
 				// Found a dead atom - `i` now stores its index
 				// Look for an alive atom after the dead atom
-				for(auto k(lastK); true; ++k)
+				for(int k{iDead + 1}; true; ++k)
 				{
 					if(atoms[k].state == AtomState::Alive)
 					{
 						// Found an alive atom after dead `i` atom
 						std::swap(atoms[i], atoms[k]);
-						lastAlive = i;
-						lastK = k;
+						iAlive = i;
+						iDead = k;
 						break;
 					}
 
@@ -232,8 +225,8 @@ template<typename T> class Manager
 
 			later:
 
-			// [lastAlive + 1, sizeNext) contains only dead atoms, clean them up
-			for(auto j(lastAlive + 1); j < sizeNext; ++j)				
+			// [iAlive + 1, sizeNext) contains only dead atoms, clean them up
+			for(int j{iAlive + 1}; j < sizeNext; ++j)				
 			{
 				atoms[j].deinitData();
 				atoms[j].state = AtomState::Unused;
@@ -241,8 +234,8 @@ template<typename T> class Manager
 			}	
 
 			// Starting from the beginning, update alive entities and their marks			
-			auto n(0u);
-			for(; n <= lastAlive; ++n) getMarkFromAtom(atoms[n]).idx = n;
+			int n{0};
+			for(; n <= iAlive; ++n) getMarkFromAtom(atoms[n]).idx = n;
 
 			size = sizeNext = n; // Update size 		
 		}

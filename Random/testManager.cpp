@@ -190,12 +190,15 @@ template<typename T> class Manager
 		{
 			// Type must be signed, to check with negative values later
 			int iAlive{0}, iDead{0};
+
+			// Convert `sizeNext` to int, to avoid warnings/runtime errors
+			const int intSizeNext{static_cast<int>(sizeNext)};
 			
 			// Find first alive and first dead atoms
-			while(iDead < sizeNext && atoms[iDead].alive) ++iDead;			
+			while(iDead < intSizeNext && atoms[iDead].alive) ++iDead;			
 			iAlive = iDead - 1;
 
-			for(int i{iDead}; i < sizeNext; ++i)
+			for(int i{iDead}; i < intSizeNext; ++i)
 			{
 				// Skip alive atoms
 				if(atoms[i].alive) continue;
@@ -214,14 +217,14 @@ template<typename T> class Manager
 					}
 
 					// No more alive atoms, continue					
-					if(k == sizeNext) goto later;					
+					if(k == intSizeNext) goto later;					
 				}
 			}
 
 			later:
 
 			// [iAlive + 1, sizeNext) contains only dead atoms, clean them up
-			for(int j{iAlive + 1}; j < sizeNext; ++j)				
+			for(int j{iAlive + 1}; j < intSizeNext; ++j)				
 			{
 				atoms[j].deinitData();
 				++(getMarkFromAtom(atoms[j]).ctr);				
@@ -391,10 +394,31 @@ void doTest()
 			SSVU_ASSERT(test.getSize() == 4);
 			SSVU_ASSERT(test.getSizeNext() == 4);
 
+			auto aSuicide = test.create();
+			
+			SSVU_ASSERT(ctorCalls == 9);
+			SSVU_ASSERT(dtorCalls == 4);
+			SSVU_ASSERT(test.getSize() == 4);
+			SSVU_ASSERT(test.getSizeNext() == 5);
+
+			aSuicide.destroy();
+
+			SSVU_ASSERT(ctorCalls == 9);
+			SSVU_ASSERT(dtorCalls == 4);
+			SSVU_ASSERT(test.getSize() == 4);
+			SSVU_ASSERT(test.getSizeNext() == 5);
+
+			test.refresh();
+
+			SSVU_ASSERT(ctorCalls == 9);
+			SSVU_ASSERT(dtorCalls == 5);
+			SSVU_ASSERT(test.getSize() == 4);
+			SSVU_ASSERT(test.getSizeNext() == 4);
+
 			test.clear();
 
-			SSVU_ASSERT(ctorCalls == 8);
-			SSVU_ASSERT(dtorCalls == 8);
+			SSVU_ASSERT(ctorCalls == 9);
+			SSVU_ASSERT(dtorCalls == 9);
 		}		
 	}	
 }
@@ -416,12 +440,16 @@ void doBench()
 		char k[16];
 		int myState;
 		void a() { ++state; ++myState; }
+		OSmall() { ++state; }
+		~OSmall() { ++state; }
 	};
 	struct OBig
 	{
 		char k[128];
 		int myState;
 		void a() { ++state; ++myState; }
+		OBig() { ++state; }
+		~OBig() { ++state; }
 	};
 
 	constexpr std::size_t s(1000000);
@@ -487,6 +515,98 @@ void doBench()
 
 			Benchmark::start("AtomM - iteration");
 			storage.forEach([](OSmall& mO){ mO.a(); });
+			Benchmark::endLo();
+
+			Benchmark::start("AtomM - set dead");
+			storage.forEachAtom([](decltype(storage)::AtomType& mO){ mO.setDead(); });
+			Benchmark::endLo();
+
+			Benchmark::start("AtomM - refresh");
+			storage.refresh();
+			Benchmark::endLo();
+
+			Benchmark::start("AtomM - add/rem");
+			for(auto k(0u); k < 3; ++k)
+			{
+				for(auto j(0u); j < 10000; ++j) 
+				{
+					auto h(storage.create());
+					h.destroy();					
+				}
+
+				storage.refresh();
+			}
+			Benchmark::endLo();
+
+			Benchmark::start("AtomM - cleanup");
+		}
+
+		Benchmark::endLo();
+	}
+
+	ssvu::lo() << "" << std::endl;
+
+	{
+		{
+			Benchmark::start("Vector - creation");
+			std::vector<Uptr<OV<OBig>>> storage;
+			storage.reserve(s + 10000);
+			Benchmark::endLo();
+
+			Benchmark::start("Vector - filling");
+			for(auto i(0u); i < s; ++i) storage.emplace_back(new OV<OBig>);
+			Benchmark::endLo();
+
+			Benchmark::start("Vector - iteration");
+			for(auto& o : storage) o->a();
+			Benchmark::endLo();
+
+			Benchmark::start("Vector - set dead");
+			for(auto i(0u); i < s; i += 2) storage[i]->alive = false;
+			Benchmark::endLo();
+
+			Benchmark::start("Vector - refresh");
+			eraseRemoveIf(storage, [](const Uptr<OV<OBig>>& mO){ return !mO->alive; });
+			Benchmark::endLo();
+
+			Benchmark::start("Vector - add/rem");
+			for(auto k(0u); k < 3; ++k)
+			{
+				for(auto j(0u); j < 10000; ++j) 
+				{
+					auto& u(getEmplaceUptr<OV<OBig>>(storage));	
+					u.alive = false;
+				}
+
+				eraseRemoveIf(storage, [](const Uptr<OV<OBig>>& mO){ return !mO->alive; });
+			}
+			Benchmark::endLo();
+
+			Benchmark::start("Vector - cleanup");
+		}
+
+		Benchmark::endLo();
+	}
+
+	ssvu::lo() << "" << std::endl;
+
+	{
+		{
+			Benchmark::start("AtomM - creation");
+			Manager<OBig> storage;
+			storage.reserve(s + 10000);
+			Benchmark::endLo();
+
+			Benchmark::start("AtomM - filling");
+			for(auto i(0u); i < s; ++i) storage.create();
+			Benchmark::endLo();
+
+			Benchmark::start("AtomM - refresh");
+			storage.refresh();
+			Benchmark::endLo();
+
+			Benchmark::start("AtomM - iteration");
+			storage.forEach([](OBig& mO){ mO.a(); });
 			Benchmark::endLo();
 
 			Benchmark::start("AtomM - set dead");

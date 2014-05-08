@@ -198,43 +198,42 @@ template<typename T> class Manager
 			while(iDead < intSizeNext && atoms[iDead].alive) ++iDead;			
 			iAlive = iDead - 1;
 
-			for(int i{iDead}; i < intSizeNext; ++i)
+			for(int iD{iDead}; iD < intSizeNext; ++iD)
 			{
 				// Skip alive atoms
-				if(atoms[i].alive) continue;
+				if(atoms[iD].alive) continue;
 
 				// Found a dead atom - `i` now stores its index
 				// Look for an alive atom after the dead atom
-				for(int k{iDead + 1}; true; ++k)
+				for(int iA{iDead + 1}; true; ++iA)
 				{
-					if(atoms[k].alive)
+					if(atoms[iA].alive)
 					{
 						// Found an alive atom after dead `i` atom
-						std::swap(atoms[i], atoms[k]);
-						iAlive = i;
-						iDead = k;
+						std::swap(atoms[iA], atoms[iD]);
+						iAlive = iD; iDead = iA;
 						break;
 					}
 
 					// No more alive atoms, continue					
-					if(k == intSizeNext) goto later;					
+					if(iA == intSizeNext) goto later;					
 				}
 			}
 
 			later:
 
 			// [iAlive + 1, sizeNext) contains only dead atoms, clean them up
-			for(int j{iAlive + 1}; j < intSizeNext; ++j)				
+			for(int iD{iAlive + 1}; iD < intSizeNext; ++iD)				
 			{
-				atoms[j].deinitData();
-				++(getMarkFromAtom(atoms[j]).ctr);				
+				atoms[iD].deinitData();
+				++(getMarkFromAtom(atoms[iD]).ctr);				
 			}	
 
 			// Starting from the beginning, update alive entities and their marks			
-			int n{0};
-			for(; n <= iAlive; ++n) getMarkFromAtom(atoms[n]).idx = n;
+			int iA{0};
+			for(; iA <= iAlive; ++iA) getMarkFromAtom(atoms[iA]).idx = iA;
 
-			size = sizeNext = n; // Update size 		
+			size = sizeNext = iA; // Update size 		
 		}
 
 		template<typename TFunc> inline void forEach(TFunc mFunc)
@@ -452,7 +451,7 @@ void doBench()
 		~OBig() { ++state; }
 	};
 
-	constexpr std::size_t s(1000000);
+	constexpr std::size_t s(10000000);
 
 	{
 		{

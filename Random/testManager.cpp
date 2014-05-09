@@ -207,11 +207,14 @@ template<typename T> class HManager
 			// Type must be signed, to check with negative values later
 			int iDead{0};
 
+			// Convert sizeNext to int to avoid warnings/issues
+			const int intSizeNext(sizeNext);
+
 			// Find first alive and first dead atoms
-			while(iDead < sizeNext && atoms[iDead].alive) ++iDead;			
+			while(iDead < intSizeNext && atoms[iDead].alive) ++iDead;
 			int iAlive{iDead - 1};
 
-			for(int iD{iDead}; iD < sizeNext; ++iD)
+			for(int iD{iDead}; iD < intSizeNext; ++iD)
 			{
 				// Skip alive atoms
 				if(atoms[iD].alive) continue;
@@ -220,31 +223,31 @@ template<typename T> class HManager
 				// Look for an alive atom after the dead atom
 				for(int iA{iDead + 1}; true; ++iA)
 				{
-					// No more alive atoms, continue					
-					if(iA == sizeNext) goto finishRefresh;					
-					
+					// No more alive atoms, continue
+					if(iA == intSizeNext) goto finishRefresh;
+
 					// Skip dead atoms
 					if(!atoms[iA].alive) continue;
-					
+
 					// Found an alive atom after dead `iD` atom - swap and update mark
 					std::swap(atoms[iA], atoms[iD]);
 					getMarkFromAtom(atoms[iD]).atomIdx = iD;
 					iAlive = iD; iDead = iA;
 
-					break;					
+					break;
 				}
 			}
 
 			finishRefresh:
 
-			// [iAlive + 1, sizeNext) contains only dead atoms, clean them up
-			for(int iD{iAlive + 1}; iD < sizeNext; ++iD)				
+			// [iAlive + 1, intSizeNext) contains only dead atoms, clean them up
+			for(int iD{iAlive + 1}; iD < intSizeNext; ++iD)
 			{
 				atoms[iD].deinitData();
-				++(getMarkFromAtom(atoms[iD]).ctr);				
-			}	
+				++(getMarkFromAtom(atoms[iD]).ctr);
+			}
 
-			size = sizeNext = iAlive + 1; // Update size 		
+			size = sizeNext = iAlive + 1; // Update size
 		}
 
 		template<typename TFunc> inline void forEach(TFunc mFunc)

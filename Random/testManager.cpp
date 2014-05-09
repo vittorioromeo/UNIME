@@ -128,7 +128,7 @@ template<typename T> class HManager
 
 		inline void growCapacityTo(std::size_t mCapacity) 
 		{ 
-			SSVU_ASSERT(getCapacity() < mCapacity) 
+			SSVU_ASSERT(getCapacity() < mCapacity);
 			growCapacityBy(mCapacity - getCapacity());  
 		}
 
@@ -148,25 +148,25 @@ template<typename T> class HManager
 		inline Mark& getMarkFromAtom(const AtomType& mAtom)	noexcept { return marks[mAtom.markIdx]; }
 		inline AtomType& getAtomFromMark(const Mark& mMark) noexcept { return atoms[mMark.atomIdx]; }
 
-		inline void cleanUpMemory()
-		{
-			refresh();
-			for(auto i(0u); i < size; ++i) 				
-			{
-				SSVU_ASSERT(atoms[i].alive);
-				atoms[i].alive = false;						
-				atoms[i].deinitData();
-			}
-		}
-
 	public:
 		inline HManager() = default;
-		inline ~HManager() { cleanUpMemory(); }
+		inline ~HManager() { clear(); }
 
 		inline void clear() noexcept
 		{
-			cleanUpMemory();
-			atoms.clear(); marks.clear();
+			refresh();
+			
+			for(auto i(0u); i < size; ++i) 				
+			{
+				auto& atom(atoms[i]);
+				auto& mark(marks[i]);
+
+				SSVU_ASSERT(atom.alive);
+				atom.alive = false;						
+				atom.deinitData();
+				++mark.ctr;
+			}
+
 			size = sizeNext = 0u;
 		}
 
@@ -451,6 +451,11 @@ SSVUT_TEST(HandleManagerMixed)
 			SSVUT_EXPECT(mgr.getSize() == 0);
 			SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(a2.isAlive());
+			SSVUT_EXPECT(a3.isAlive());
+
 			mgr.refresh();
 
 			SSVUT_EXPECT(cc == 4);
@@ -458,10 +463,20 @@ SSVUT_TEST(HandleManagerMixed)
 			SSVUT_EXPECT(mgr.getSize() == 4);
 			SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(a2.isAlive());
+			SSVUT_EXPECT(a3.isAlive());
+
 			a0.destroy();
 			a1.destroy();
 			a2.destroy();
 			a3.destroy();
+
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(a2.isAlive());
+			SSVUT_EXPECT(a3.isAlive());
 
 			mgr.refresh();
 
@@ -469,6 +484,11 @@ SSVUT_TEST(HandleManagerMixed)
 			SSVUT_EXPECT(dd == 4);
 			SSVUT_EXPECT(mgr.getSize() == 0);
 			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+
+			SSVUT_EXPECT(!a0.isAlive());
+			SSVUT_EXPECT(!a1.isAlive());
+			SSVUT_EXPECT(!a2.isAlive());
+			SSVUT_EXPECT(!a3.isAlive());
 
 			mgr.refresh();
 
@@ -482,6 +502,11 @@ SSVUT_TEST(HandleManagerMixed)
 			a2 = mgr.create(cc, dd);
 			a3 = mgr.create(cc, dd);
 
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(a2.isAlive());
+			SSVUT_EXPECT(a3.isAlive());
+
 			SSVUT_EXPECT(cc == 8);
 			SSVUT_EXPECT(dd == 4);
 			SSVUT_EXPECT(mgr.getSize() == 0);
@@ -489,12 +514,22 @@ SSVUT_TEST(HandleManagerMixed)
 
 			mgr.refresh();
 
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(a2.isAlive());
+			SSVUT_EXPECT(a3.isAlive());
+
 			SSVUT_EXPECT(cc == 8);
 			SSVUT_EXPECT(dd == 4);
 			SSVUT_EXPECT(mgr.getSize() == 4);
 			SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
 			mgr.clear();
+
+			SSVUT_EXPECT(!a0.isAlive());
+			SSVUT_EXPECT(!a1.isAlive());
+			SSVUT_EXPECT(!a2.isAlive());
+			SSVUT_EXPECT(!a3.isAlive());
 
 			SSVUT_EXPECT(cc == 8);
 			SSVUT_EXPECT(dd == 8);
@@ -523,6 +558,8 @@ SSVUT_TEST(HandleManagerMixed)
 			SSVUT_EXPECT(mgr.getSizeNext() == 0);
 
 			auto a0(mgr.create(cc, dd));
+
+			SSVUT_EXPECT(a0.isAlive());			
 			
 			SSVUT_EXPECT(cc == 1);
 			SSVUT_EXPECT(dd == 0);
@@ -531,12 +568,16 @@ SSVUT_TEST(HandleManagerMixed)
 
 			mgr.refresh();
 
+			SSVUT_EXPECT(a0.isAlive());
+
 			SSVUT_EXPECT(cc == 1);
 			SSVUT_EXPECT(dd == 0);
 			SSVUT_EXPECT(mgr.getSize() == 1);
 			SSVUT_EXPECT(mgr.getSizeNext() == 1);
 
 			a0.destroy();
+
+			SSVUT_EXPECT(a0.isAlive());
 
 			SSVUT_EXPECT(cc == 1);
 			SSVUT_EXPECT(dd == 0);
@@ -545,12 +586,16 @@ SSVUT_TEST(HandleManagerMixed)
 
 			mgr.refresh();
 
+			SSVUT_EXPECT(!a0.isAlive());
+
 			SSVUT_EXPECT(cc == 1);
 			SSVUT_EXPECT(dd == 1);
 			SSVUT_EXPECT(mgr.getSize() == 0);
 			SSVUT_EXPECT(mgr.getSizeNext() == 0);
 
 			mgr.clear();
+
+			SSVUT_EXPECT(!a0.isAlive());
 
 			SSVUT_EXPECT(cc == 1);
 			SSVUT_EXPECT(dd == 1);

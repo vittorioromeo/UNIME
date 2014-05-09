@@ -190,7 +190,7 @@ template<typename T> class HManager
 			// Update the mark
 			auto& mark(getMarkFromAtom(atom));
 			mark.atomIdx = sizeNext;
-			++mark.ctr;
+			//++mark.ctr; // Probably not needed
 
 			// Update next size
 			++sizeNext;
@@ -220,25 +220,23 @@ template<typename T> class HManager
 				for(int iA{iDead + 1}; true; ++iA)
 				{
 					// No more alive atoms, continue					
-					if(iA == intSizeNext) goto tempLabel;					
+					if(iA == intSizeNext) goto finishRefresh;					
 					
-					if(atoms[iA].alive)
-					{
-						// Found an alive atom after dead `i` atom
-						std::swap(atoms[iA], atoms[iD]);
-						iAlive = iD; iDead = iA;
+					// Skip dead atoms
+					if(!atoms[iA].alive) continue;
+					
+					// Found an alive atom after dead `iD` atom - swap and update mark
+					std::swap(atoms[iA], atoms[iD]);
+					getMarkFromAtom(atoms[iD]).atomIdx = iD;
+					iAlive = iD; iDead = iA;
 
-						// Update swapped alive atom mark
-						getMarkFromAtom(atoms[iD]).atomIdx = iD;
-
-						break;
-					}
+					break;					
 				}
 			}
 
-			tempLabel:
+			finishRefresh:
 
-			// [iAlive + 1, sizeNext) contains only dead atoms, clean them up
+			// [iAlive + 1, intSizeNext) contains only dead atoms, clean them up
 			for(int iD{iAlive + 1}; iD < intSizeNext; ++iD)				
 			{
 				atoms[iD].deinitData();

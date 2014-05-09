@@ -16,7 +16,7 @@ namespace ob
 		using Idx = std::size_t;
 		using Ctr = int;
 
-		template<typename> class Manager;
+		template<typename> class HManager;
 
 		namespace Internal
 		{
@@ -38,12 +38,12 @@ namespace ob
 
 			template<typename T> class Atom 
 			{
-				template<typename> friend class Manager;
+				template<typename> friend class ::HManager;
 
 				private:
+					Uncertain<T> data;
 					Idx markIdx;
 					bool alive{false};
-					Uncertain<T> data;
 
 					// Initializes the internal data
 					template<typename... TArgs> inline void initData(TArgs&&... mArgs) 
@@ -61,7 +61,7 @@ namespace ob
 					}
 
 				public:
-					inline Atom() = default;
+					inline Atom() = default;	
 					inline Atom(Atom&&) = default;
 					inline Atom& operator=(Atom&&) = default;
 
@@ -77,23 +77,23 @@ namespace ob
 
 		template<typename T> class Handle
 		{
-			template<typename> friend class Manager;
+			template<typename> friend class HManager;
 
 			public:
 				using AtomType = typename Internal::Atom<T>;
 
 			private:
-				Manager<T>& manager;
+				HManager<T>* manager;
 				Idx markIdx;
 				Ctr ctr;
 
-				inline Handle(Manager<T>& mManager, Idx mCtrlIdx, Ctr mCtr) noexcept 
-					: manager(mManager), markIdx{mCtrlIdx}, ctr{mCtr} { }		
+				inline Handle(HManager<T>& mManager, Idx mMarkIdx, Ctr mCtr) noexcept 
+					: manager(&mManager), markIdx{mMarkIdx}, ctr{mCtr} { }		
 
 				template<typename TT> inline TT getAtomImpl() noexcept
 				{
 					SSVU_ASSERT(isAlive());
-					return manager.getAtomFromMark(manager.marks[markIdx]);
+					return manager->getAtomFromMark(manager->marks[markIdx]);
 				}
 				
 			public:
@@ -110,12 +110,12 @@ namespace ob
 				inline const T* operator->() const noexcept { return &(get()); }
 		};
 
-		template<typename T> class Manager
+		template<typename T> class HManager
 		{
 			template<typename> friend class Handle;
 
 			private:
-				struct Mark { Idx idx; Ctr ctr; };
+				struct Mark { Idx atomIdx; Ctr ctr; };
 
 			public:
 				using AtomType = typename Internal::Atom<T>;
@@ -127,124 +127,137 @@ namespace ob
 
 				inline std::size_t getCapacity() const noexcept { return atoms.size(); }	
 
-				inline void growCapacity(std::size_t mAmount)
-				{
-					auto oldSize(getCapacity()), newSize(oldSize + mAmount);
-					SSVU_ASSERT(newSize >= 0 && newSize >= oldSize);
+				inline void growCapacityBy(std::size_t mAmount)
+				{		
+					auto i(getCapacity()), newCapacity(getCapacity() + mAmount);
+					SSVU_ASSERT(newCapacity >= 0 && newCapacity >= getCapacity());
 
-					atoms.resize(newSize);
-					marks.resize(newSize);
+					atoms.resize(newCapacity);
+					marks.resize(newCapacity);
 
 					// Initialize resized storage
-					for(auto i(oldSize); i < newSize; ++i) atoms[i].markIdx = marks[i].idx = i;									
+					for(; i < newCapacity; ++i) atoms[i].markIdx = marks[i].atomIdx = i;									
+				}
+
+				inline void growCapacityTo(std::size_t mCapacity) 
+				{ 
+					SSVU_ASSERT(getCapacity() < mCapacity);
+					growCapacityBy(mCapacity - getCapacity());  
 				}
 
 				inline void growIfNeeded()
 				{
-					constexpr std::size_t growAmount{10};
-					if(getCapacity() <= sizeNext) growCapacity(growAmount);
+					constexpr float growMultiplier{2.f};
+					constexpr std::size_t growAmount{5};
+
+					if(getCapacity() <= sizeNext) growCapacityTo((getCapacity() + growAmount) * growMultiplier);		
 				}
 
-				inline void destroy(Idx mCtrlIdx) noexcept
+				inline void destroy(Idx mMarkIdx) noexcept
 				{			
-					getAtomFromMark(marks[mCtrlIdx]).setDead();
+					getAtomFromMark(marks[mMarkIdx]).setDead();
 				}
 
-				inline Mark& getMarkFromAtom(const AtomType& mAtom)	{ return marks[mAtom.markIdx]; }
-				inline AtomType& getAtomFromMark(const Mark& mMark)	{ return atoms[mMark.idx]; }
-
-				inline void cleanUpMemory()
-				{
-					refresh();
-					for(auto i(0u); i < size; ++i) 				
-					{
-						SSVU_ASSERT(atoms[i].alive);
-						atoms[i].alive = false;						
-						atoms[i].deinitData();
-					}
-				}
+				inline Mark& getMarkFromAtom(const AtomType& mAtom)	noexcept { return marks[mAtom.markIdx]; }
+				inline AtomType& getAtomFromMark(const Mark& mMark) noexcept { return atoms[mMark.atomIdx]; }
 
 			public:
-				inline Manager() = default;
-				inline ~Manager() { cleanUpMemory(); }
+				inline HManager() = default;
+				inline ~HManager() { clear(); }
 
 				inline void clear() noexcept
 				{
-					cleanUpMemory();
-					atoms.clear();
-					marks.clear();
+					refresh();
+					
+					for(auto i(0u); i < size; ++i) 				
+					{
+						auto& atom(atoms[i]);
+						auto& mark(marks[i]);
+
+						SSVU_ASSERT(atom.alive);
+						atom.alive = false;						
+						atom.deinitData();
+						++mark.ctr;
+					}
+
 					size = sizeNext = 0u;
 				}
 
-				inline void reserve(std::size_t mCapacity) { if(getCapacity() < mCapacity) growCapacity(mCapacity); }
+				inline void reserve(std::size_t mCapacity) { if(getCapacity() < mCapacity) growCapacityTo(mCapacity); }
 
-				template<typename... TArgs> inline Handle<T> create(TArgs&&... mArgs)
+				inline Handle<T> createHandleFromAtom(AtomType& mAtom) noexcept
+				{
+					return {*this, mAtom.markIdx, getMarkFromAtom(mAtom).ctr};	
+				}
+
+				template<typename... TArgs> inline AtomType& createAtom(TArgs&&... mArgs)		
 				{
 					// `sizeNext` may be greater than the sizes of the vectors - resize vectors if needed 
 					growIfNeeded();
 
 					// `sizeNext` now is the first empty valid index - we create our atom there
-					atoms[sizeNext].initData(std::forward<TArgs>(mArgs)...);
-					atoms[sizeNext].alive = true;
+					auto& atom(atoms[sizeNext]);
+					atom.initData(std::forward<TArgs>(mArgs)...);
+					atom.alive = true;
 
 					// Update the mark
-					auto cIdx(atoms[sizeNext].markIdx);
-					auto& mark(marks[cIdx]);
-					mark.idx = sizeNext;
-					++mark.ctr;
+					auto& mark(getMarkFromAtom(atom));
+					mark.atomIdx = sizeNext;			
 
-					// Update sizeNext free index
+					// Update next size
 					++sizeNext;
 
-					return {*this, cIdx, mark.ctr};	
+					return atom;
+				}
+
+				template<typename... TArgs> inline Handle<T> create(TArgs&&... mArgs)
+				{
+					return createHandleFromAtom(createAtom(std::forward<TArgs>(mArgs)...));
 				}	
 
 				inline void refresh()
 				{
 					// Type must be signed, to check with negative values later
-					int iAlive{0}, iDead{0};
-					
+					int iDead{0};
+
 					// Find first alive and first dead atoms
 					while(iDead < sizeNext && atoms[iDead].alive) ++iDead;			
-					iAlive = iDead - 1;
+					int iAlive{iDead - 1};
 
-					for(int i{iDead}; i < sizeNext; ++i)
+					for(int iD{iDead}; iD < sizeNext; ++iD)
 					{
 						// Skip alive atoms
-						if(atoms[i].alive) continue;
+						if(atoms[iD].alive) continue;
 
 						// Found a dead atom - `i` now stores its index
 						// Look for an alive atom after the dead atom
-						for(int k{iDead + 1}; true; ++k)
+						for(int iA{iDead + 1}; true; ++iA)
 						{
-							if(atoms[k].alive)
-							{
-								// Found an alive atom after dead `i` atom
-								std::swap(atoms[i], atoms[k]);
-								iAlive = i;
-								iDead = k;
-								break;
-							}
-
 							// No more alive atoms, continue					
-							if(k == sizeNext) goto later;					
+							if(iA == sizeNext) goto finishRefresh;					
+							
+							// Skip dead atoms
+							if(!atoms[iA].alive) continue;
+							
+							// Found an alive atom after dead `iD` atom - swap and update mark
+							std::swap(atoms[iA], atoms[iD]);
+							getMarkFromAtom(atoms[iD]).atomIdx = iD;
+							iAlive = iD; iDead = iA;
+
+							break;					
 						}
 					}
 
-					later:
+					finishRefresh:
 
 					// [iAlive + 1, sizeNext) contains only dead atoms, clean them up
-					for(int j{iAlive + 1}; j < sizeNext; ++j)				
+					for(int iD{iAlive + 1}; iD < sizeNext; ++iD)				
 					{
-						atoms[j].deinitData();
-						++(getMarkFromAtom(atoms[j]).ctr);				
+						atoms[iD].deinitData();
+						++(getMarkFromAtom(atoms[iD]).ctr);				
 					}	
 
-					// Starting from the beginning, update alive entities and their marks			
-					int n{0};
-					for(; n <= iAlive; ++n) getMarkFromAtom(atoms[n]).idx = n;
-
-					size = sizeNext = n; // Update size 		
+					size = sizeNext = iAlive + 1; // Update size 		
 				}
 
 				template<typename TFunc> inline void forEach(TFunc mFunc)
@@ -267,12 +280,12 @@ namespace ob
 
 		template<typename T> inline bool Handle<T>::isAlive() const noexcept
 		{ 
-			return manager.marks[markIdx].ctr == ctr;
+			return manager->marks[markIdx].ctr == ctr;
 		}
 
 		template<typename T> inline void Handle<T>::destroy() noexcept
 		{ 
-			return manager.destroy(markIdx);
+			return manager->destroy(markIdx);
 		}
 	}
 

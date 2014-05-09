@@ -3,7 +3,7 @@
 using Idx = std::size_t;
 using Ctr = int;
 
-template<typename> class Manager;
+template<typename> class HManager;
 
 namespace Internal
 {
@@ -25,7 +25,7 @@ namespace Internal
 
 	template<typename T> class Atom 
 	{
-		template<typename> friend class Manager;
+		template<typename> friend class ::HManager;
 
 		private:
 			Uncertain<T> data;
@@ -64,23 +64,23 @@ namespace Internal
 
 template<typename T> class Handle
 {
-	template<typename> friend class Manager;
+	template<typename> friend class HManager;
 
 	public:
 		using AtomType = typename Internal::Atom<T>;
 
 	private:
-		Manager<T>& manager;
+		HManager<T>* manager;
 		Idx markIdx;
 		Ctr ctr;
 
-		inline Handle(Manager<T>& mManager, Idx mMarkIdx, Ctr mCtr) noexcept 
-			: manager(mManager), markIdx{mMarkIdx}, ctr{mCtr} { }		
+		inline Handle(HManager<T>& mManager, Idx mMarkIdx, Ctr mCtr) noexcept 
+			: manager(&mManager), markIdx{mMarkIdx}, ctr{mCtr} { }		
 
 		template<typename TT> inline TT getAtomImpl() noexcept
 		{
 			SSVU_ASSERT(isAlive());
-			return manager.getAtomFromMark(manager.marks[markIdx]);
+			return manager->getAtomFromMark(manager->marks[markIdx]);
 		}
 		
 	public:
@@ -97,7 +97,7 @@ template<typename T> class Handle
 		inline const T* operator->() const noexcept { return &(get()); }
 };
 
-template<typename T> class Manager
+template<typename T> class HManager
 {
 	template<typename> friend class Handle;
 
@@ -160,8 +160,8 @@ template<typename T> class Manager
 		}
 
 	public:
-		inline Manager() = default;
-		inline ~Manager() { cleanUpMemory(); }
+		inline HManager() = default;
+		inline ~HManager() { cleanUpMemory(); }
 
 		inline void clear() noexcept
 		{
@@ -224,6 +224,10 @@ template<typename T> class Manager
 						// Found an alive atom after dead `i` atom
 						std::swap(atoms[iA], atoms[iD]);
 						iAlive = iD; iDead = iA;
+
+						// Update its mark
+						getMarkFromAtom(atoms[iAlive]).atomIdx = iAlive;
+
 						break;
 					}
 
@@ -241,11 +245,7 @@ template<typename T> class Manager
 				++(getMarkFromAtom(atoms[iD]).ctr);				
 			}	
 
-			// Starting from the beginning, update alive entities and their marks			
-			int iA{0};
-			for(; iA <= iAlive; ++iA) getMarkFromAtom(atoms[iA]).atomIdx = iA;
-
-			size = sizeNext = iA; // Update size 		
+			size = sizeNext = iAlive + 1; // Update size 		
 		}
 
 		template<typename TFunc> inline void forEach(TFunc mFunc)
@@ -268,15 +268,15 @@ template<typename T> class Manager
 
 template<typename T> inline bool Handle<T>::isAlive() const noexcept
 { 
-	return manager.marks[markIdx].ctr == ctr;
+	return manager->marks[markIdx].ctr == ctr;
 }
 
 template<typename T> inline void Handle<T>::destroy() noexcept
 { 
-	return manager.destroy(markIdx);
+	return manager->destroy(markIdx);
 }
 
-SSVUT_TEST(HandleManager)
+SSVUT_TEST(HandleManagerMixed)
 {
 	int cc{0}, dd{0};
 
@@ -290,146 +290,273 @@ SSVUT_TEST(HandleManager)
 		~OTest() { ++rDD; }
 	};
 
-	Manager<OTest> mgr;
-
-	for(int k = 0; k < 2; ++k)
+	// Mixed elements
 	{
-		cc = dd = 0;
+		HManager<OTest> mgr;
+		for(int k = 0; k < 2; ++k)
+		{
+			cc = dd = 0;
 
-		auto a0(mgr.create(cc, dd));
-		auto a1(mgr.create(cc, dd));
-		auto a2(mgr.create(cc, dd));
-		auto a3(mgr.create(cc, dd));
-		auto a4(mgr.create(cc, dd));
-		auto a5(mgr.create(cc, dd));
-		auto a6(mgr.create(cc, dd));
+			auto a0(mgr.create(cc, dd));
+			auto a1(mgr.create(cc, dd));
+			auto a2(mgr.create(cc, dd));
+			auto a3(mgr.create(cc, dd));
+			auto a4(mgr.create(cc, dd));
+			auto a5(mgr.create(cc, dd));
+			auto a6(mgr.create(cc, dd));
 
-		SSVUT_EXPECT(cc == 7);
-		SSVUT_EXPECT(dd == 0);
-		SSVUT_EXPECT(mgr.getSize() == 0);
-		SSVUT_EXPECT(mgr.getSizeNext() == 7);
+			SSVUT_EXPECT(cc == 7);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 7);
 
-		mgr.refresh();
+			mgr.refresh();
 
-		SSVUT_EXPECT(cc == 7);
-		SSVUT_EXPECT(dd == 0);
-		SSVUT_EXPECT(mgr.getSize() == 7);
-		SSVUT_EXPECT(mgr.getSizeNext() == 7);
+			SSVUT_EXPECT(cc == 7);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 7);
+			SSVUT_EXPECT(mgr.getSizeNext() == 7);
 
-		a0->s = "hi";
-		a4->s = "ciao";
-		a6->s = "bye";
+			a0->s = "hi";
+			a4->s = "ciao";
+			a6->s = "bye";
 
-		a2.destroy();
-		a3.destroy();
-		a5.destroy();
+			a2.destroy();
+			a3.destroy();
+			a5.destroy();
 
-		SSVUT_EXPECT(cc == 7);
-		SSVUT_EXPECT(dd == 0);
-		SSVUT_EXPECT(mgr.getSize() == 7);
-		SSVUT_EXPECT(mgr.getSizeNext() == 7);
+			SSVUT_EXPECT(cc == 7);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 7);
+			SSVUT_EXPECT(mgr.getSizeNext() == 7);
 
-		mgr.refresh();
+			mgr.refresh();
 
-		SSVUT_EXPECT(cc == 7);
-		SSVUT_EXPECT(dd == 3);
-		SSVUT_EXPECT(mgr.getSize() == 4);
-		SSVUT_EXPECT(mgr.getSizeNext() == 4);
+			SSVUT_EXPECT(cc == 7);
+			SSVUT_EXPECT(dd == 3);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
-		SSVUT_EXPECT(a0->s == "hi");
-		SSVUT_EXPECT(a4->s == "ciao");
-		SSVUT_EXPECT(a6->s == "bye");
+			SSVUT_EXPECT(a0->s == "hi");
+			SSVUT_EXPECT(a4->s == "ciao");
+			SSVUT_EXPECT(a6->s == "bye");
 
-		SSVUT_EXPECT(a0.isAlive());
-		SSVUT_EXPECT(a1.isAlive());
-		SSVUT_EXPECT(!a2.isAlive());
-		SSVUT_EXPECT(!a3.isAlive());
-		SSVUT_EXPECT(a4.isAlive());
-		SSVUT_EXPECT(!a5.isAlive());
-		SSVUT_EXPECT(a6.isAlive());
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(!a2.isAlive());
+			SSVUT_EXPECT(!a3.isAlive());
+			SSVUT_EXPECT(a4.isAlive());
+			SSVUT_EXPECT(!a5.isAlive());
+			SSVUT_EXPECT(a6.isAlive());
 
-		mgr.forEach([](OTest& mA){ mA.s += "bb"; });
+			mgr.forEach([](OTest& mA){ mA.s += "bb"; });
 
-		SSVUT_EXPECT(a0->s == "hibb");
-		SSVUT_EXPECT(a4->s == "ciaobb");
-		SSVUT_EXPECT(a6->s == "byebb");
+			SSVUT_EXPECT(a0->s == "hibb");
+			SSVUT_EXPECT(a4->s == "ciaobb");
+			SSVUT_EXPECT(a6->s == "byebb");
 
-		SSVUT_EXPECT(a0.isAlive());
-		SSVUT_EXPECT(a1.isAlive());
-		SSVUT_EXPECT(!a2.isAlive());
-		SSVUT_EXPECT(!a3.isAlive());
-		SSVUT_EXPECT(a4.isAlive());
-		SSVUT_EXPECT(!a5.isAlive());
-		SSVUT_EXPECT(a6.isAlive());
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(!a2.isAlive());
+			SSVUT_EXPECT(!a3.isAlive());
+			SSVUT_EXPECT(a4.isAlive());
+			SSVUT_EXPECT(!a5.isAlive());
+			SSVUT_EXPECT(a6.isAlive());
 
-		auto aNew(mgr.create(cc, dd));
-		aNew->s = "hehe";
+			auto aNew(mgr.create(cc, dd));
+			aNew->s = "hehe";
 
-		SSVUT_EXPECT(cc == 8);
-		SSVUT_EXPECT(dd == 3);
-		SSVUT_EXPECT(mgr.getSize() == 4);
-		SSVUT_EXPECT(mgr.getSizeNext() == 5);
+			SSVUT_EXPECT(cc == 8);
+			SSVUT_EXPECT(dd == 3);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-		mgr.refresh();
+			mgr.refresh();
 
-		SSVUT_EXPECT(cc == 8);
-		SSVUT_EXPECT(dd == 3);
-		SSVUT_EXPECT(mgr.getSize() == 5);
-		SSVUT_EXPECT(mgr.getSizeNext() == 5);
+			SSVUT_EXPECT(cc == 8);
+			SSVUT_EXPECT(dd == 3);
+			SSVUT_EXPECT(mgr.getSize() == 5);
+			SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-		SSVUT_EXPECT(a0.isAlive());
-		SSVUT_EXPECT(a1.isAlive());
-		SSVUT_EXPECT(!a2.isAlive());
-		SSVUT_EXPECT(!a3.isAlive());
-		SSVUT_EXPECT(a4.isAlive());
-		SSVUT_EXPECT(!a5.isAlive());
-		SSVUT_EXPECT(a6.isAlive());
-		SSVUT_EXPECT(aNew.isAlive());
+			SSVUT_EXPECT(a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(!a2.isAlive());
+			SSVUT_EXPECT(!a3.isAlive());
+			SSVUT_EXPECT(a4.isAlive());
+			SSVUT_EXPECT(!a5.isAlive());
+			SSVUT_EXPECT(a6.isAlive());
+			SSVUT_EXPECT(aNew.isAlive());
 
-		SSVUT_EXPECT(aNew->s == "hehe");
+			SSVUT_EXPECT(aNew->s == "hehe");
 
-		a0.destroy();		
-		mgr.refresh();
+			a0.destroy();		
+			mgr.refresh();
 
-		SSVUT_EXPECT(!a0.isAlive());
-		SSVUT_EXPECT(a1.isAlive());
-		SSVUT_EXPECT(!a2.isAlive());
-		SSVUT_EXPECT(!a3.isAlive());
-		SSVUT_EXPECT(a4.isAlive());
-		SSVUT_EXPECT(!a5.isAlive());
-		SSVUT_EXPECT(a6.isAlive());
-		SSVUT_EXPECT(aNew.isAlive());
+			SSVUT_EXPECT(!a0.isAlive());
+			SSVUT_EXPECT(a1.isAlive());
+			SSVUT_EXPECT(!a2.isAlive());
+			SSVUT_EXPECT(!a3.isAlive());
+			SSVUT_EXPECT(a4.isAlive());
+			SSVUT_EXPECT(!a5.isAlive());
+			SSVUT_EXPECT(a6.isAlive());
+			SSVUT_EXPECT(aNew.isAlive());
 
-		SSVUT_EXPECT(cc == 8);
-		SSVUT_EXPECT(dd == 4);
-		SSVUT_EXPECT(mgr.getSize() == 4);
-		SSVUT_EXPECT(mgr.getSizeNext() == 4);
+			SSVUT_EXPECT(cc == 8);
+			SSVUT_EXPECT(dd == 4);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
-		auto aSuicide(mgr.create(cc, dd));
-		
-		SSVUT_EXPECT(cc == 9);
-		SSVUT_EXPECT(dd == 4);
-		SSVUT_EXPECT(mgr.getSize() == 4);
-		SSVUT_EXPECT(mgr.getSizeNext() == 5);
+			auto aSuicide(mgr.create(cc, dd));
+			
+			SSVUT_EXPECT(cc == 9);
+			SSVUT_EXPECT(dd == 4);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-		aSuicide.destroy();
+			aSuicide.destroy();
 
-		SSVUT_EXPECT(cc == 9);
-		SSVUT_EXPECT(dd == 4);
-		SSVUT_EXPECT(mgr.getSize() == 4);
-		SSVUT_EXPECT(mgr.getSizeNext() == 5);
+			SSVUT_EXPECT(cc == 9);
+			SSVUT_EXPECT(dd == 4);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 5);
 
-		mgr.refresh();
+			mgr.refresh();
 
-		SSVUT_EXPECT(cc == 9);
-		SSVUT_EXPECT(dd == 5);
-		SSVUT_EXPECT(mgr.getSize() == 4);
-		SSVUT_EXPECT(mgr.getSizeNext() == 4);
+			SSVUT_EXPECT(cc == 9);
+			SSVUT_EXPECT(dd == 5);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 4);
 
-		mgr.clear();
+			mgr.clear();
 
-		SSVUT_EXPECT(cc == 9);
-		SSVUT_EXPECT(dd == 9);
+			SSVUT_EXPECT(cc == 9);
+			SSVUT_EXPECT(dd == 9);
+		}
+	}		
+
+	// All alive -> all dead -> all alive
+	{
+		HManager<OTest> mgr;
+		for(int k = 0; k < 2; ++k)
+		{
+			cc = dd = 0;
+
+			auto a0(mgr.create(cc, dd));
+			auto a1(mgr.create(cc, dd));
+			auto a2(mgr.create(cc, dd));
+			auto a3(mgr.create(cc, dd));
+
+			SSVUT_EXPECT(cc == 4);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 4);
+
+			mgr.refresh();
+
+			SSVUT_EXPECT(cc == 4);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 4);
+
+			a0.destroy();
+			a1.destroy();
+			a2.destroy();
+			a3.destroy();
+
+			mgr.refresh();
+
+			SSVUT_EXPECT(cc == 4);
+			SSVUT_EXPECT(dd == 4);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+
+			mgr.refresh();
+
+			SSVUT_EXPECT(cc == 4);
+			SSVUT_EXPECT(dd == 4);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+
+			a0 = mgr.create(cc, dd);
+			a1 = mgr.create(cc, dd);
+			a2 = mgr.create(cc, dd);
+			a3 = mgr.create(cc, dd);
+
+			SSVUT_EXPECT(cc == 8);
+			SSVUT_EXPECT(dd == 4);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 4);
+
+			mgr.refresh();
+
+			SSVUT_EXPECT(cc == 8);
+			SSVUT_EXPECT(dd == 4);
+			SSVUT_EXPECT(mgr.getSize() == 4);
+			SSVUT_EXPECT(mgr.getSizeNext() == 4);
+
+			mgr.clear();
+
+			SSVUT_EXPECT(cc == 8);
+			SSVUT_EXPECT(dd == 8);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+		}
+	}		
+
+	// Empty, one element
+	{
+		HManager<OTest> mgr;
+		for(int k = 0; k < 2; ++k)
+		{
+			cc = dd = 0;
+
+			SSVUT_EXPECT(cc == 0);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+
+			mgr.refresh();
+
+			SSVUT_EXPECT(cc == 0);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+
+			auto a0(mgr.create(cc, dd));
+			
+			SSVUT_EXPECT(cc == 1);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 1);
+
+			mgr.refresh();
+
+			SSVUT_EXPECT(cc == 1);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 1);
+			SSVUT_EXPECT(mgr.getSizeNext() == 1);
+
+			a0.destroy();
+
+			SSVUT_EXPECT(cc == 1);
+			SSVUT_EXPECT(dd == 0);
+			SSVUT_EXPECT(mgr.getSize() == 1);
+			SSVUT_EXPECT(mgr.getSizeNext() == 1);
+
+			mgr.refresh();
+
+			SSVUT_EXPECT(cc == 1);
+			SSVUT_EXPECT(dd == 1);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+
+			mgr.clear();
+
+			SSVUT_EXPECT(cc == 1);
+			SSVUT_EXPECT(dd == 1);
+			SSVUT_EXPECT(mgr.getSize() == 0);
+			SSVUT_EXPECT(mgr.getSizeNext() == 0);
+		}
 	}		
 }
 
@@ -506,7 +633,7 @@ void doBench()
 	{
 		{
 			Benchmark::start("AtomM - creation");
-			Manager<OSmall> storage;
+			HManager<OSmall> storage;
 			storage.reserve(s + 10000);
 			Benchmark::endLo();
 
@@ -598,7 +725,7 @@ void doBench()
 	{
 		{
 			Benchmark::start("AtomM - creation");
-			Manager<OBig> storage;
+			HManager<OBig> storage;
 			storage.reserve(s + 10000);
 			Benchmark::endLo();
 

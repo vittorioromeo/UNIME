@@ -587,7 +587,7 @@ void doBench()
 	constexpr std::size_t s(10000000);
 
 	{
-		Benchmark::start("Vector -small");
+		Benchmark::start("Vector - small");
 		{
 			Benchmark::start("Vector - creation");
 			std::vector<Uptr<OV<OSmall>>> storage;
@@ -697,6 +697,7 @@ void doBench()
 	ssvu::lo() << "" << std::endl;
 
 	{
+		Benchmark::start("Vector - big");
 		{
 			Benchmark::start("Vector - creation");
 			std::vector<Uptr<OV<OBig>>> storage;
@@ -740,10 +741,12 @@ void doBench()
 
 		Benchmark::endLo();
 	}
+	Benchmark::endLo();
 
 	ssvu::lo() << "" << std::endl;
 
 	{
+		Benchmark::start("AtomM - big");
 		{
 			Benchmark::start("AtomM - creation");
 			HManager<OBig> storage;
@@ -791,6 +794,7 @@ void doBench()
 
 		Benchmark::endLo();
 	}
+	Benchmark::endLo();
 }
 
 int main()

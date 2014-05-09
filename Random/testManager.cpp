@@ -48,7 +48,7 @@ namespace Internal
 			}
 
 		public:
-			inline Atom() = default;
+			inline Atom() = default;	
 			inline Atom(Atom&&) = default;
 			inline Atom& operator=(Atom&&) = default;
 
@@ -201,14 +201,14 @@ template<typename T> class HManager
 		inline void refresh()
 		{
 			// Type must be signed, to check with negative values later
-			int iAlive{0}, iDead{0};
+			int iDead{0};
 
 			// Convert `sizeNext` to int, to avoid warnings/runtime errors
 			const int intSizeNext(sizeNext);
 			
 			// Find first alive and first dead atoms
 			while(iDead < intSizeNext && atoms[iDead].alive) ++iDead;			
-			iAlive = iDead - 1;
+			int iAlive{iDead - 1};
 
 			for(int iD{iDead}; iD < intSizeNext; ++iD)
 			{
@@ -587,6 +587,7 @@ void doBench()
 	constexpr std::size_t s(10000000);
 
 	{
+		Benchmark::start("Vector -small");
 		{
 			Benchmark::start("Vector - creation");
 			std::vector<Uptr<OV<OSmall>>> storage;
@@ -634,10 +635,12 @@ void doBench()
 
 		Benchmark::endLo();
 	}
+	Benchmark::endLo();
 
 	ssvu::lo() << "" << std::endl;
 
 	{
+		Benchmark::start("AtomM - small");
 		{
 			Benchmark::start("AtomM - creation");
 			HManager<OSmall> storage;
@@ -689,6 +692,7 @@ void doBench()
 
 		Benchmark::endLo();
 	}
+	Benchmark::endLo();
 
 	ssvu::lo() << "" << std::endl;
 

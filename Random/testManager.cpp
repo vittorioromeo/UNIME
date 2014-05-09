@@ -177,7 +177,7 @@ template<typename T> class HManager
 			return {*this, mAtom.markIdx, getMarkFromAtom(mAtom).ctr};	
 		}
 
-		template<typename... TArgs> inline Handle<T> create(TArgs&&... mArgs)
+		template<typename... TArgs> inline AtomType& createAtom(TArgs&&... mArgs)		
 		{
 			// `sizeNext` may be greater than the sizes of the vectors - resize vectors if needed 
 			growIfNeeded();
@@ -189,13 +189,17 @@ template<typename T> class HManager
 
 			// Update the mark
 			auto& mark(getMarkFromAtom(atom));
-			mark.atomIdx = sizeNext;
-			//++mark.ctr; // Probably not needed
+			mark.atomIdx = sizeNext;			
 
 			// Update next size
 			++sizeNext;
 
-			return createHandleFromAtom(atom);
+			return atom;
+		}
+
+		template<typename... TArgs> inline Handle<T> create(TArgs&&... mArgs)
+		{
+			return createHandleFromAtom(createAtom(std::forward<TArgs>(mArgs)...));
 		}	
 
 		inline void refresh()

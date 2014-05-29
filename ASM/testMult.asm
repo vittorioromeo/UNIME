@@ -1,27 +1,32 @@
 %include "commonMacros.asm"
 
+; cdecl:
+; *) arguments are passed on the stack
+; *) ints and pointers are returned in eax
+; *) eax, ecx and edx are caller-saved
+; *) other registers are callee-saved
+; *) caller cleans stack
+
 ; MACRO: read an operand from terminal and put it in a variable
 ;	%1: target byte
 %macro MC_E_readOperand 1
 	; Read value
 	MC_linuxTermReadWithLen strBuffer, strBufferLen, [lastReadLen]	
 	
-	; Save eax
+	; Save registers
 	push eax
+	push ecx
+	push edx
 	
-	; Pass parameters to fnConvertStrToNum
 	push strBuffer
 	push lastReadLen
-
-	; fnConvertStrToNum returns its value in eax
 	call fnConvertStrToNum
 	mov %1, eax
-
-	; Discard parameters
+	add esp, 8
+	
+	; Restore registers
 	pop edx
-	pop edx
-
-	; Restore eax
+	pop eax
 	pop eax
 %endmacro
 
@@ -33,12 +38,11 @@
 %macro MC_E_division 4
 	; Save registers
 	push eax
-	push ebx
 	push ecx
 	push edx
 
 	; Perform division
-	mov edx, 0 		; clear dividend
+	mov edx, 0 		; clear dividend register
 	mov eax, %1   	; dividend
 	mov ecx, %2    	; divisor
 	idiv ecx           
@@ -50,7 +54,6 @@
 	; Restore registers
 	pop edx
 	pop ecx
-	pop ebx
 	pop eax
 %endmacro
 
@@ -60,10 +63,13 @@ global _start
 section .data
 	strMsg0: db "Insert multiply operand 1", 0Ah, 0							
 	strMsg0Len: equ $-strMsg0
+	
 	strMsg1: db "Insert multiply operand 2", 0Ah, 0
 	strMsg1Len: equ $-strMsg1
+	
 	strMsg2: db "Insert division operand 1", 0Ah, 0
 	strMsg2Len: equ $-strMsg2
+	
 	strMsg3: db "Insert division operand 2", 0Ah, 0
 	strMsg3Len: equ $-strMsg3
 
@@ -86,7 +92,6 @@ section .bss
 ; SECTION: code
 section .text
 	_start:
-
 		; MULTIPLICATION
 		MC_linuxTermPrint strMsg0, strMsg0Len
 		MC_E_readOperand [operand0]
@@ -94,13 +99,16 @@ section .text
 		MC_linuxTermPrint strMsg1, strMsg1Len
 		MC_E_readOperand [operand1]
 
+		; No need to save registers
+		
 		mov eax, [operand0]
 		imul eax, [operand1]
+		
 		push eax
 		push strBuffer
 		call fnConvertNumToStr
 		MC_linuxTermPrint strBuffer, 10
-
+		add esp, 8
 
 		; DIVISION
 		MC_linuxTermPrint strMsg2, strMsg2Len
@@ -109,17 +117,25 @@ section .text
 		MC_linuxTermPrint strMsg3, strMsg3Len
 		MC_E_readOperand [operand1]
 
-		MC_E_division [operand0], [operand1], [divResult], [divRemainder]
-		mov eax, [divResult]
+		; No need to save registers
+
+		mov eax, [operand0]
+		push eax
+		mov eax, [operand1]
+		push eax
+		push divRemainder
+		call fnIntDivision
+		add esp, 12
+
+		; No need to save registers
+
 		push eax
 		push strBuffer
 		call fnConvertNumToStr
 		MC_linuxTermPrint strBuffer, 10
-
-
+		add esp, 8
 
 		MC_exitProgram 0
-
 
 
 
@@ -128,59 +144,43 @@ section .text
 	;	stack param 2: source string buffer length
 	;	returns the converted value in eax
 	fnConvertStrToNum:
-		; Save registers
-		push ebx
-		push ecx
-		push edx
-
-		; Get user-passed parameters
-		mov eax, [esp + 12 + 8]	; buffer ptr
-		mov ebx, [esp + 12 + 4]	; buffer len
+		push ebx				; Save registers
+		
+		mov eax, [esp + 4 + 8]	; buffer ptr
+		mov ebx, [esp + 4 + 4]	; buffer len
 		mov ebx, [ebx]
 		
-		; Initialize temp variables
 		mov ecx, 0  			; result
-		;mov edx, 0 				; temp
 
-		loopCount:
-			; if(ebx == 0) goto loopEnd;
+		.loop:
+			; if(ebx == 0) goto .loopEnd;
 			cmp ebx, 0
-			je loopEnd	
+			je .loopEnd	
 			
-			; edx[0..4] = 0
-			; edx[0] = eax[0]
+			; edx[0..4] = 0;
+			; edx[0] = eax[0];
 			mov edx, 0 
 			movzx edx, byte [eax]
 			
 			; Check if edx contains a valid char digit
 			cmp edx, '0'
-			jl loopEnd
+			jl .loopEnd
 			cmp edx, '9'
-			jg loopEnd
+			jg .loopEnd
 
 			; Convert char digit to number
 			sub edx, '0'
 			imul ecx, 10
 			add ecx, edx
-	
-			; --ebx;
-			; ++eax;		
+			
 			dec ebx
 			inc eax
-			jmp loopCount
+			jmp .loop
 
-		loopEnd:
-			; Store return result in eax
-			mov eax, ecx
-
-			; Restore registers
-			pop edx
-			pop ecx
-			pop ebx
-
-			; Return
+		.loopEnd:
+			mov eax, ecx	; Store return result in eax			
+			pop ebx			; Restore registers							
 			ret
-
 
 
 
@@ -190,23 +190,21 @@ section .text
 	;   stack param TODO: number of digit chars 
 	fnConvertNumToStr:
 		; Save registers to the stack
-		push eax
 		push ebx
-		push edx
 		
 		; Get user-passed parameters
-		mov eax, [esp + 12 + 8]	; number
-		mov ebx, [esp + 12 + 4]	; output buffer
+		mov eax, [esp + 4 + 8]	; number
+		mov ebx, [esp + 4 + 4]	; output buffer
 
 		; Initialize temp variables
 		mov edx, 0 				; number of digits
 
 		; Find out number of digits
 		push eax
-		loopDigitCount:
-			; if(eax == 0) goto loopDigitCountEnd;
+		.loopCountDigit:
+			; if(eax == 0) goto .loopCountDigitEnd;
 			cmp eax, 0
-			je loopDigitCountEnd
+			je .loopCountDigitEnd
 			
 			; eax /= 10;
 			MC_E_division eax, 10, [divResult], [divRemainder]
@@ -215,18 +213,18 @@ section .text
 			; ++edx;
 			inc edx
 
-			jmp loopDigitCount
+			jmp .loopCountDigit
 
-		loopDigitCountEnd:
+		.loopCountDigitEnd:
 			pop eax
 
 		; eax == number
 		; edx == digits
 
-		loopCount_2:
-			; if(eax == 0) goto loopEnd_2;
+		.loop:
+			; if(eax == 0) goto .loopEnd;
 			cmp eax, 0
-			je loopEnd_2
+			je .loopEnd
 			
 			; eax /= 10;
 			MC_E_division eax, 10, [divResult], [divRemainder]
@@ -241,13 +239,32 @@ section .text
 			dec edx
 			mov [ebx + edx], ch
 
-			jmp loopCount_2
+			jmp .loop
 
-		loopEnd_2:
+		.loopEnd:
 			; Restore registers
-			pop edx			
-			pop ebx
-			pop eax
+			pop ebx			
 
 			; Return 
 			ret
+
+
+	; FUNCTION:
+	;	stack param 1: dividend
+	;	stack param 2: divisor
+	;	stack param 3: remainder target byte
+	; returns quotient in eax, sets remainder target byte
+	fnIntDivision:
+		push ebx	; Save registers
+
+		mov edx, 0 		; clear dividend register
+		mov eax, [esp + 4 + 12]	; dividend
+		mov ecx, [esp + 4 + 8]	; divisor		
+		idiv ecx				; Perform division
+
+		; Move results in target bytes
+		mov ebx, [esp + 4 + 4]
+		mov [ebx], edx
+
+		pop ebx		; Restore registers		
+		ret

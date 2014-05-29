@@ -132,7 +132,7 @@ section .text
 		push eax
 		push strBuffer
 		call fnConvertNumToStr
-		MC_linuxTermPrint strBuffer, 10
+		MC_linuxTermPrint strBuffer, 10 ; TODO: 10?
 		add esp, 8
 
 		MC_exitProgram 0
@@ -189,14 +189,9 @@ section .text
 	;	stack param 2: target output string buffer
 	;   stack param TODO: number of digit chars 
 	fnConvertNumToStr:
-		; Save registers to the stack
-		push ebx
-		
-		; Get user-passed parameters
+		push ebx				; Save registers to the stack
 		mov eax, [esp + 4 + 8]	; number
 		mov ebx, [esp + 4 + 4]	; output buffer
-
-		; Initialize temp variables
 		mov edx, 0 				; number of digits
 
 		; Find out number of digits
@@ -242,10 +237,7 @@ section .text
 			jmp .loop
 
 		.loopEnd:
-			; Restore registers
-			pop ebx			
-
-			; Return 
+			pop ebx		; Restore registers
 			ret
 
 

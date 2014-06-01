@@ -72,11 +72,10 @@ int albero_Inserisci_Ricorsivo(Albero* mRadice, int mDato)
 	return 1;
 }
 
-Albero* albero_Ricerca(Albero* mRadice, int mDato)
+Albero* albero_Ricerca(Albero* mA, int mDato)
 {
-	if(mRadice == NULL || mDato == mRadice->dato) return mRadice;
-	if(mDato < mRadice->dato) return albero_Ricerca(mRadice->sx, mDato);
-	return albero_Ricerca(mRadice->dx, mDato);
+	if(mA == NULL || mDato == mA->dato) return mA;
+	return albero_Ricerca(mDato < mA->dato ? mA->sx : mA->dx, mDato);
 }
 
 Albero* albero_getMinimo(Albero* mA)

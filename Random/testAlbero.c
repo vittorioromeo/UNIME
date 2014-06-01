@@ -74,9 +74,7 @@ int albero_Inserisci_Ricorsivo(Albero* mRadice, int mDato)
 
 Albero* albero_Ricerca(Albero* mRadice, int mDato)
 {
-	if(mRadice == NULL) return NULL;
-	
-	if(mDato == mRadice->dato) return mRadice;
+	if(mRadice == NULL || mDato == mRadice->dato) return mRadice;
 	if(mDato < mRadice->dato) return albero_Ricerca(mRadice->sx, mDato);
 	return albero_Ricerca(mRadice->dx, mDato);
 }

@@ -36,18 +36,6 @@ void albero_Distruggi(Albero** mA)
 	*mA = NULL;
 }
 
-int albero_Compara(Albero* mA, Albero* mB)
-{
-	if(mA->dato < mB->dato) return -1;
-	if(mA->dato > mB->dato) return 1;
-	return 0;
-}
-
-int albero_NonHaFigli(Albero* mA)
-{
-	return mA->sx == NULL && mA->dx == NULL;
-}
-
 int albero_Inserisci(Albero* mRadice, int mDato)
 {
 	Albero* prec = NULL;

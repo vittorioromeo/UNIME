@@ -122,30 +122,11 @@ Albero* albero_getPredecessore(Albero* mA)
 	while(mA->px != NULL && mA != mA->px->dx) mA = mA->px;
 	return mA->px;
 }
-void albero_StampaImpl(Albero* mA, int mDepth, int mDir)
-{
-	int k;
-	for(k = 0; k < mDepth; ++k) printf("----");
-	
-	if(mDir == 0) printf(" RX ");
-	else if(mDir == -1) printf(" SX ");
-	else printf(" DX ");
-
-	printf(" -> %d\n", mA->dato); 
-
-	if(mA->sx != NULL) albero_StampaImpl(mA->sx, mDepth + 1, -1);
-	if(mA->dx != NULL) albero_StampaImpl(mA->dx, mDepth + 1, 1);	
-}
-
-void albero_Stampa(Albero* mA)
-{
-	albero_StampaImpl(mA, 0, 0);
-}
 
 void stampaX(int mSpazi, const char* mStr)
 {
 	int i;
-	for(i = 0; i < mSpazi; ++i) printf(mStr);
+	for(i = 0; i < mSpazi; ++i) printf("%s", mStr);
 }
 
 int contaCifre(int mNumero)
@@ -154,7 +135,8 @@ int contaCifre(int mNumero)
 	
 	while(mNumero >= 10)
 	{
-		mNumero = mNumero % 10;
+		mNumero %= 10;
+		++risultato;
 	}
 
 	return risultato;
@@ -163,7 +145,7 @@ int contaCifre(int mNumero)
 void albero_AttraversaLiv(Albero* mRadice)
 {
 	Albero* coda[100];
-	int i, spazi = 40, precSpazi = 0, passaggi = 0, livello= 0;
+	int i, spazi = 50, precSpazi = 0, passaggi = 0, livello = 0;
 	for(i = 0; i < 100; ++i) coda[i] = NULL;
 
 	coda[0] = mRadice;		
@@ -194,9 +176,9 @@ void albero_AttraversaLiv(Albero* mRadice)
 			
 		if(++passaggi >= pow(2, livello)) 
 		{
-			printf("\n");
 			++livello;
 
+			printf("\n");
 			stampaX(spazi - 1, " ");
 			printf("|");
 			
@@ -207,10 +189,10 @@ void albero_AttraversaLiv(Albero* mRadice)
 				printf("|");
 			}
 
+			printf("\n");
+			
 			precSpazi = spazi;
 			spazi /= 2;
-			
-			printf("\n");
 			passaggi = 0;
 		}
 	}
@@ -232,12 +214,11 @@ int main()
 	albero_Inserisci(a, 15);
 	albero_Inserisci(a, 17);
 
-
 	albero_AttraversaLiv(a);
+ 
+ 	return 0;
 
-	return 0;
 
-	albero_Stampa(a);
 
 	Albero* test = albero_Ricerca(a, 9);
 	Albero* testSuccessore = albero_getPredecessore(test);

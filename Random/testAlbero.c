@@ -36,6 +36,14 @@ void albero_Distruggi(Albero** mA)
 	*mA = NULL;
 }
 
+void albero_Distruggi_Ricorsivo(Albero** mA)
+{
+	if((*mA)->sx != NULL) albero_Distruggi_Ricorsivo(&(*mA)->sx);
+	if((*mA)->dx != NULL) albero_Distruggi_Ricorsivo(&(*mA)->dx);
+
+	albero_Distruggi(mA);
+}
+
 int albero_Inserisci(Albero* mRadice, int mDato)
 {
 	Albero* prec = NULL;
@@ -93,6 +101,7 @@ Albero* albero_getMassimo(Albero* mA)
 Albero* albero_getSuccessore(Albero* mA)
 {
 	if(mA->dx != NULL) return albero_getMinimo(mA->dx);
+	if(mA->px == NULL) return NULL;
 	if(mA == mA->px->sx) return mA->px;
 
 	while(mA->px != NULL && mA != mA->px->sx) mA = mA->px;
@@ -102,10 +111,47 @@ Albero* albero_getSuccessore(Albero* mA)
 Albero* albero_getPredecessore(Albero* mA)
 {
 	if(mA->sx != NULL) return albero_getMassimo(mA->sx);
+	if(mA->px == NULL) return NULL;
 	if(mA == mA->px->dx) return mA->px;
 
 	while(mA->px != NULL && mA != mA->px->dx) mA = mA->px;
 	return mA->px;
+}
+
+int albero_Rimuovi(Albero* mA)
+{
+	Albero* padre = mA->px;
+
+	if(padre != NULL)
+	{
+		Albero** figlioPadre = (padre->sx == mA) ? &(padre->sx) : &(padre->dx);
+	
+		if(mA->sx == NULL && mA->dx == NULL) *figlioPadre = NULL;
+		else if(mA->sx != NULL && mA->dx == NULL) *figlioPadre = mA->sx;
+		else if(mA->sx == NULL && mA->dx != NULL) *figlioPadre = mA->dx;
+	}
+
+	if(padre == NULL || (mA->sx != NULL && mA->dx != NULL))
+	{
+		Albero* next = albero_getSuccessore(mA);
+		if(next == NULL) next = albero_getPredecessore(mA);
+		mA->dato = next->dato;
+		
+		return albero_Rimuovi(next);
+	}
+
+	albero_Distruggi(&mA);
+	return 0;
+}
+
+int albero_getAltezza(Albero* mRadice)
+{
+	if(mRadice == NULL) return -1;
+
+	int hSx = albero_getAltezza(mRadice->sx);
+	int hDx = albero_getAltezza(mRadice->dx);
+
+	return hSx > hDx ? hSx + 1 : hDx + 1;
 }
 
 void stampaX(int mSpazi, const char* mStr)
@@ -130,7 +176,7 @@ int contaCifre(int mNumero)
 void albero_AttraversaLiv(Albero* mRadice)
 {
 	Albero* coda[100];
-	int i, spazi = 50, precSpazi = 0, passaggi = 0, livello = 0;
+	int i, spazi = 44, precSpazi = 0, passaggi = 0, livello = 0;
 	for(i = 0; i < 100; ++i) coda[i] = NULL;
 
 	coda[0] = mRadice;		
@@ -145,8 +191,8 @@ void albero_AttraversaLiv(Albero* mRadice)
 		{
 			cifre = contaCifre(c->dato);
 
-			stampaX(numSimboli - cifre, simbolo);			
-			printf("%d", c->dato);
+			stampaX(numSimboli - cifre - 4, simbolo);			
+			printf("( %d )", c->dato);
 
 			coda[2 * i + 1] = c->sx;
 			coda[2 * i + 2] = c->dx;
@@ -156,7 +202,7 @@ void albero_AttraversaLiv(Albero* mRadice)
 			cifre = 1;
 
 			stampaX(numSimboli - cifre, simbolo);
-			printf("o");			
+			printf("X");			
 		}
 			
 		if(++passaggi >= pow(2, livello)) 
@@ -198,13 +244,24 @@ int main()
 	albero_Inserisci(a, 10);
 	albero_Inserisci(a, 15);
 	albero_Inserisci(a, 17);
+	albero_Inserisci(a, 4);
+	albero_Inserisci(a, 1);
+	albero_Inserisci(a, 11);
 
 	albero_AttraversaLiv(a);
+
+	printf("\n\n");
+	albero_Rimuovi(albero_Ricerca(a, 5));
+	albero_AttraversaLiv(a);
+
+	printf("\nAltezza: %d", albero_getAltezza(a));
  
+	albero_Distruggi_Ricorsivo(&a);
+	
  	return 0;
 
 
-
+/*
 	Albero* test = albero_Ricerca(a, 9);
 	Albero* testSuccessore = albero_getPredecessore(test);
 	
@@ -212,6 +269,5 @@ int main()
 		printf("\nSuccessore di %d: %d", test->dato, testSuccessore->dato);
 	else
 		printf("\nSuccessore di %d: NULL", test->dato);
-
-	albero_Distruggi(&a);
+*/
 }

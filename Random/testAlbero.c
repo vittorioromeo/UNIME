@@ -2,13 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 
-typedef struct AlberoImpl
+struct AlberoImpl;
+typedef struct AlberoImpl Albero;
+
+struct AlberoImpl
 {
-	struct AlberoImpl* px;
-	struct AlberoImpl* sx;
-	struct AlberoImpl* dx;
+	Albero* px;
+	Albero* sx;
+	Albero* dx;
 	int dato;
-} Albero;
+};
 
 int albero_Crea(Albero** mA, int mDato)
 {
@@ -259,15 +262,4 @@ int main()
 	albero_Distruggi_Ricorsivo(&a);
 	
  	return 0;
-
-
-/*
-	Albero* test = albero_Ricerca(a, 9);
-	Albero* testSuccessore = albero_getPredecessore(test);
-	
-	if(testSuccessore != NULL)
-		printf("\nSuccessore di %d: %d", test->dato, testSuccessore->dato);
-	else
-		printf("\nSuccessore di %d: NULL", test->dato);
-*/
 }

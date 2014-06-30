@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <VeeLib/VeeLib.h>
 
 /// @brief Structure used as a return type for debt functions.
 typedef struct 
@@ -80,7 +81,11 @@ double calculateRequiredFixedRate(double mDebt, double mAnnualInterest, int mExp
 void printDebtForAnYear(double mDebt, double mAnnualInterest, double mVariableMonthlyRate)
 {
 	int m;
+	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 	printf("Printing debts for an year:\n");
+	vlc_resetFmt();
+
 	printf("\tAnnual interest -> %f\n", mAnnualInterest);
 	printf("\tMonthly rate    -> %f\n\n", mVariableMonthlyRate);
 
@@ -95,7 +100,11 @@ void printDebtForAnYear(double mDebt, double mAnnualInterest, double mVariableMo
 void printDebtExpectedMonthsFixedRate(double mDebt, double mAnnualInterest, double mFixedRate, int mExpectedMonths)
 {
 	int m = 0;
+
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
 	printf("Printing debts with fixed rates - can it be done in %d months?\n", mExpectedMonths);
+	vlc_resetFmt();
+
 	printf("\tAnnual interest -> %f\n", mAnnualInterest);
 	printf("\tFixed rate      -> %f\n\n", mFixedRate);
 
@@ -118,7 +127,8 @@ void printDebtExpectedMonthsFixedRate(double mDebt, double mAnnualInterest, doub
 int main()
 {
 	printDebtForAnYear(4213, 0.2, 0.04);
+	printf("\n");
 	printDebtExpectedMonthsFixedRate(4213, 0.2, 872, 5);
-
-	printf("Test: %f", calculateRequiredFixedRate(4213, 0.2, 5));
+	printf("\n");
+	printf("Required fixed rate test: %f\n", calculateRequiredFixedRate(4213, 0.2, 5));
 }

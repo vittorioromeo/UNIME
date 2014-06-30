@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <VeeLib/VeeLib.h>
 
 /// @brief Returns the count of `mKey` elements in `mArray`.
 int f1RecursiveCount(int* mArray, int mSize, int mKey)
@@ -77,23 +78,53 @@ int main()
 	int array[] = {1, 2, 4, 1, 4, 3, 2, 1, 1, 7, 12};
 	int size = sizeof array / sizeof(int);
 
-	printf("%d\n", 		f1RecursiveCount(array, size, 1));
-	printf("%d\n\n", 	f1RecursiveCount(array, size, 4));
+	// Print array
+	{
+		int i;
+		vlc_setFmt(vlc_StyleBold, vlc_ColorYellow);
+		printf("Array: ");
+		vlc_resetFmt();
+		for(i = 0; i < size; ++i) printf("%d, ", array[i]);
+		printf("\n\n");
+	}
 
-	printf("%d\n", 		f2RecursiveExists(array, size, 1) != -1);
-	printf("%d\n", 		f2RecursiveExists(array, size, 2) != -1);
-	printf("%d\n", 		f2RecursiveExists(array, size, 4) != -1);
-	printf("%d\n\n\n", 	f2RecursiveExists(array, size, 122) != -1);
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+	printf("F1 recursive count:\n");
+	vlc_resetFmt();
+	printf("Count of 1: %d\n", 		f1RecursiveCount(array, size, 1));
+	printf("Count of 4: %d\n\n", 	f1RecursiveCount(array, size, 4));
 
-	printf("%d\n", 		f1ImplWithF2(array, size, 1));
-	printf("%d\n\n", 	f1ImplWithF2(array, size, 4));
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+	printf("F2 recursive exists:\n");
+	vlc_resetFmt();
+	printf("Exists? (1): %d\n", 		f2RecursiveExists(array, size, 1) != -1);
+	printf("Exists? (2): %d\n", 		f2RecursiveExists(array, size, 2) != -1);
+	printf("Exists? (4): %d\n", 		f2RecursiveExists(array, size, 4) != -1);
+	printf("Exists? (122): %d\n\n\n", 	f2RecursiveExists(array, size, 122) != -1);
 
-	printf("%d\n", 		f2ImplWithF1(array, size, 1) != 0);
-	printf("%d\n", 		f2ImplWithF1(array, size, 2) != 0);
-	printf("%d\n", 		f2ImplWithF1(array, size, 4) != 0);
-	printf("%d\n", 		f2ImplWithF1(array, size, 122) != 0);
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("F1 implemented with F2:\n");
+	vlc_resetFmt();
+	printf("Count of 1: %d\n", 		f1ImplWithF2(array, size, 1));
+	printf("Count of 4: %d\n\n", 	f1ImplWithF2(array, size, 4));
 
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("F2 implemented with F1:\n");
+	vlc_resetFmt();
+	printf("Exists? (1): %d\n", 		f2ImplWithF1(array, size, 1) != 0);
+	printf("Exists? (2): %d\n", 		f2ImplWithF1(array, size, 2) != 0);
+	printf("Exists? (4): %d\n", 		f2ImplWithF1(array, size, 4) != 0);
+	printf("Exists? (122): %d\n\n\n", 	f2ImplWithF1(array, size, 122) != 0);
+
+	vlc_setFmt(vlc_StyleBold, vlc_ColorYellow);
+	printf("Reverse recursive print:\n");
+	vlc_resetFmt();
 	recursiveInversePrint(array, size);
+	printf("\n");
+
+	vlc_setFmt(vlc_StyleBold, vlc_ColorYellow);
+	printf("Sin value tests:\n");
+	vlc_resetFmt();
 	printf("sin(3.14 * 0.2): %f\n", sinMcLaurinRecursive(3.14 * 0.2, 9));
 	printf("sin(3.14 * 0.4): %f\n", sinMcLaurinRecursive(3.14 * 0.4, 9));
 	printf("sin(3.14 * 0.6): %f\n", sinMcLaurinRecursive(3.14 * 0.6, 9));

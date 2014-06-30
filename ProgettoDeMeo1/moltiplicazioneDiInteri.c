@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <VeeLib/VeeLib.h>
 
 int multIterative(int mA, int mB)
 {
@@ -47,6 +48,13 @@ int multRecursive(int mA, int mB)
 
 int main()
 {
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+	printf("Iterative (%d * %d): ", 71, 15);
+	vlc_resetFmt();
 	printf("%d\n", multIterative(71, 15));
+
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Recursive (%d * %d): ", 71, 15);
+	vlc_resetFmt();
 	printf("%d\n", multRecursive(71, 15));
 }

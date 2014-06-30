@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <VeeLib/VeeLib.h>
 
 /// @brief Computes the union of `mAInc` and `mADec` in `mATarget`.
 /// @details `mATarget` will be filled in increasing order.
@@ -127,24 +128,54 @@ int arrayUnionDec(int* mAInc, int mAIncSize, int* mADec, int mADecSize, int* mAT
 
 int main()
 {
+	int i;
+
 	int aInc[] = {1, 1, 3, 4, 5, 12, 13, 22, 22, 23};
 	int aIncSize = sizeof(aInc) / sizeof(aInc[0]);
 
 	int aDec[] = {30, 23, 22, 21, 14, 13, 12, 11, 10, 6, 4, 2, 1, 0};
 	int aDecSize = sizeof(aDec) / sizeof(aDec[0]);
 
-	int aTargetSize = aIncSize + aDecSize;
-	int* aTarget = (int*) malloc(aTargetSize * sizeof(int));
-
+	// Print array 1
 	{
-		int aTargetNewSize = arrayUnionInc(aInc, aIncSize, aDec, aDecSize, aTarget), i;
-		for(i = 0; i < aTargetNewSize; ++i) printf(" %d ", aTarget[i]);
+		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+		printf("Array 1: ");
+		vlc_resetFmt();
+		for(i = 0; i < aIncSize; ++i) printf("%d, ", aInc[i]);
 		printf("\n");
 	}
 
+	// Print array 2
 	{
-		int aTargetNewSize = arrayUnionDec(aInc, aIncSize, aDec, aDecSize, aTarget), i;
-		for(i = 0; i < aTargetNewSize; ++i) printf(" %d ", aTarget[i]);
+		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+		printf("Array 2: ");
+		vlc_resetFmt();
+		for(i = 0; i < aDecSize; ++i) printf("%d, ", aDec[i]);
+		printf("\n\n");
+	}
+
+	// Allocate target array	
+	int aTargetSize = aIncSize + aDecSize;
+	int* aTarget = (int*) malloc(aTargetSize * sizeof(int));
+
+	// Print union inc
+	{
+		vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+		printf("Union inc: ");
+		vlc_resetFmt();
+		int aTargetNewSize = arrayUnionInc(aInc, aIncSize, aDec, aDecSize, aTarget);
+		for(i = 0; i < aTargetNewSize; ++i) printf("%d, ", aTarget[i]);
+		printf("\n");
+	}
+
+	// Print union dec
+	{
+		vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+		printf("Union dec: ");
+		vlc_resetFmt();
+		int aTargetNewSize = arrayUnionDec(aInc, aIncSize, aDec, aDecSize, aTarget);
+		for(i = 0; i < aTargetNewSize; ++i) printf("%d, ", aTarget[i]);
+		printf("\n");
 	}
 
 

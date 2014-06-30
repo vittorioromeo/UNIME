@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <VeeLib/VeeLib.h>
 
 /// @brief Utility function to swap two int values.
 void swapInt(int* mA, int *mB)
@@ -123,14 +124,18 @@ int sortedSumExistance(int* mArray, int mSize, int mDesiredValue)
 /// @details Assumes the array is sorted. Linear computational complexity.
 void printSmallestSequenceSumSorted(int* mArray, int mSize, int mDesiredValue)
 {
-	printf("\nSmallest sequence for (>%d): { ", mDesiredValue);
+	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+	printf("Smallest sequence for (>%d): ", mDesiredValue);
+	vlc_resetFmt();
+
+	printf("{ ");
 
 	int ub, accumulator = 0;
 
 	for(ub = mSize - 1; accumulator <= mDesiredValue && ub >= 0; --ub)
 	{		
 		accumulator += mArray[ub];	
-		printf("%d ", mArray[ub]);
+		printf("%d, ", mArray[ub]);
 	}
 
 	if(accumulator <= mDesiredValue) printf("... not found ... ");
@@ -140,28 +145,54 @@ void printSmallestSequenceSumSorted(int* mArray, int mSize, int mDesiredValue)
 
 int main()
 {
+	int i;
 	int array[] = {4, 3, 6, 2, 7, 11, 5, 8, 9};
 	int arraySize = (sizeof(array) / sizeof(array[0]));
 
+	// Print array
+	{
+		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+		printf("Array: ");
+		vlc_resetFmt();
+		for(i = 0; i < arraySize; ++i) printf("%d, ", array[i]);
+		printf("\n\n");
+	}
+
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Sorting array...\n\n");
+	
 	selectionSort(array, arraySize);
 
-	int i;
-	for(i = 0; i < arraySize; ++i) printf("%d, ", array[i]);
+	// Print sorted array
+	{
+		vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+		printf("Sorted array: ");
+		vlc_resetFmt();
+		for(i = 0; i < arraySize; ++i) printf("%d, ", array[i]);
+		printf("\n\n");
+	}
 	
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Checking sum existance (brute force):\n");
+	vlc_resetFmt();
+	printf("(x + y = %d ?) -> %d\n", 16, bruteForceSumExistance(array, arraySize, 16));
+	printf("(x + y = %d ?) -> %d\n", 17, bruteForceSumExistance(array, arraySize, 17));
+	printf("(x + y = %d ?) -> %d\n", 1, bruteForceSumExistance(array, arraySize, 1));
+	printf("(x + y = %d ?) -> %d\n", 91, bruteForceSumExistance(array, arraySize, 91));
 	printf("\n");
 
-	printf("%d\n", bruteForceSumExistance(array, arraySize, 16));
-	printf("%d\n", bruteForceSumExistance(array, arraySize, 17));
-	printf("%d\n", bruteForceSumExistance(array, arraySize, 1));
-	printf("%d\n", bruteForceSumExistance(array, arraySize, 91));
-
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Checking sum existance (binary search):\n");
+	vlc_resetFmt();
+	printf("(x + y = %d ?) -> %d\n", 16, sortedSumExistance(array, arraySize, 16));
+	printf("(x + y = %d ?) -> %d\n", 17, sortedSumExistance(array, arraySize, 17));
+	printf("(x + y = %d ?) -> %d\n", 1, sortedSumExistance(array, arraySize, 1));
+	printf("(x + y = %d ?) -> %d\n", 91, sortedSumExistance(array, arraySize, 91));
 	printf("\n");
 
-	printf("%d\n", sortedSumExistance(array, arraySize, 16));
-	printf("%d\n", sortedSumExistance(array, arraySize, 17));
-	printf("%d\n", sortedSumExistance(array, arraySize, 1));
-	printf("%d\n", sortedSumExistance(array, arraySize, 91));
-
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Printing smallest sequences:\n");
+	vlc_resetFmt();
 	printSmallestSequenceSumSorted(array, arraySize, 15);	
 	printSmallestSequenceSumSorted(array, arraySize, 20);	
 	printSmallestSequenceSumSorted(array, arraySize, 25);	

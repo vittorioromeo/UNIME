@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <VeeLib/VeeLib.h>
 
 /// @brief Returns the absolute value of `mA`
 double myAbs(double mA) { return mA >= 0 ? mA : -mA; }
@@ -46,6 +47,9 @@ int main()
 	double step1 = 0.01;
 	double ep1 = 0.1;
 
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Basic sqrt tests:\n");
+	vlc_resetFmt();
 	printf("Sqrt of 3: %f\n", mySqrtAlg1(3, ep1, step1, &tempItr));
 	printf("Iterations: %d\n\n", tempItr);
 
@@ -64,6 +68,9 @@ int main()
 	printf("Sqrt of 34: %f\n", mySqrtAlg1(34, ep1, step1, &tempItr));
 	printf("Iterations: %d\n\n", tempItr);
 
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Epsilon sqrt tests:\n");
+	vlc_resetFmt();
 	{
 		double num = 312;
 		double ep = 0.1;
@@ -107,6 +114,9 @@ int main()
 		printf("Iterations: %d\n\n", tempItr);
 	}
 
+	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+	printf("Cubic root tests:\n");
+	vlc_resetFmt();
 	printf("Cubic root of 8: %f\n", myCubicRootAlg1(8, ep1, step1, &tempItr));
 	printf("Iterations: %d\n\n", tempItr);
 

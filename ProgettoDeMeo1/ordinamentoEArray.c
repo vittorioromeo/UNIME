@@ -115,7 +115,10 @@ int sortedSumExistance(int* mArray, int mSize, int mDesiredValue)
 	// Strategy: pick a pivot, then use binary search to look for `mDesiredValue - pivot` in the array
 
 	int pivot;
-	for(pivot = 0; pivot < mSize; ++pivot) if(binarySearchInt(mArray, mSize, mDesiredValue - pivot) != -1) return 0;
+
+	for(pivot = 0; pivot < mSize; ++pivot) 
+		if(binarySearchInt(mArray, mSize, mDesiredValue - pivot) != -1) 
+			return 0;
 	
 	return 1;
 }

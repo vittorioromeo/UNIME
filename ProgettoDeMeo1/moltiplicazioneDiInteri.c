@@ -7,6 +7,7 @@
 #include <math.h>
 #include <VeeLib/VeeLib.h>
 
+/// @brief Multiplies `mA` and `mB`, and returns the result. Iterative version.
 int multIterative(int mA, int mB)
 {
 	if(mA == 0 || mB == 0) return 0;
@@ -24,6 +25,7 @@ int multIterative(int mA, int mB)
 	return result;
 }
 
+/// @brief Multiplies `mA` and `mB`, and returns the result. Recursive version.
 int multRecursive(int mA, int mB)
 {
 	if(mA == 0 || mB == 0) return 0;

@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <VeeLib/VeeLib.h>
 
 /// @brief Structure used as a return type for debt functions.
@@ -38,6 +39,8 @@ DebtResult getRemainingDebt(double mDebt, double mRate, double mAnnualInterest, 
 /// @brief Returns the optimal fixed rate to pay a debt in `mExpectedMonths`.
 double calculateRequiredFixedRate(double mDebt, double mAnnualInterest, int mExpectedMonths)
 {
+	assert(mExpectedMonths > 0);
+
 	double monthlyInterest = mAnnualInterest / 12.0;
 
 	// I look for two bound values that the optimal rate will never exceed.

@@ -74,9 +74,9 @@ ABC solvePenProblem(int mN)
 	// We then loop through all possible values of a, b, c, checking if 
 	// we found a valid solution.
 
-	for(r.a = 0; r.a < ubA; ++r.a)
-		for(r.b = 0; r.b < ubB; ++r.b)
-			for(r.c = 0; r.c < ubC; ++r.c)							
+	for(r.a = 0; r.a <= ubA; ++r.a)
+		for(r.b = 0; r.b <= ubB; ++r.b)
+			for(r.c = 0; r.c <= ubC; ++r.c)							
 				if(5 * r.a + 8 * r.b + 24 * r.c == mN) return r;
 				
 	// In case we couldn't find a suitable solution, set `r.valid` to 1.

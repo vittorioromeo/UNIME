@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head >
+<script src="framework/jquery"></script>
+<link href="css/ospedale.css" rel="stylesheet" type="text/css">
+<link href="css/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="css/bootstrap/js/bootstrap.min.js"></script>
+</head> 
+
+
+
+
+<!--********************************************-->
+<!--FUNZIONI-->
+<!--********************************************-->
+<script>
+function mostra_reparti(){
+   $("#section").load("php_query/queryreparti.php");
+}
+function mostra_reparti_ordinati(){
+	$("#section").load("php_query/queryrepartiordinati.php")
+}
+function mostra_personale(){
+   $("#section").load("php_query/querypersonale.php");
+}
+function mostra_turni(){
+   
+  $("#section").load("php_query/queryturni.php");
+}
+function mostra_pazienti(){
+   $("#section").load("php_query/querypazienti.php");
+}
+function mostra_eta_pazienti(){
+	$("#section").load("php_query/querypazientieta.php")
+}
+function mostra_cartelle_cliniche(){
+   $("#section").load("php_query/querycartellecliniche.php");
+}
+function mostra_visite(){
+   $("#section").load("php_query/queryvisite.php");
+}
+function mostra_in_cura_con(){
+	$("#section").load("php_query/queryincuracon.php");
+}
+function mostra_dottori_turni (idTurno){
+	$("#dettaglio_turno").load("php_query/querymostradottori.php?idTurno="+idTurno);
+}
+function inserisci_dottore(){
+  $("#section").load("php_query/inserimento/insert_dipendente.php");
+}
+function elimina_dottore(){
+	$("#section").load("php_query/Eliminazione/delete_dipendente.php");
+}
+</script>
+<!--********************************************-->
+
+
+
+<body>
+
+<!--********************************************-->
+<!--TESTATA-->
+<!--********************************************-->
+<div id="header">
+<span class="titolo"> Gestionale informativo  </span><br>
+<span class="sottotitolo"> Clinica privata Messina</span>
+</div>
+<!--********************************************-->
+
+
+
+
+	
+<!--********************************************-->
+<!--NAV - PULSANTIERA LATERALE-->
+<!--********************************************-->
+<div id="nav">
+<ul class="nav nav-pills nav-stacked testocentrato" style="line-height: 20px;">
+  <li  role="presentation"><a href="#" onclick="mostra_reparti()">Reparti</a></li>
+  <li role="presentation"><a href="#" onclick="mostra_personale()">Personale ospedale</a></li>
+  <li role="presentation"><a href="#" onclick="mostra_pazienti()">Pazienti</a></li>
+  <li role="presentation"><a href="#" onclick="mostra_cartelle_cliniche()">Cartelle cliniche </a></li>
+  <li role="presentation"><a href="#" onclick="mostra_turni()">Turni</a></li>
+  <li role="presentation"><a href="#" onclick="mostra_in_cura_con()">In cura con </a></li>  
+
+</ul>
+</div>
+<!--********************************************-->
+
+
+
+<!--********************************************-->
+<!--SECTION-->
+<!--********************************************-->
+<div id="section" style="overflow:auto">
+<h2>Suggerimento</h2>
+<p>
+Clicca su uno dei pulsanti a sinistra per visualizzare le informazioni disponibili dell'ospedale.
+</p>
+</div>
+
+
+<!--********************************************-->
+
+
+
+<!--********************************************-->
+<!--FOOTER-->
+<!--********************************************-->
+<div id="footer">
+Powered by Marco Castano
+</div>
+<!--********************************************-->
+
+</body>
+</html>

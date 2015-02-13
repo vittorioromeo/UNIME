@@ -1,12 +1,7 @@
 <?php
 
-ini_set('display_errors',1);
-ini_set('display_startup_errors',1);
-error_reporting(-1);
-
-include "php/Global/global.php";
-
-Session::init();
+$root = realpath($_SERVER["DOCUMENT_ROOT"]) . "/PV";
+require_once "$root/php/base.php";
 
 ?>
 
@@ -26,8 +21,8 @@ else
 {
 }
 
-include "php/Core/head.php";
-include "php/Core/body.php";
+require_once "$root/php/Core/head.php";
+require_once "$root/php/Core/body.php";
 
 
 
@@ -38,9 +33,10 @@ while ($row = $res->fetch_assoc())
 {
     Debug::lo(" id = " . $row["id"]);
 }
-
-Debug::echoLo();
-
 ?>
+
+<div id="debugLo">
+	<?php Debug::echoLo(); ?>
+</div>
 
 </html>

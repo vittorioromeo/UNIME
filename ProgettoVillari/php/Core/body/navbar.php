@@ -6,7 +6,6 @@
 		<?php
 			if(Credentials::isLoggedIn() == 1)
 			{
-				echo "diosepre";
 				include "loginControls.php";
 			}
 			else

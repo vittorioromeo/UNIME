@@ -21,4 +21,31 @@ class Utils
 	}
 }
 
+class Gen
+{
+	public static function BSPanelStart($mHeading)
+	{
+		print('
+		<div class="panel panel-default">
+		  	<div class="panel-heading">' . $mHeading . '</div>
+		  	<div class="panel-body">
+		');
+	}
+
+	public static function BSPanelEnd()
+	{
+		print('</div></div>');
+	}
+
+	public static function Textbox($mID, $mLabel)
+	{
+		print("
+		<div class=\"form-group\">
+			<label for=\"$mID\">$mLabel</label>
+			<input type=\"text\" class=\"form-control\" id=\"$mID\" placeholder=\"$mLabel\">
+		</div>
+		");
+	}
+}
+
 ?>

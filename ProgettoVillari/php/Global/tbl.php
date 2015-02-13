@@ -44,6 +44,16 @@ class Tbl
 	{
 		return DB::query("SELECT * FROM $this->tblName");
 	}
+
+	function getAllRowsWhere($mX)
+	{
+		return DB::query("SELECT * FROM $this->tblName WHERE $mX");
+	}
+
+	function hasAnyWhere($mX)
+	{
+		return count($this->getAllRowsWhere($mX)) > 0;
+	}
 }
 
 ?>

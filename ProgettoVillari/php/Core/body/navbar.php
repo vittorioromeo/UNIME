@@ -1,16 +1,17 @@
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
 		<div class="navbar-header">
 			<a class="navbar-brand" href="#">veeForum</a>
 		</div>
 		<?php
-			if(Credentials::isLoggedIn() == 1)
+
+			if(Credentials::isLoggedIn() == 0)
 			{
-				include "loginControls.php";
+				require_once "$root/php/Core/body/loginControls.php";
 			}
 			else
 			{
-				include "profileControls.php";
+				require_once "$root/php/Core/body/profileControls.php";
 			}
 		?>
 	</div>

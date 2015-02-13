@@ -1,87 +1,186 @@
+<h1>Administration</h1>
+<?php Gen::LinkIcon("btnRefresh", "glyphicon-refresh"); ?>
 
-
-<div class="container">
-	<h1>Administration panel</h1>
-	<div class="row">
+<div class="row">
+	<div class="col-md-2">
+		<h2>Debugging</h2>
+		<div class="panel panel-default">
+			<div class="panel-heading"><h4 class="panel-title">Actions</h4></div>
+			<div class="panel-body">
+				<a class="btn btn-default" href="#" role="button" id="btnDebugEnable">Enable/clear</a>
+				<a class="btn btn-default" href="#" role="button" id="btnDebugDisable">Disable</a>
+			</div>
+		</div>		
+	</div>
+	<div class="col-md-8">
+		<h2>Sections</h2>
 		<div class="col-md-4">
-			<h2>Sections</h2>
-			<?php Gen::BSPanelStart("Create"); ?>
-			<form name="formAddSection" id="formAddSection" action="action_createSection.php">
-				
-				<button type="button" class="btn btn-default" id="btnRefresh">
-					<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-				</button>
+			<div class="panel panel-default">
+				<div class="panel-heading"><h4 class="panel-title">Create section</h4></div>
+				<div class="panel-body">
+					<form id="formAddSection" action="action_createSection.php">
+					
+						<?php Gen::Textbox("tbName", "Section name"); ?>
 
-				<?php
-					Gen::Textbox("tbName", "Section name");
-				?>
+						<div class="form-group">
+							<label for="slParent">Parent section</label>
+							<select class="form-control" name="slParent" id="slParent">
+								
+							</select>
+						</div>
 
-				<div class="form-group">
-						<label for="slParent">Parent section</label>
-					<select class="form-control" name="slParent" id="slParent" onchange="showUser(this.value)">
-						<option value="-1">None</option>
-
-						<?php
-							foreach(Tables::$section->getAllRows() as $x)
-							{
-								print("<option value=".$x["id"].">(".$x["id"].") ".$x["name"]."</option>");
-							}
-						?>
-
-						<option value="1">Peter Griffin</option>
-						<option value="2">Lois Griffin</option>
-						<option value="3">Joseph Swanson</option>
-						<option value="4">Glenn Quagmire</option>
-					</select>
-				</div>		 
-			</form>
-			<?php Gen::BSPanelEnd(); ?>
+						<div class="btn-group pull-right">
+							<button type="button" id="btnCreate" class="btn btn-default">
+								<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+								Create
+							</button> 
+						</div>
+					</form>
+				</div>
+			</div>
 		</div>
 		<div class="col-md-4">
-			<h2>Heading</h2>
-			<p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-			<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
-	 </div>
-		<div class="col-md-4">
-			<h2>Heading</h2>
-			<p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-			<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+			<div class="panel panel-default">
+				<div class="panel-heading"><h4 class="panel-title">Delete section</h4></div>
+				<div class="panel-body">
+					<form id="formDelSection" action="action_delSection.php">									
+						<div class="form-group">
+							<label for="slParent">Select section</label>
+							<select class="form-control" name="slToDel" id="slToDel">
+								
+							</select>
+						</div>
+
+						<div class="btn-group pull-right">
+							<button type="button" id="btnDelete" class="btn btn-default">
+								<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+								Delete
+							</button> 
+						</div>
+					</form>
+				</div>
+			</div>
 		</div>
 	</div>
+	
+</div>
 
-	<hr>
+<div class="modal fade" id="modalInfo">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true"></span>
+				</button>
+				<h4 class="modal-title" id="modalInfoHeader"></h4>
+			</div>	
+			<div class="modal-body">
+				<p id="modalInfoText"></p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>        
+			</div>
+		</div>
+	</div>
+</div>
 
-	<footer>
-		<p>&copy; Company 2015</p>
-	</footer>
-</div>         
+<hr>
 
 <script>
-
-	$("#btnRefresh").click(function() 
+	function showModalInfo(mHeader, mText)
 	{
-		var idParent = $("#slParent").val();
-		var name = $("#tbName").val();
+		$("#modalInfoHeader").text(mHeader);
+		$("#modalInfoText").text(mText);
+		$("#modalInfo").modal('show');
+	}
 
-		var URL = "php/Core/content/" + $("#formAddSection").attr("action");
-		var formData = 
-		{
-			idParent: idParent,
-			name: name
-		};
-//$("#debugLo").clear();
-		$("#debugLo").text("DIO BELLO");
+	function setDebugEnabled(mX)
+	{
+		var url = "php/Core/content/action_setDebugEnabled.php";
+		var sentData = { enabled: mX };
 
-		$.post(URL,
-		    formData,
-		    function(data, textStatus, jqXHR)
-		    {
-		       alert(data);
-		    }).fail(function(jqXHR, textStatus, errorThrown) 
-		    {
-		 		alert(errorThrown);
-		    });
+		$.post(url, sentData, 
+			function(mOut, mTS, mJQXHR)
+			{
+				
+			});
+	}
 
+	function refreshDebugLo()
+	{
+		var url = "php/Core/content/action_refreshDebugLo.php";
+		var sentData = {};
 
+		$.post(url, sentData, 
+			function(mOut, mTS, mJQXHR)
+			{
+				$("#debugLo").html(mOut);
+			});
+	}	
+
+	function refreshSections(mTarget, mNullRow)
+	{
+		var url = "php/Core/content/action_refreshSections.php";
+		var sentData = { nullRow: mNullRow };
+
+		$.post(url, sentData, 
+			function(mOut, mTS, mJQXHR)
+			{
+				$(mTarget).html(mOut);				
+			});
+	}
+
+	function createSection()
+	{
+		var url = "php/Core/content/action_createSection.php";
+		var sentData = { idParent: $("#slParent").val(), name: $("#tbName").val() };
+
+		$.post(url, sentData,			
+			function(mOut, mTS, mJQXHR)
+			{
+			   showModalInfo("Create", mOut);
+			}
+			).fail(function(mJQXHR, mTS, mErr)
+			{
+				showModalInfo("Error", mErr);
+			});
+	}
+
+	function refreshAll()
+	{
+		refreshSections("#slParent", true); 
+		refreshSections("#slToDel", false); 
+		refreshDebugLo(); 
+	}
+
+	$(document).ready(function()
+	{ 
+		refreshAll();
+	});
+
+	$("#btnRefresh").click(function()
+	{ 
+		refreshAll();
+		showModalInfo("Info", "Refresh successful.");
+	});
+
+	$("#btnCreate").click(function()
+	{
+		createSection();
+		refreshAll();
+		showModalInfo("Info", "Section created successful.");
+	});
+
+	$("#btnDebugEnable").click(function()
+	{ 
+		setDebugEnabled(true);
+		refreshDebugLo();
+		showModalInfo("Info", "Debug mode enabled.");
+	});
+	$("#btnDebugDisable").click(function()
+	{ 
+		setDebugEnabled(false);
+		refreshDebugLo();
+		showModalInfo("Info", "Debug mode disabled.");
 	});
 </script>

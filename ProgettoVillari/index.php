@@ -1,7 +1,7 @@
 <?php
 
 $root = realpath($_SERVER["DOCUMENT_ROOT"]) . "/PV";
-require_once "$root/php/base.php";
+require_once "$root/php/Lib/lib.php";
 
 ?>
 
@@ -31,8 +31,12 @@ $res = Tables::$group->getAllRows();
 $res->data_seek(0);
 while ($row = $res->fetch_assoc()) 
 {
-    Debug::lo(" id = " . $row["id"]);
+   // Debug::lo(" id = " . $row["id"]);
 }
+
+	Debug::loLn();
+	Debug::lo("<br/>Session ID: <br/>" . session_id()); 
+	Debug::lo("<br/>Session data: <br/>" . print_r($_SESSION, true));
 ?>
 
 <div id="debugLo">

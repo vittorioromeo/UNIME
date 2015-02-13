@@ -7,12 +7,17 @@
 <![endif]-->
 
 <?php
-	$root = realpath($_SERVER["DOCUMENT_ROOT"]) . "/PV";
+	//$root = realpath($_SERVER["DOCUMENT_ROOT"]) . "/PV";
 
-	include "$root/php/Core/body/navbar.php";
+	require_once "$root/php/Core/body/navbar.php";
 	// include "body/jumbotron.php";
-	include "$root/php/Core/content/adminPanel.php";
-	include "$root/php/Core/body/scripts.php";
+
+	print('<div class="container">');
+	require_once "$root/php/Core/content/adminPanel.php";
+	require_once "$root/php/Core/body/footer.php";
+	print('</div>');
+
+	require_once "$root/php/Core/body/scripts.php";
 ?>
 
 </body>

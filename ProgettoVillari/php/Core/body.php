@@ -15,7 +15,12 @@
 	require_once "$root/php/Core/body/modalInfo.php";
 
 	print('<div class="container">');
-	require_once "$root/php/Core/content/adminPanel.php";
+	
+	print('<span id="page"></span>');
+
+	//require_once "$root/php/Core/content/adminPanel.php";
+	
+
 	require_once "$root/php/Core/body/footer.php";
 	print('</div>');
 
@@ -23,3 +28,12 @@
 ?>
 
 </body>
+
+<?php
+print('<script>
+$(document).ready(function()
+{
+	$("#page").load("php/Core/content/adminPanel.php");
+});
+</script>');
+?>

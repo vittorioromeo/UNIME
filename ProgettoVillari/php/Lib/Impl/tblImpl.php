@@ -2,92 +2,78 @@
 
 class TblUser extends Tbl
 {
-	
+	public function mkUser()
+	{
+
+	}
 }
 
 class TblGroup extends Tbl
 {
-	
+	public function mkGroup($mIdParent, $mName, $mPrivileges, &$mMsg)
+	{
+		if(!Utils::checkEmptyStr($mName, $mMsg)) return false;
+
+		$parentId = Utils::getInsertParent($this, $mIdParent, $mMsg);
+		if(!$parentId) return false;
+
+		$privileges = Privileges::arrayToStr($mPrivileges);
+
+		$this->insert($parentId, $mName, DB::v($privileges));
+		$mMsg = "Group created successfully.";
+		return true;
+	}
+
+	public function getHierarchyStr(&$mMsg)
+	{	
+		$res = "";
+
+		$this->forHierarchy(function($mRow, $mDepth) use (&$res)
+		{
+			$indent = str_repeat("--->", $mDepth);
+
+			$id = $mRow['id'];
+			$name = $mRow['name'];
+			$privileges = $mRow['privileges'];
+
+			$res .= $indent . "($id) $name [$privileges]\n";
+
+			return $id;
+		}, $mMsg);
+
+		return $res;
+	}
 }
 
 class TblSection extends Tbl
 {
 	public function mkSection($mIdParent, $mName, &$mMsg)
 	{
-		if(trim($mName) == "''")
-		{
-			$mMsg = "Name not valid, empty or whitespace.";
-			return false;
-		}
+		if(!Utils::checkEmptyStr($mName, $mMsg)) return false;
 
-		if($mIdParent != -1)
-		{
-			if(!$this->hasAnyWhere("id = $mIdParent"))
-			{
-				$mMsg = "Invalid parent ID: $mIdParent";
-				return false;
-			}
+		$parentId = Utils::getInsertParent($this, $mIdParent, $mMsg);
+		if(!$parentId) return false;
 
-			$this->insert($mIdParent, $mName);
-		}
-		else
-		{
-			$this->insert('null', $mName);
-		}
-
+		$this->insert($parentId, $mName);
 		$mMsg = "Section created successfully.";
 		return true;
 	}
 
-	public function deleteWithChildren($mId, &$mMsg)
-	{
-		$qres = DB::query("SELECT * FROM $this->tblName 
-			WHERE id_parent = $mId");
-
-		if($qres == null)
-		{
-			$mMsg = "Error! " . DB::$lastError;
-			return false;
-		}
-
-		while($row = $qres->fetch_assoc()) 
-		{
-			$this->deleteWithChildren($row["id"], $mMsg);
-		}
-
-		Tables::$section->deleteWhere("id = $mId");
-		$mMsg = "Success.";
-		return true;
-	}	
-
-	public function getHierarchyStr($mParent = 'null', $mIndent = "")
-	{
+	public function getHierarchyStr(&$mMsg)
+	{	
 		$res = "";
-		$where = "";
-		if($mParent == 'null') 
-		{
-			$where = "id_parent IS NULL";
-		}
-		else
-		{
-			$where = "id_parent = $mParent";
-		}
 
-		$qres = DB::query("SELECT * FROM $this->tblName WHERE $where");
-
-		if($qres == null)
+		$this->forHierarchy(function($mRow, $mDepth) use (&$res)
 		{
-			return "Error getting section hierarchy. " . DB::$lastError;
-		}
+			$indent = str_repeat("--->", $mDepth);
 
-		while($row = $qres->fetch_assoc()) 
-		{
-			$id = $row['id'];
-			$name = $row['name'];
+			$id = $mRow['id'];
+			$name = $mRow['name'];
 
-			$res .= $mIndent . "($id) $name\n";
-			$res .= $this->getHierarchyStr($id, $mIndent . "--->");
-		}
+			$res .= $indent . "($id) $name\n";
+
+			return $id;
+		}, $mMsg);
 
 		return $res;
 	}

@@ -5,12 +5,12 @@ class Tbl
 	protected $tblName;
 	private $insertFields;
 
-	function __construct($mTblName) 
+	public function __construct($mTblName) 
 	{
 		$this->tblName = $mTblName;
 	}
 
-	function setInsertFields(...$mFields)
+	public function setInsertFields(...$mFields)
 	{
 		$this->insertFields = array();
 
@@ -20,7 +20,7 @@ class Tbl
     	}
 	}
 
-	function insert(...$mValues)
+	public function insert(...$mValues)
 	{
 		$insertFieldsStr = Utils::GetCSL($this->insertFields);
 		$insertValuesStr = Utils::GetCSL($mValues);
@@ -40,24 +40,75 @@ class Tbl
 		return $res;
 	}
 
-	function deleteWhere($mX)
+	public function deleteWhere($mX)
 	{
 		return DB::query("DELETE FROM $this->tblName WHERE $mX");
 	}
 
-	function getAllRows()
+	public function getAllRows()
 	{
 		return DB::query("SELECT * FROM $this->tblName");
 	}
 
-	function getAllRowsWhere($mX)
+	public function getAllRowsWhere($mX)
 	{
 		return DB::query("SELECT * FROM $this->tblName WHERE $mX");
 	}
 
-	function hasAnyWhere($mX)
+	public function hasAnyWhere($mX)
 	{
 		return count($this->getAllRowsWhere($mX)) > 0;
+	}
+
+	public function deleteWithChildren($mId, &$mMsg)
+	{
+		$qres = DB::query("SELECT * FROM $this->tblName WHERE id_parent = $mId");
+
+		if($qres == null)
+		{
+			$mMsg = "Error! " . DB::$lastError;
+			return false;
+		}
+
+		while($row = $qres->fetch_assoc()) 
+		{
+			$this->deleteWithChildren($row["id"], $mMsg);
+		}
+
+		$this->deleteWhere("id = $mId");
+		$mMsg = "Success.";
+		return true;
+	}	
+
+	public function forHierarchy($mFn, &$mMsg, $mParent = 'null', $mDepth = 0)
+	{
+		$res = "";
+		$where = "";
+		if($mParent == 'null') 
+		{
+			$where = "id_parent IS NULL";
+		}
+		else
+		{
+			$where = "id_parent = $mParent";
+		}
+
+		$qres = DB::query("SELECT * FROM $this->tblName WHERE $where");
+
+		if($qres == null)
+		{
+			$mMsg = "Error getting $this->tblName hierarchy. " . DB::$lastError;
+			return false;
+		}
+
+		while($row = $qres->fetch_assoc()) 
+		{
+			$nextId = $mFn($row, $mDepth);
+			$this->forHierarchy($mFn, $mMsg, $nextId, $mDepth + 1);
+		}
+
+		$mMsg = "Success getting $this->tblName hierarchy.";
+		return true;
 	}
 }
 

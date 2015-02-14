@@ -1,14 +1,25 @@
 <h1>Administration</h1>
-<?php Gen::LinkIcon("btnRefresh", "glyphicon-refresh"); ?>
 
 <div class="row">
 	<div class="col-md-2">
-		<h2>Debugging</h2>
+		<h2>Debug</h2>
 		<div class="panel panel-default">
 			<div class="panel-heading"><h4 class="panel-title">Actions</h4></div>
 			<div class="panel-body">
-				<a class="btn btn-default" href="#" role="button" id="btnDebugEnable">Enable/clear</a>
-				<a class="btn btn-default" href="#" role="button" id="btnDebugDisable">Disable</a>
+				<div class="btn-group-vertical pull-right">		
+					<a class="btn btn-default" href="#" role="button" id="btnDebugEnable">
+						<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+						Enable/clear
+					</a>
+					<a class="btn btn-default" href="#" role="button" id="btnDebugDisable">
+						<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+						Disable
+					</a>
+					<a class="btn btn-default" href="#" role="button" id="btnRefresh">
+						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+						Refresh page
+					</a>
+				</div>
 			</div>
 		</div>		
 	</div>
@@ -51,106 +62,70 @@
 							</select>
 						</div>
 
-						<div class="btn-group pull-right">
-							<button type="button" id="btnDelete" class="btn btn-default">
+						<div class="btn-group-vertical pull-right">							
+							<a role="button" id="btnDel" class="btn btn-default">
 								<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
 								Delete
-							</button> 
+							</a>
+							<a role="button" id="btnDelWithChildren" class="btn btn-default">
+								<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+								Delete recursively
+							</a>
 						</div>
 					</form>
 				</div>
 			</div>
 		</div>
+		<div class="col-md-4">
+			<div id="sectionHierarchy"></div>
+		</div>
 	</div>
 	
 </div>
 
-<div class="modal fade" id="modalInfo">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true"></span>
-				</button>
-				<h4 class="modal-title" id="modalInfoHeader"></h4>
-			</div>	
-			<div class="modal-body">
-				<p id="modalInfoText"></p>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>        
-			</div>
-		</div>
-	</div>
-</div>
-
 <hr>
 
+<?php 
+	Gen::PostJSAction('setDebugEnabled(mX)', 'setDebugEnabled', array( 'enabled' => 'mX' ));
+
+	Gen::PostJSAction('refreshDebugLo()', 'refreshDebugLo', array(), '{ $("#debugLo").html(mOut); }');
+
+	Gen::PostJSAction('refreshSectionHierarchy()', 'getSectionHierarchyStr', array(), '{ $("#sectionHierarchy").html(mOut); }');
+
+	Gen::PostJSAction('refreshSections(mTarget, mNullRow)', 'getSectionOptions',
+		array( 'nullRow' => 'mNullRow' ),
+		'{ $(mTarget).html(mOut); }');
+
+	Gen::PostJSAction('createSection()', 'createSection',
+		array( 'idParent' => '$("#slParent").val()', 'name' => '$("#tbName").val()' ),
+		'{ showModalInfo("Create", mOut); }',
+		'{ showModalInfo("Create - error", mErr); }');
+
+	Gen::PostJSAction('deleteSection()', 'deleteSection',
+		array( 'id' => '$("#slToDel").val()' ),
+		'{ showModalInfo("Delete", mOut); }',
+		'{ showModalInfo("Delete - error", mErr); }');
+
+	Gen::PostJSAction('deleteSectionWithChildren()', 'deleteSectionWithChildren',
+		array( 'id' => '$("#slToDel").val()' ),
+		'{ showModalInfo("Delete with children", mOut); }',
+		'{ showModalInfo("Delete with children - error", mErr); }');
+?>
+
 <script>
-	function showModalInfo(mHeader, mText)
-	{
-		$("#modalInfoHeader").text(mHeader);
-		$("#modalInfoText").text(mText);
-		$("#modalInfo").modal('show');
-	}
-
-	function setDebugEnabled(mX)
-	{
-		var url = "php/Core/content/action_setDebugEnabled.php";
-		var sentData = { enabled: mX };
-
-		$.post(url, sentData, 
-			function(mOut, mTS, mJQXHR)
-			{
-				
-			});
-	}
-
-	function refreshDebugLo()
-	{
-		var url = "php/Core/content/action_refreshDebugLo.php";
-		var sentData = {};
-
-		$.post(url, sentData, 
-			function(mOut, mTS, mJQXHR)
-			{
-				$("#debugLo").html(mOut);
-			});
-	}	
-
-	function refreshSections(mTarget, mNullRow)
-	{
-		var url = "php/Core/content/action_refreshSections.php";
-		var sentData = { nullRow: mNullRow };
-
-		$.post(url, sentData, 
-			function(mOut, mTS, mJQXHR)
-			{
-				$(mTarget).html(mOut);				
-			});
-	}
-
-	function createSection()
-	{
-		var url = "php/Core/content/action_createSection.php";
-		var sentData = { idParent: $("#slParent").val(), name: $("#tbName").val() };
-
-		$.post(url, sentData,			
-			function(mOut, mTS, mJQXHR)
-			{
-			   showModalInfo("Create", mOut);
-			}
-			).fail(function(mJQXHR, mTS, mErr)
-			{
-				showModalInfo("Error", mErr);
-			});
-	}
-
 	function refreshAll()
 	{
 		refreshSections("#slParent", true); 
 		refreshSections("#slToDel", false); 
+		refreshSectionHierarchy();
 		refreshDebugLo(); 
+	}
+
+	function setDebugMode(mX)
+	{
+		setDebugEnabled(mX);
+		refreshDebugLo();
+		showModalInfo("Info", "Debug mode " + (mX ? "enabled." : "disabled."));
 	}
 
 	$(document).ready(function()
@@ -168,19 +143,24 @@
 	{
 		createSection();
 		refreshAll();
-		showModalInfo("Info", "Section created successful.");
+		//showModalInfo("Info", "Section created successful.");
 	});
 
-	$("#btnDebugEnable").click(function()
-	{ 
-		setDebugEnabled(true);
-		refreshDebugLo();
-		showModalInfo("Info", "Debug mode enabled.");
+	$("#btnDel").click(function()
+	{
+		deleteSection();
+		refreshAll();
+		//showModalInfo("Info", "Section deletion successful.");
 	});
-	$("#btnDebugDisable").click(function()
-	{ 
-		setDebugEnabled(false);
-		refreshDebugLo();
-		showModalInfo("Info", "Debug mode disabled.");
+
+	$("#btnDelWithChildren").click(function()
+	{
+		deleteSectionWithChildren();
+		refreshAll();
+		//showModalInfo("Info", "Section deletion successful.");
 	});
+
+	$("#btnDebugEnable").click(function(){ setDebugMode(true); });
+	$("#btnDebugDisable").click(function(){ setDebugMode(false); });
+
 </script>

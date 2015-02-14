@@ -12,6 +12,8 @@
 	require_once "$root/php/Core/body/navbar.php";
 	// include "body/jumbotron.php";
 
+	require_once "$root/php/Core/body/modalInfo.php";
+
 	print('<div class="container">');
 	require_once "$root/php/Core/content/adminPanel.php";
 	require_once "$root/php/Core/body/footer.php";

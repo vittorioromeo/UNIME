@@ -22,10 +22,9 @@ class Gen
 		');
 	}
 
-	public static function PostJSAction($mFnName, $mAction, $mKVArray, $mFnOk = '{}', $mFnFail = '{}')
+	public static function JS_PostAction($mFnName, $mAction, $mKVArray, $mFnOk = '', $mFnFail = '')
 	{
-		print('
-		<script>
+		print('<script>
 			function '.$mFnName.'
 			{
 				var url = "php/Core/content/actions.php";
@@ -42,12 +41,33 @@ class Gen
 				};
 
 				$.post(url, sentData, 
-					function(mOut, mTS, mJQXHR)'.$mFnOk.')
+					function(mOut, mTS, mJQXHR){'.$mFnOk.'})
 				.fail(
-					function(mJQXHR, mTS, mErr)'.$mFnFail.');
+					function(mJQXHR, mTS, mErr){'.$mFnFail.'});
 			}
-		</script>
-		');
+		</script>');
+	}
+
+	public static function JS_OnBtnClick($mId, $mX)
+	{
+		print('<script>
+		$("#'.$mId.'").click(function(e)
+		{
+			e.preventDefault();
+			'.$mX.'
+		});
+		</script>'); 
+	}
+
+	public static function JS_OnBtnClickDynamic($mId, $mX)
+	{
+		print('<script>
+		$(document).on("click", "#'.$mId.'", function(e)
+		{
+			e.preventDefault();
+			'.$mX.'
+		});
+		</script>'); 
 	}
 }
 

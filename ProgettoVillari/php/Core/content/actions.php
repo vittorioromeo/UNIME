@@ -34,7 +34,7 @@ class Actions
 	
 
 
-	public static function createSection()
+	public static function scAdd()
 	{
 		$idParent = $_POST["idParent"];
 		$name = $_POST["name"];
@@ -45,6 +45,24 @@ class Actions
 		print($msg);
 	}
 	
+	public static function scDel()
+	{
+		$id = $_POST["id"];
+		$res = Tables::$section->deleteWhere("id = $id");
+
+		print(($res == null) ? DB::$lastError : "Success.");
+	}
+
+	public static function scDelRecursive()
+	{
+		$id = $_POST["id"];
+		$msg = "";
+		
+		Tables::$section->deleteWithChildren($id, $msg);
+
+		print($msg);
+	}
+
 	public static function getSectionOptions()
 	{
 		$nullRow = $_POST["nullRow"];
@@ -60,24 +78,6 @@ class Actions
 		}
 	}
 
-	public static function deleteSection()
-	{
-		$id = $_POST["id"];
-		$res = Tables::$section->deleteWhere("id = $id");
-
-		print(($res == null) ? DB::$lastError : "Success.");
-	}
-
-	public static function deleteSectionWithChildren()
-	{
-		$id = $_POST["id"];
-		$msg = "";
-		
-		Tables::$section->deleteWithChildren($id, $msg);
-
-		print($msg);
-	}
-
 	public static function getSectionHierarchyStr()
 	{
 		$msg = "";
@@ -88,7 +88,7 @@ class Actions
 
 
 
-	public static function createGroup()
+	public static function grAdd()
 	{
 		$idParent = $_POST["idParent"];
 		$name = $_POST["name"];
@@ -99,7 +99,25 @@ class Actions
 
 		print($msg);
 	}
-	
+
+	public static function grDel()
+	{
+		$id = $_POST["id"];
+		$res = Tables::$group->deleteWhere("id = $id");
+
+		print(($res == null) ? DB::$lastError : "Success.");
+	}
+
+	public static function grDelRecursive()
+	{
+		$id = $_POST["id"];
+		$msg = "";
+		
+		Tables::$group->deleteWithChildren($id, $msg);
+
+		print($msg);
+	}
+
 	public static function getGroupOptions()
 	{
 		$nullRow = $_POST["nullRow"];
@@ -113,24 +131,6 @@ class Actions
 		{
 			print("<option value=".$x["id"].">(ID: ".$x["id"].") ".$x["name"]."</option>");
 		}
-	}
-
-	public static function deleteGroup()
-	{
-		$id = $_POST["id"];
-		$res = Tables::$group->deleteWhere("id = $id");
-
-		print(($res == null) ? DB::$lastError : "Success.");
-	}
-
-	public static function deleteGroupWithChildren()
-	{
-		$id = $_POST["id"];
-		$msg = "";
-		
-		Tables::$group->deleteWithChildren($id, $msg);
-
-		print($msg);
 	}
 
 	public static function getGroupHierarchyStr()
@@ -188,7 +188,7 @@ class Actions
 
 		print('</tbody>');
 	}
-};
+}
 
 Actions::$action();
 

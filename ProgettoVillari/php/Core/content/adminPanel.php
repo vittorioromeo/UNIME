@@ -27,7 +27,8 @@
 				</div>
 				<div class="checkbox">
 					<label>
-						<input id="cbDbModals" type="checkbox" checked="true"> Show modals in this page
+						<input id="cbDbModals" type="checkbox" checked="true"> 
+						Show modals in this page
 					</label>
 				</div>
 			</div>
@@ -89,10 +90,17 @@
 	</div>
 </div>
 
+<hr>
+
 <div class="row">
-	<h2>TODO</h2>
 	<div class="col-md-4">
-		TODO
+		<h2>Tags</h2>
+		<div class="panel panel-default">
+			<div class="panel-heading"><h4 class="panel-title">TODO</h4></div>
+			<div class="panel-body">	
+				TODO
+			</div>
+		</div>
 	</div>
 
 	<div class="col-md-8">
@@ -158,6 +166,8 @@
 	</div>
 </div>
 
+<hr>
+
 <div class="row">
 	<div class="col-md-12">
 		<h2>Users</h2>
@@ -186,16 +196,28 @@
 				<?php 
 					Gen::Textbox("tbUsAddUsername", "Username"); 
 					Gen::Textbox("tbUsAddEmail", "Email"); 
-					Gen::Textbox("tbUsAddGroup", "Group ID"); 
 					Gen::Textbox("tbUsAddFirstname", "First name"); 
 					Gen::Textbox("tbUsAddLastname", "Last name"); 
-					Gen::Textbox("tbUsAddRegistrationDate", "Registration date"); 
-					Gen::Textbox("tbUsAddBirthDate", "Birth date"); 
+					//Gen::Textbox("tbUsAddGroup", "Group ID"); 
+					//Gen::Textbox("tbUsAddRegistrationDate", "Registration date"); 
+					//Gen::Textbox("tbUsAddBirthDate", "Birth date"); 
 				?>
+
+				<div class="form-group">
+					<label for="dateUsAddBirth">Birth date</label>
+					<input class="form-control" type="date" id="dateUsAddBirth">
+				</div>
+
+				<div class="form-group">
+					<label for="slUsAddGroup">Group</label>
+					<select class="form-control" name="slUsAddGroup" id="slUsAddGroup">
+							
+					</select>
+				</div>
 			</div>
 			<div class="modal-footer">
 				<div class="btn-group pull-right">
-					<button type="button" class="btn btn-default" data-dismiss="modal">
+					<button type="button" class="btn btn-default" id="btnUsAddOk">
 						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>	
 					</button>  
 					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -208,68 +230,84 @@
 <hr>
 
 <?php 
-	Gen::PostJSAction('setDebugEnabled(mX)', 'setDebugEnabled', array( 'enabled' => 'mX' ));
+	Gen::JS_PostAction('setDebugEnabled(mX)', 'setDebugEnabled', array( 'enabled' => 'mX' ));
 
-	Gen::PostJSAction('refreshDebugLo()', 'refreshDebugLo', array(), '{ $("#debugLo").html(mOut); }');
+	Gen::JS_PostAction('refreshDebugLo()', 'refreshDebugLo', array(), '$("#debugLo").html(mOut);');
 
 
 
-	Gen::PostJSAction('refreshSectionHierarchy()', 'getSectionHierarchyStr', array(), '{ $("#divScHierarchy").html(mOut); }');
+	Gen::JS_PostAction('refreshSectionHierarchy()', 'getSectionHierarchyStr', array(), '$("#divScHierarchy").html(mOut);');
 
-	Gen::PostJSAction('refreshSections(mTarget, mNullRow)', 'getSectionOptions',
+	Gen::JS_PostAction('refreshSections(mTarget, mNullRow)', 'getSectionOptions',
 		array( 'nullRow' => 'mNullRow' ),
-		'{ $(mTarget).html(mOut); }');
+		'$(mTarget).html(mOut);');
 
-	Gen::PostJSAction('createSection()', 'createSection',
+	Gen::JS_PostAction('scAdd()', 'scAdd',
 		array( 'idParent' => '$("#slScParent").val()', 'name' => '$("#tbScName").val()' ),
-		'{ showAPModal("Create", mOut); }',
-		'{ showAPModal("Create - error", mErr); }');
+		'showAPModal("Create", mOut);',
+		'showAPModal("Create - error", mErr);');
 
-	Gen::PostJSAction('deleteSection()', 'deleteSection',
+	Gen::JS_PostAction('scDel()', 'scDel',
 		array( 'id' => '$("#scScToDel").val()' ),
-		'{ showAPModal("Delete", mOut); }',
-		'{ showAPModal("Delete - error", mErr); }');
+		'showAPModal("Delete", mOut);',
+		'showAPModal("Delete - error", mErr);');
 
-	Gen::PostJSAction('deleteSectionWithChildren()', 'deleteSectionWithChildren',
+	Gen::JS_PostAction('scDelRecursive()', 'scDelRecursive',
 		array( 'id' => '$("#scScToDel").val()' ),
-		'{ showAPModal("Delete with children", mOut); }',
-		'{ showAPModal("Delete with children - error", mErr); }');
+		'showAPModal("Delete with children", mOut);',
+		'showAPModal("Delete with children - error", mErr);');
 
 
 
 
-	Gen::PostJSAction('refreshGroupHierarchy()', 'getGroupHierarchyStr', array(), '{ $("#divGrHierarchy").html(mOut); }');
+	Gen::JS_PostAction('refreshGroupHierarchy()', 'getGroupHierarchyStr', array(), '$("#divGrHierarchy").html(mOut);');
 
-	Gen::PostJSAction('refreshGroups(mTarget, mNullRow)', 'getGroupOptions',
+	Gen::JS_PostAction('refreshGroups(mTarget, mNullRow)', 'getGroupOptions',
 		array( 'nullRow' => 'mNullRow' ),
-		'{ $(mTarget).html(mOut); }');
+		'$(mTarget).html(mOut);');
 
-	Gen::PostJSAction('createGroup()', 'createGroup',
+	Gen::JS_PostAction('grAdd()', 'grAdd',
 		array
 		( 
 			'idParent' => '$("#slGrParent").val()', 
 			'name' => '$("#tbGrName").val()',
 			'privileges' => '$("#slGrPrivileges").val()'
 		),
-		'{ showAPModal("Create", mOut); }',
-		'{ showAPModal("Create - error", mErr); }');
+		'showAPModal("Create", mOut);',
+		'showAPModal("Create - error", mErr);');
 
-	Gen::PostJSAction('deleteGroup()', 'deleteGroup',
+	Gen::JS_PostAction('grDel()', 'grDel',
 		array( 'id' => '$("#slGrToDel").val()' ),
-		'{ showAPModal("Delete", mOut); }',
-		'{ showAPModal("Delete - error", mErr); }');
+		'showAPModal("Delete", mOut);',
+		'showAPModal("Delete - error", mErr);');
 
-	Gen::PostJSAction('deleteGroupWithChildren()', 'deleteGroupWithChildren',
+	Gen::JS_PostAction('grDelRecursive()', 'grDelRecursive',
 		array( 'id' => '$("#slGrToDel").val()' ),
-		'{ showAPModal("Delete with children", mOut); }',
-		'{ showAPModal("Delete with children - error", mErr); }');
+		'showAPModal("Delete with children", mOut);',
+		'showAPModal("Delete with children - error", mErr);');
 
 
 
-	Gen::PostJSAction('refreshUsers()', 'getTblUsers',
+	Gen::JS_PostAction('refreshUsers()', 'getTblUsers',
 		array(),
-		'{ $("#tblUsManage").html(mOut); }',
-		'{ showAPModal("Refresh users - error", mErr); }');
+		'$("#tblUsManage").html(mOut);',
+		'showAPModal("Refresh users - error", mErr);');
+
+	Gen::JS_OnBtnClick('btnDbEnable', 			'setDebugMode(true);');
+	Gen::JS_OnBtnClick('btnDbDisable', 			'setDebugMode(false);');
+	Gen::JS_OnBtnClick('btnDbRefresh', 			'refreshAll();');
+
+	Gen::JS_OnBtnClick('btnScAdd', 				'scAdd(); refreshAll();');
+	Gen::JS_OnBtnClick('btnScDel', 				'scDel(); refreshAll();');
+	Gen::JS_OnBtnClick('btnScDelRecursive', 	'scDelRecursive(); refreshAll();');
+
+	Gen::JS_OnBtnClick('btnGrAdd', 				'grAdd(); refreshAll();');
+	Gen::JS_OnBtnClick('btnGrDel', 				'grDel(); refreshAll();');
+	Gen::JS_OnBtnClick('btnGrDelRecursive', 	'grDelRecursive(); refreshAll();');
+
+	Gen::JS_OnBtnClickDynamic('btnUsAdd',		'$("#modalUsAdd").modal("show");');
+
+	Gen::JS_OnBtnClick('btnUsAddOk', 			' /*todo*/ ');
 ?>
 
 <script>
@@ -281,6 +319,7 @@
 
 		refreshGroups("#slGrParent", true); 
 		refreshGroups("#slGrToDel", false); 
+		refreshGroups("#slUsAddGroup", false);
 		refreshGroupHierarchy();
 
 		refreshUsers();
@@ -301,75 +340,5 @@
 		showAPModal("Info", "Debug mode " + (mX ? "enabled." : "disabled."));
 	}
 
-	$(document).ready(function()
-	{ 
-		refreshAll();	
-	});
-
-	$("#btnDbEnable").click(function(e)
-	{
-		e.preventDefault();
-		setDebugMode(true); 
-	});
-	$("#btnDbDisable").click(function(e)
-	{
-		e.preventDefault();
-		setDebugMode(false); 
-	});
-	$("#btnDbRefresh").click(function(e)
-	{ 
-		e.preventDefault();
-		refreshAll();
-		showAPModal("Info", "Refresh successful.");
-	});
-
-
-
-	$("#btnScAdd").click(function(e)
-	{
-		e.preventDefault();
-		createSection();
-		refreshAll();		
-	});
-	$("#btnScDel").click(function(e)
-	{
-		e.preventDefault();
-		deleteSection();
-		refreshAll();
-	});
-	$("#btnScDelRecursive").click(function(e)
-	{
-		e.preventDefault();
-		deleteSectionWithChildren();
-		refreshAll();	
-	});
-
-
-	$("#btnGrAdd").click(function(e)
-	{
-		e.preventDefault();
-		createGroup();
-		refreshAll();		
-	});
-	$("#btnGrDel").click(function(e)
-	{
-		e.preventDefault();
-		deleteGroup();
-		refreshAll();
-	});
-	$("#btnGrDelRecursive").click(function(e)
-	{
-		e.preventDefault();
-		deleteGroupWithChildren();
-		refreshAll();	
-	});
-
-	
-	$(document).on('click', '#btnUsAdd', function(e)
-	{    
-		e.preventDefault();
-    	$("#modalUsAdd").modal('show');
-	});
-
-
+	$(document).ready(function(){ refreshAll(); });
 </script>	

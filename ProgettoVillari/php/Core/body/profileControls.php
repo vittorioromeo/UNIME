@@ -14,9 +14,9 @@
 
 Gen::JS_PostAction('trySignOut()', 'trySignOut',
 			array(),
-			'alert(mOut); reloadNavbar();'
+			'reloadNavbar(); reloadPage();'
 			);
 
-Gen::JS_OnBtnClick('btnSignOut', 'trySignOut();');
+Gen::JS_OnBtnClick('btnSignOut', 'trySignOut(); ');
 
 ?>

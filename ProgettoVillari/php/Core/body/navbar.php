@@ -8,7 +8,6 @@
 </nav>
 
 <script>
-
 $(document).ready(function()
 {
 	reloadNavbar();
@@ -18,5 +17,4 @@ function reloadNavbar()
 {
 	$("#navCont").load("php/Core/body/navbarContents.php");
 }
-
 </script>

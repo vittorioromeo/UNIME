@@ -21,7 +21,7 @@ function signIn()
 
 Gen::JS_PostAction('trySignIn(mUser, mPass)', 'trySignIn',
 			array( 'user' => 'mUser', 'pass' => 'mPass' ),
-			'alert(mOut); reloadNavbar();'
+			' reloadNavbar(); reloadPage();'
 			);
 
 Gen::JS_OnBtnClick('btnSignIn', 'signIn();');

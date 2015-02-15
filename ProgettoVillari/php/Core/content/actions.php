@@ -44,6 +44,18 @@ class Actions
 	public static function trySignOut()
 	{
 		print(Credentials::tryLogout());
+	}		
+
+	public static function getCurrentPage()
+	{
+		if(!Credentials::isLoggedIn())
+		{
+			print('php/Core/content/forbidden.php');
+		}
+		else
+		{
+			print('php/Core/content/adminPanel.php');
+		}
 	}
 
 

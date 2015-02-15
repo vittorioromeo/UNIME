@@ -48,14 +48,16 @@ class Actions
 
 	public static function getCurrentPage()
 	{
-		if(!Credentials::isLoggedIn())
+		if(Credentials::isLoggedIn())
 		{
-			print('php/Core/content/forbidden.php');
+			if(Credentials::hasCUPrivilege(Privs::$superAdmin))
+			{
+				print('php/Core/content/adminPanel.php');
+				return;
+			}
 		}
-		else
-		{
-			print('php/Core/content/adminPanel.php');
-		}
+
+		print('php/Core/content/forbidden.php');
 	}
 
 
@@ -121,9 +123,12 @@ class Actions
 		$privileges = $_POST["privileges"];
 		$msg = "";
 
-		Tables::$group->mkGroup($idParent, DB::v($name), $privileges, $msg);
+		$pset = new PrivSet();
+		if($privileges) foreach($privileges as $x) $pset->add($x);
 
-		print($msg);
+		Tables::$group->mkGroup($idParent, DB::v($name), $pset, $msg);
+
+		print($msg);	
 	}
 
 	public static function grDel()
@@ -171,7 +176,7 @@ class Actions
 
 		$groupId = $_POST['groupId'];
 		$username = $_POST['username'];
-		$passwordHash = Utils::getPwdHash('TODO');
+		$passwordHash = Utils::getPwdHash($_POST['password']);
 		$email = $_POST['email'];
 		$registrationDate = date('Y-m-d');
 		$firstname = $_POST['firstname'];
@@ -295,3 +300,4 @@ class Actions
 Actions::$action();
 
 ?>
+		

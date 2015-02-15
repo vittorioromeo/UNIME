@@ -40,6 +40,37 @@ class Credentials
 		Session::set(SKeys::$userID, null);
 		return true;
 	}
+
+	public static function getCURow()
+	{
+		return Tables::$user->findByID(Session::get(SKeys::$userID));
+	}
+
+	public static function getCalcPSet()
+	{
+		$groupID = Credentials::getCURow()['id_group'];
+		$group = Tables::$group->findByID($groupID);
+		$msg = "";
+
+		$calcPset = PrivSet::fromStr($group['privileges']);
+
+		Tables::$group->forChildren(function($mRow, $mDepth) use (&$calcPset)
+		{
+			$id = $mRow['id_parent'];	
+			$privileges = $mRow['privileges'];
+
+			$calcPset = $calcPset->getOrWith(PrivSet::fromStr($privileges));
+
+			return $id;
+		}, $msg, $groupID);
+
+		return $calcPset;
+	}
+
+	public static function hasCUPrivilege($mX)
+	{
+		return Credentials::getCalcPSet()->has($mX);
+	}
 }
 
 ?>

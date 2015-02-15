@@ -175,9 +175,15 @@
 				<div class="usIdDiv"></div>
 			</div>
 			<div class="modal-body">
-
 				<?php
 					Gen::Textbox("tbUsAddUsername", "Username");
+				?>
+				
+				<span id="modalUsAddPwd">
+					<?php Gen::Textbox("tbUsAddPassword", "Password"); ?>
+				</span>
+
+				<?php
 					Gen::Textbox("tbUsAddEmail", "Email");
 					Gen::Textbox("tbUsAddFirstname", "First name");
 					Gen::Textbox("tbUsAddLastname", "Last name");
@@ -304,6 +310,7 @@
 			( 
 				'id' => 'usEditModalId',
 				'username' => '$("#tbUsAddUsername").val()',
+				'password' => '$("#tbUsAddPassword").val()',
 				'email' => '$("#tbUsAddEmail").val()',
 				'firstname' => '$("#tbUsAddFirstname").val()',
 				'lastname' => '$("#tbUsAddLastname").val()',
@@ -406,7 +413,10 @@
 
 		if(mId == -1)
 		{
+			$("#modalUsAddPwd").show();
+
 			$("#tbUsAddUsername").val("");
+			$("#tbUsAddPassword").val("");
 			$("#tbUsAddEmail").val("");
 			$("#tbUsAddFirstname").val("");
 			$("#tbUsAddLastname").val("");
@@ -414,6 +424,7 @@
 		}
 		else
 		{
+			$("#modalUsAddPwd").hide();
 			usGetData(mId);
 		}
 

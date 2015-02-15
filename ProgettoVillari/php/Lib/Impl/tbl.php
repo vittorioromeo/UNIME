@@ -58,6 +58,11 @@ class Tbl
 		return DB::query("SELECT * FROM $this->tblName WHERE $mX");
 	}
 
+	public function findByID($mId)
+	{
+		return $this->firstRowWhere("id = $mId");
+	}
+
 	public function firstRowWhere($mX)
 	{
 		$res = $this->getAllRowsWhere($mX);
@@ -67,7 +72,7 @@ class Tbl
 
 	public function hasAnyWhere($mX)
 	{
-		return count($this->getAllRowsWhere($mX)) > 0;
+		return $this->getAllRowsWhere($mX)->num_rows > 0;
 	}
 
 	public function deleteWithChildren($mId, &$mMsg)
@@ -115,6 +120,30 @@ class Tbl
 		{
 			$nextId = $mFn($row, $mDepth);
 			$this->forHierarchy($mFn, $mMsg, $nextId, $mDepth + 1);
+		}
+
+		$mMsg = "Success getting $this->tblName hierarchy.";
+		return true;
+	}
+
+	public function forChildren($mFn, &$mMsg, $mId, $mDepth = 0)
+	{
+		if($mId == 'null') return;
+		$res = "";
+		$where = "id = $mId";		
+
+		$qres = DB::query("SELECT * FROM $this->tblName WHERE $where");
+
+		if($qres == null)
+		{
+			$mMsg = "Error getting $this->tblName hierarchy. " . DB::$lastError;
+			return false;
+		}
+
+		while($row = $qres->fetch_assoc()) 
+		{
+			$nextId = $mFn($row, $mDepth);
+			$this->forChildren($mFn, $mMsg, $nextId, $mDepth + 1);
 		}
 
 		$mMsg = "Success getting $this->tblName hierarchy.";

@@ -21,16 +21,14 @@ class TblUser extends Tbl
 
 class TblGroup extends Tbl
 {
-	public function mkGroup($mIdParent, $mName, $mPrivileges, &$mMsg)
+	public function mkGroup($mIdParent, $mName, $mPrivs, &$mMsg)
 	{
 		if(!Utils::checkEmptyStr($mName, $mMsg)) return false;
 
 		$parentId = Utils::getInsertParent($this, $mIdParent, $mMsg);
 		if(!$parentId) return false;
 
-		$privileges = Privileges::arrayToStr($mPrivileges);
-
-		$this->insert($parentId, $mName, DB::v($privileges));
+		$this->insert($parentId, $mName, DB::v($mPrivs->toStr()));
 		$mMsg = "Group created successfully.";
 		return true;
 	}

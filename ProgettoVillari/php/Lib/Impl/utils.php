@@ -1,35 +1,59 @@
 <?php
 
-class PrivilegesSet
-{
-	public $superAdmin = false;
-}
-
-class Privileges
+class Privs
 {
 	public static $count = 1;
 
+	public static $superAdmin = 0;
+}
+
+class PrivSet
+{
+	private $bits = "";
+
+	public function __construct()
+	{
+		$this->bits = str_repeat('F', Privs::$count);
+	}
+
 	public static function fromStr($mX)
 	{
-		$res = new PrivilegesSet();
-
-		$res->superAdmin = $mX[0] == 'T';
-	
+		$res = new PrivSet();
+		$res->bits = $mX;
 		return $res;
 	}
-	public static function toStr($mX)
+
+	public function toStr()
 	{
-		$res = "";
-
-		$res .= ($mX->superAdmin) ? "T" : "F";
-
-		return $res;
+		return $this->bits;
 	}
-	public static function arrayToStr($mX)
-	{
-		$res = "";
 
-		$res .= (in_array(0, $mX)) ? "T" : "F"; 
+	public function add($mX)
+	{
+		$this->bits[$mX] = 'T';
+	}
+
+	public function del($mX)
+	{
+		$this->bits[$mX] = 'F';
+	}
+
+	public function has($mX)
+	{
+		return $this->bits[$mX] == 'T';
+	}
+
+	public function getOrWith($mX)
+	{
+		$res = new PrivSet();
+		
+		for($i = 0; $i < Privs::$count; $i++)
+		{
+			if($this->has($i) || $mX->has($i))
+			{
+				$res->add($i);
+			}
+		}
 
 		return $res;
 	}

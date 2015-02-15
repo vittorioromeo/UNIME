@@ -23,13 +23,22 @@ class Credentials
 		if($userID == -1)
 		{
 			Debug::lo("Invalid credentials: $mUser, $mPass");
+			return false;
 		}
 		else
 		{
 			Debug::lo("Login successful: $mUser, $mPass");
 			Session::set(SKeys::$loggedIn, true);
 			Session::set(SKeys::$userID, $userID);
+			return true;
 		}
+	}
+
+	public static function tryLogout()
+	{
+		Session::set(SKeys::$loggedIn, false);
+		Session::set(SKeys::$userID, null);
+		return true;
 	}
 }
 

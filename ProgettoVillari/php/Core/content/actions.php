@@ -32,6 +32,20 @@ class Actions
 
 
 	
+	public static function trySignIn()
+	{
+		$user = $_POST["user"];
+		$pass = $_POST["pass"];
+		
+		$res = Credentials::tryLogin($user, $pass);
+		print($res);
+	}
+
+	public static function trySignOut()
+	{
+		print(Credentials::tryLogout());
+	}
+
 
 
 	public static function scAdd()
@@ -232,38 +246,36 @@ class Actions
 
 		print('<tbody>');
 
+			foreach(Tables::$user->getAllRows() as $x)
+			{
+				print('<tr>');
 
-				foreach(Tables::$user->getAllRows() as $x)
-				{
-					print('<tr>');
+				$userId = $x['id'];
+				$groupId = $x['id_group'];
+				$groupName = Tables::$group->firstRowWhere('id = '.DB::v($groupId))['name'];
+				$btnActionsId = 'btnUsActions_' . $userId;
+				$btnEditId = 'btnUsEdit_' . $userId;
 
-					$userId = $x['id'];
-					$groupId = $x['id_group'];
-					$groupName = Tables::$group->firstRowWhere('id = '.DB::v($groupId))['name'];
-					$btnActionsId = 'btnUsActions_' . $userId;
-					$btnEditId = 'btnUsEdit_' . $userId;
+				print('<td>');
+					Gen::LinkBtn($btnActionsId, 'glyphicon-asterisk', '', 'btn-xs');
+					Gen::JS_OnBtnClick($btnActionsId, 'showUsActionsModal('.$userId.');');
+					
+					Gen::LinkBtn($btnEditId, 'glyphicon-pencil', '', 'btn-xs');
+					Gen::JS_OnBtnClick($btnEditId, 'showUsEditModal('.$userId.');');
+				print('</td>');
 
-					print('<td>');
-						Gen::LinkBtn($btnActionsId, 'glyphicon-asterisk', '', 'btn-xs');
-						Gen::JS_OnBtnClick($btnActionsId, 'showUsActionsModal('.$userId.');');
-						
-						Gen::LinkBtn($btnEditId, 'glyphicon-pencil', '', 'btn-xs');
-						Gen::JS_OnBtnClick($btnEditId, 'showUsEditModal('.$userId.');');
-					print('</td>');
-
-					print('<td>'.$userId.'</td>');
-					print('<td>'.$x['username'].'</td>');
-					print('<td>'.$x['email'].'</td>');
-					print('<td>'.$groupName.'</td>');
-					print('<td>'.$x['firstname'].'</td>');
-					print('<td>'.$x['lastname'].'</td>');
-					print('<td>'.$x['registration_date'].'</td>');
-					print('<td>'.$x['birth_date'].'</td>');
+				print('<td>'.$userId.'</td>');
+				print('<td>'.$x['username'].'</td>');
+				print('<td>'.$x['email'].'</td>');
+				print('<td>'.$groupName.'</td>');
+				print('<td>'.$x['firstname'].'</td>');
+				print('<td>'.$x['lastname'].'</td>');
+				print('<td>'.$x['registration_date'].'</td>');
+				print('<td>'.$x['birth_date'].'</td>');
+			
+				print('</tr>');
+			}
 				
-					print('</tr>');
-				}
-				
-
 		print('</tbody>');
 	}
 }

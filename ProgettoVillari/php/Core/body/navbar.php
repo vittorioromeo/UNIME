@@ -3,16 +3,20 @@
 		<div class="navbar-header">
 			<a class="navbar-brand" href="#">veeForum</a>
 		</div>
-		<?php
-
-			if(Credentials::isLoggedIn() == 0)
-			{
-				require_once "$root/php/Core/body/loginControls.php";
-			}
-			else
-			{
-				require_once "$root/php/Core/body/profileControls.php";
-			}
-		?>
+		<span id="navCont"></span>
 	</div>
 </nav>
+
+<script>
+
+$(document).ready(function()
+{
+	reloadNavbar();
+});
+
+function reloadNavbar()
+{
+	$("#navCont").load("php/Core/body/navbarContents.php");
+}
+
+</script>

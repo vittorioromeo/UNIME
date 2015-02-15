@@ -6,6 +6,17 @@ class TblUser extends Tbl
 	{
 
 	}
+
+	public function findIDByCredentials($mUser, $mPass)
+	{
+		$hash = Utils::getPwdHash($mPass);
+		$res = $this->getAllRowsWhere('username = '.DB::v($mUser).' AND password_hash = '.DB::v($hash));
+
+		if($res->num_rows == 0) return -1;
+
+		$row = $res->fetch_assoc();
+		return $row['id'];
+	}
 }
 
 class TblGroup extends Tbl

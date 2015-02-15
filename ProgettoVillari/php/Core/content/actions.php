@@ -139,19 +139,87 @@ class Actions
 		print(nl2br(Tables::$group->getHierarchyStr($msg)));
 	}
 
+	public static function usAdd()
+	{
+		$id = $_POST['id'];
 
+		$groupId = $_POST['groupId'];
+		$username = $_POST['username'];
+		$passwordHash = Utils::getPwdHash('TODO');
+		$email = $_POST['email'];
+		$registrationDate = date('Y-m-d');
+		$firstname = $_POST['firstname'];
+		$lastname = $_POST['lastname'];
+		$birthdate = $_POST['birthdate'];
 
+		if($id == -1)
+		{
+			return Tables::$user->insert
+			(
+				DB::v($groupId), 
+				DB::v($username), 
+				DB::v($passwordHash), 
+				DB::v($email), 
+				DB::v($registrationDate), 
+				DB::v($firstname),
+				DB::v($lastname), 
+				DB::v($birthdate)
+			);
+		}
+		else
+		{
+			return DB::query('UPDATE tbl_user 
+				SET 
+					id_group = '.DB::v($groupId).',
+					username = '.DB::v($username).',
+					email = '.DB::v($email).',
+					registration_date = '.DB::v($registrationDate).',
+					firstname = '.DB::v($firstname).',
+					lastname = '.DB::v($lastname).',
+					birth_date = '.DB::v($birthdate).'
+				WHERE 
+					id = '.DB::v($id)
+				);
+		}
+	}
+
+	public static function usDel()
+	{
+		$id = $_POST["id"];
+
+		Tables::$user->deleteWhere('id = '.DB::v($id));
+
+		print("Success.");
+	}
+
+	public static function usGetData()
+	{
+		$id = $_POST["id"];
+		$r = Tables::$user->firstRowWhere('id = '.DB::v($id));
+		$res = array
+		(
+			'username' => $r['username'],
+			'email' => $r['email'],
+			'groupid' => $r['id_group'],
+			'firstname' => $r['firstname'],
+			'lastname' => $r['lastname'],
+			'registrationdate' => $r['registration_date'],
+			'birthdate' => $r['birth_date']
+		);
+
+		$tj = json_encode($res);
+		print($tj);
+	}
 
 	public static function getTblUsers()
 	{
 		print('
 		<thead>
 			<tr>
-				<th>
-					<a class="btn btn-default btn-xs" href="#" role="button" id="btnUsAdd">
-						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>				
-					</a>
-				</th>
+				<th>');
+					Gen::LinkBtn('btnUsAdd', 'glyphicon-plus', '', 'btn-xs');
+		print('</th>
+				<th>ID</th>
 				<th>Username</th>
 				<th>Email</th>
 				<th>Group</th>
@@ -160,31 +228,41 @@ class Actions
 				<th>Registration date</th>
 				<th>Birth date</th>
 			</tr>
-		</thead>
-		');
+		</thead>');
 
 		print('<tbody>');
 
-		print('<tr>');
 
-		// Actions
-		print('
-		<td>
-			<a class="btn btn-default btn-xs" href="#" role="button" id="btnUserDel" data-id="0">
-				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>				
-			</a>
-		</td>
-		');
+				foreach(Tables::$user->getAllRows() as $x)
+				{
+					print('<tr>');
 
-		print('<td>username_0</td>');
-		print('<td>email_0</td>');
-		print('<td>group_0</td>');
-		print('<td>firstname_0</td>');
-		print('<td>lastname_0</td>');
-		print('<td>regdate_0</td>');
-		print('<td>birthdate_0</td>');
+					$userId = $x['id'];
+					$groupId = $x['id_group'];
+					$groupName = Tables::$group->firstRowWhere('id = '.DB::v($groupId))['name'];
+					$btnActionsId = 'btnUsActions_' . $userId;
+					$btnEditId = 'btnUsEdit_' . $userId;
 
-		print('</tr>');
+					print('<td>');
+						Gen::LinkBtn($btnActionsId, 'glyphicon-asterisk', '', 'btn-xs');
+						Gen::JS_OnBtnClick($btnActionsId, 'showUsActionsModal('.$userId.');');
+						
+						Gen::LinkBtn($btnEditId, 'glyphicon-pencil', '', 'btn-xs');
+						Gen::JS_OnBtnClick($btnEditId, 'showUsEditModal('.$userId.');');
+					print('</td>');
+
+					print('<td>'.$userId.'</td>');
+					print('<td>'.$x['username'].'</td>');
+					print('<td>'.$x['email'].'</td>');
+					print('<td>'.$groupName.'</td>');
+					print('<td>'.$x['firstname'].'</td>');
+					print('<td>'.$x['lastname'].'</td>');
+					print('<td>'.$x['registration_date'].'</td>');
+					print('<td>'.$x['birth_date'].'</td>');
+				
+					print('</tr>');
+				}
+				
 
 		print('</tbody>');
 	}

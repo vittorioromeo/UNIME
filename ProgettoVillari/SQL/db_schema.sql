@@ -34,12 +34,12 @@ create table tbl_user
 	username varchar(255) not null,
 	password_hash varchar(255) not null,
 	email varchar(255) not null,
-	registrationdate date not null,
+	registration_date date not null,
 
 	# Personal info
 	firstname varchar(255),
 	lastname varchar(255),
-	birthdate date,
+	birth_date date,
 
 	foreign key (id_group) 
 		references tbl_group(id)
@@ -53,7 +53,7 @@ create table tbl_creation_data
 	id int auto_increment primary key,
 
 	# Data
-	creationdate date not null,
+	creation_date date not null,
 	id_author int not null,
 
 	foreign key (id_author)

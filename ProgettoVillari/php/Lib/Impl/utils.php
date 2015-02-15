@@ -50,7 +50,7 @@ class Utils
 		return $res;
 	}
 
-	public static function GetPwdHash($mX)
+	public static function getPwdHash($mX)
 	{
 		return md5($mX);
 	}

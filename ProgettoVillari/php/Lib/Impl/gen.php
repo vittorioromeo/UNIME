@@ -22,6 +22,24 @@ class Gen
 		');
 	}
 
+	public static function LinkBtn($mId, $mIcon, $mText = '', $mCSS = '')
+	{
+		print('
+		<a class="btn btn-default '.$mCSS.'" href="#" role="button" id="'.$mId.'">
+			<span class="glyphicon '.$mIcon.'" aria-hidden="true"></span>
+			'.$mText.'
+		</a>
+		');
+	}
+
+	public static function BtnCloseModal()
+	{
+		print('
+		<a role="button" class="btn btn-default" data-dismiss="modal">
+			<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+		</a>');
+	}
+
 	public static function JS_PostAction($mFnName, $mAction, $mKVArray, $mFnOk = '', $mFnFail = '')
 	{
 		print('<script>

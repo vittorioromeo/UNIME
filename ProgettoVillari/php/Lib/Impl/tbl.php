@@ -32,12 +32,15 @@ class Tbl
 
 		if(count($mValues) != count($this->insertFields))
 		{
-			Debug::lo("Error: count of values does not match count of fields.");
-			return null;
+			$err = "Error: count of values does not match count of fields.";
+			Debug::lo($err);
+			return $err;
 		}
 
 		$res = DB::query("INSERT INTO $this->tblName ($insertFieldsStr) VALUES ($insertValuesStr);");
-		return $res;
+		if($res) return $res;
+
+		return DB::$lastError;
 	}
 
 	public function deleteWhere($mX)
@@ -53,6 +56,13 @@ class Tbl
 	public function getAllRowsWhere($mX)
 	{
 		return DB::query("SELECT * FROM $this->tblName WHERE $mX");
+	}
+
+	public function firstRowWhere($mX)
+	{
+		$res = $this->getAllRowsWhere($mX);
+		$row = $res->fetch_assoc();
+		return $row;
 	}
 
 	public function hasAnyWhere($mX)

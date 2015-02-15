@@ -93,7 +93,7 @@ Tables::$group = new TblGroup('tbl_group');
 Tables::$group->setInsertFields('id_parent', 'name', 'privileges');
 
 Tables::$user = new TblUser('tbl_user');
-Tables::$user->setInsertFields('id_group', 'username', 'password_hash', 'email', 'registration_date', 'firstname', 'lastname', 'birthdate');
+Tables::$user->setInsertFields('id_group', 'username', 'password_hash', 'email', 'registration_date', 'firstname', 'lastname', 'birth_date');
 
 // Tables::$group->insert('null', DB::v("agdssad"), DB::v("TTTTT"));
 

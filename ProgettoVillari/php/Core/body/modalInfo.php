@@ -18,10 +18,10 @@
 </div>
 
 <script>
-	function showModalInfo(mHeader, mText)
-	{
-		$("#modalInfoHeader").text(mHeader);
-		$("#modalInfoText").html(mText);
-		$("#modalInfo").modal('show');
-	}
+function showModalInfo(mHeader, mText)
+{
+	$("#modalInfoHeader").text(mHeader);
+	$("#modalInfoText").html(mText);
+	$("#modalInfo").modal('show');
+}
 </script>

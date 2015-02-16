@@ -84,13 +84,6 @@ class TblGroupSectionPermission extends Tbl
 {
 	public function mkGSPerm($mIDGroup, $mIDSection, $mCView, $mCPost, $mCCreateThread, $mCDeletePost, $mCDeleteThread, $mCDeleteSection)
 	{
-		$mCView = (int) $mCView;
-		$mCPost = (int) $mCPost;
-		$mCCreateThread = (int) $mCCreateThread;
-		$mCDeletePost = (int) $mCDeletePost;
-		$mCDeleteThread = (int) $mCDeleteThread;
-		$mCDeleteSection = (int) $mCDeleteSection;
-
 		$res = $this->insert
 		(
 			DB::v($mIDGroup), 
@@ -103,7 +96,6 @@ class TblGroupSectionPermission extends Tbl
 			DB::v($mCDeleteSection)
 		);
 
-		// var_dump($res);
 		return !$res ? false : true; 
 	}
 };

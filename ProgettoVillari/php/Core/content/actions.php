@@ -56,8 +56,8 @@ class Actions
 				return;
 			}
 		}
-
-		print('php/Core/content/forbidden.php');
+		
+		print('php/Core/content/forbidden.php');		
 	}
 
 
@@ -173,9 +173,11 @@ class Actions
 		$lastname = $_POST['lastname'];
 		$birthdate = $_POST['birthdate'];
 
+		$res = "";
+
 		if($id == -1)
 		{
-			return TBS::$user->insert
+			$res = TBS::$user->insert
 			(
 				DB::v($groupId), 
 				DB::v($username), 
@@ -189,7 +191,7 @@ class Actions
 		}
 		else
 		{
-			return DB::query('UPDATE tbl_user 
+			$res = DB::query('UPDATE tbl_user 
 				SET 
 					id_group = '.DB::v($groupId).',
 					username = '.DB::v($username).',
@@ -202,6 +204,8 @@ class Actions
 					id = '.DB::v($id)
 				);
 		}
+
+		print(($res == null) ? DB::$lastError : "Success.");
 	}
 
 	public static function usDel()

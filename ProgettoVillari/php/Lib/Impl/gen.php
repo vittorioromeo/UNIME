@@ -22,14 +22,19 @@ class Gen
 		');
 	}
 
-	public static function LinkBtn($mID, $mIcon, $mText = '', $mCSS = '')
+	public static function LinkBtn($mID, $mIcon, $mText = '', $mCSS = '', $mDismissModal = false)
 	{
 		print('
-		<a class="btn btn-default '.$mCSS.'" href="#" role="button" id="'.$mID.'">
+		<a class="btn btn-default '.$mCSS.'" href="#" role="button" id="'.$mID.'"'.($mDismissModal ? ' data-dismiss="modal"' : '').'>
 			<span class="glyphicon '.$mIcon.'" aria-hidden="true"></span>
 			'.$mText.'
 		</a>
 		');
+	}
+
+	public static function PanelTitle($mTitle)
+	{
+		print('<div class="panel-heading"><h4 class="panel-title">'.$mTitle.'</h4></div>');
 	}
 
 	public static function BtnCloseModal()

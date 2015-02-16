@@ -1,16 +1,26 @@
+<ul class="nav navbar-nav">
+	<?php
+		if(Credentials::hasCUPrivilege(Privs::$superAdmin))
+		{
+			print('<li><a href="#">Administration</a></li>');
+		}
+	?>   
+	<li><a href="#">Sections</a></li>
+</ul>
 
-<form method="post" class="navbar-form navbar-right" role="form">
-	Logged in as: 
-	<strong>
-	<?php 
-		print(Credentials::getCURow()['username']); 
-	?>
-	</strong>
-
-
-
-	<a id="btnSignOut" role="button" type="submit" class="btn btn-success">Sign out</a>
-</form>
+<ul class="nav navbar-nav navbar-right">
+	<li>
+		<a href="#">
+			Logged in as: 
+			<strong> <?php print(Credentials::getCURow()['username']); ?> </strong>
+		</a>
+	</li>   
+	<li>
+		<div class="navbar-form">
+			<?php Gen::LinkBtn('btnSignOut', '', 'Sign out'); ?>			
+		</div>
+	</li>   		
+</ul>
 
 <?php
 

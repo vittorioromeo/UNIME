@@ -3,6 +3,15 @@
 	require_once("$root/php/Lib/lib.php");
 ?>
 
-Permissions not valid
+<br/>
 
-<?php print(Credentials::getCalcPSet()->toStr()); ?>
+<?php
+	if(Credentials::isLoggedIn())
+	{
+		print('<strong>Permissions not valid to view this page.</strong>');
+	}
+	else
+	{
+		print('<strong>User not logged in.</strong>');
+	}
+?>

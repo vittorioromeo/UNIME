@@ -7,25 +7,20 @@ class TblUser extends Tbl
 
 	}
 
-	public function findIDByCredentials($mUser, $mPass)
+	public function findByCredentials($mUser, $mPass)
 	{
 		$hash = Utils::getPwdHash($mPass);
-		$res = $this->getAllRowsWhere('username = '.DB::v($mUser).' AND password_hash = '.DB::v($hash));
-
-		if($res->num_rows == 0) return -1;
-
-		$row = $res->fetch_assoc();
-		return $row['id'];
+		return $this->getFirstWhere('username = '.DB::v($mUser).' AND password_hash = '.DB::v($hash));
 	}
 }
 
 class TblGroup extends Tbl
 {
-	public function mkGroup($mIdParent, $mName, $mPrivs, &$mMsg)
+	public function mkGroup($mIDParent, $mName, $mPrivs, &$mMsg)
 	{
 		if(!Utils::checkEmptyStr($mName, $mMsg)) return false;
 
-		$parentId = Utils::getInsertParent($this, $mIdParent, $mMsg);
+		$parentId = Utils::getInsertParent($this, $mIDParent, $mMsg);
 		if(!$parentId) return false;
 
 		$this->insert($parentId, $mName, DB::v($mPrivs->toStr()));
@@ -33,11 +28,11 @@ class TblGroup extends Tbl
 		return true;
 	}
 
-	public function getHierarchyStr(&$mMsg)
+	public function getHierarchyStr()
 	{	
 		$res = "";
 
-		$this->forHierarchy(function($mRow, $mDepth) use (&$res)
+		$this->forChildren(function(&$mRow, $mDepth) use (&$res)
 		{
 			$indent = str_repeat("--->", $mDepth);
 
@@ -46,9 +41,7 @@ class TblGroup extends Tbl
 			$privileges = $mRow['privileges'];
 
 			$res .= $indent . "($id) $name [$privileges]\n";
-
-			return $id;
-		}, $mMsg);
+		});
 
 		return $res;
 	}
@@ -56,23 +49,24 @@ class TblGroup extends Tbl
 
 class TblSection extends Tbl
 {
-	public function mkSection($mIdParent, $mName, &$mMsg)
+	public function mkSection($mIDParent, $mName, &$mMsg)
 	{
 		if(!Utils::checkEmptyStr($mName, $mMsg)) return false;
 
-		$parentId = Utils::getInsertParent($this, $mIdParent, $mMsg);
+		$parentId = Utils::getInsertParent($this, $mIDParent, $mMsg);
 		if(!$parentId) return false;
 
-		$this->insert($parentId, $mName);
+		$res = $this->insert($parentId, $mName);
 		$mMsg = "Section created successfully.";
-		return true;
+		
+		return !$res ? false : true; 
 	}
 
-	public function getHierarchyStr(&$mMsg)
+	public function getHierarchyStr()
 	{	
 		$res = "";
 
-		$this->forHierarchy(function($mRow, $mDepth) use (&$res)
+		$this->forChildren(function(&$mRow, $mDepth) use (&$res)
 		{
 			$indent = str_repeat("--->", $mDepth);
 
@@ -80,32 +74,58 @@ class TblSection extends Tbl
 			$name = $mRow['name'];
 
 			$res .= $indent . "($id) $name\n";
-
-			return $id;
-		}, $mMsg);
+		});
 
 		return $res;
 	}
 }
 
-class Tables
+class TblGroupSectionPermission extends Tbl
+{
+	public function mkGSPerm($mIDGroup, $mIDSection, $mCView, $mCPost, $mCCreateThread, $mCDeletePost, $mCDeleteThread, $mCDeleteSection)
+	{
+		$mCView = (int) $mCView;
+		$mCPost = (int) $mCPost;
+		$mCCreateThread = (int) $mCCreateThread;
+		$mCDeletePost = (int) $mCDeletePost;
+		$mCDeleteThread = (int) $mCDeleteThread;
+		$mCDeleteSection = (int) $mCDeleteSection;
+
+		$res = $this->insert
+		(
+			DB::v($mIDGroup), 
+			DB::v($mIDSection), 
+			DB::v($mCView), 
+			DB::v($mCPost), 
+			DB::v($mCCreateThread), 
+			DB::v($mCDeletePost), 
+			DB::v($mCDeleteThread), 
+			DB::v($mCDeleteSection)
+		);
+
+		// var_dump($res);
+		return !$res ? false : true; 
+	}
+};
+
+class TBS
 {
 	public static $section;
 	public static $group;
 	public static $user;
+	public static $gsperms;
 }
 
-Tables::$section = new TblSection('tbl_section');
-Tables::$section->setInsertFields('id_parent', 'name');
+TBS::$section = new TblSection('tbl_section');
+TBS::$section->setInsertFields('id_parent', 'name');
 
-Tables::$group = new TblGroup('tbl_group');
-Tables::$group->setInsertFields('id_parent', 'name', 'privileges');
+TBS::$group = new TblGroup('tbl_group');
+TBS::$group->setInsertFields('id_parent', 'name', 'privileges');
 
-Tables::$user = new TblUser('tbl_user');
-Tables::$user->setInsertFields('id_group', 'username', 'password_hash', 'email', 'registration_date', 'firstname', 'lastname', 'birth_date');
+TBS::$user = new TblUser('tbl_user');
+TBS::$user->setInsertFields('id_group', 'username', 'password_hash', 'email', 'registration_date', 'firstname', 'lastname', 'birth_date');
 
-// Tables::$group->insert('null', DB::v("agdssad"), DB::v("TTTTT"));
-
-
+TBS::$gsperms = new TblGroupSectionPermission('tbl_group_section_permission');
+TBS::$gsperms->setInsertFields('id_group', 'id_section', 'can_view', 'can_post', 'can_create_thread', 'can_delete_post', 'can_delete_thread', 'can_delete_section');
 
 ?>

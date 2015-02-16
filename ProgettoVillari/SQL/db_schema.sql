@@ -139,10 +139,10 @@ create table tbl_group_section_permission
 	id_section int not null,
 
 	# Data
-	can_view bit not null,
-	can_post bit not null,
-	can_create_thread bit not null,
-	can_delete_post bit not null,
-	can_delete_thread bit not null,
-	can_delete_section bit not null
+	can_view boolean not null,
+	can_post boolean not null,
+	can_create_thread boolean not null,
+	can_delete_post boolean not null,
+	can_delete_thread boolean not null,
+	can_delete_section boolean not null
 );

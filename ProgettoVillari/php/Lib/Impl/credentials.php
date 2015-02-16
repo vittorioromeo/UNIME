@@ -4,65 +4,47 @@ class Credentials
 {
 	public static function isLoggedIn()
 	{
-		if(Session::isNull(SKeys::$loggedIn)) 
-		{
-			Debug::lo("Not logged in");
-			return false;
-		}
-
-
-		$value = Session::get(SKeys::$loggedIn);
-
-		return $value == true;
-
+		return Session::get(SK::$userID) != null;
 	}
+
 	public static function tryLogin($mUser, $mPass)
 	{
-		$userID = Tables::$user->findIDByCredentials($mUser, $mPass);
+		$row = TBS::$user->findByCredentials($mUser, $mPass);
 
-		if($userID == -1)
+		if(!$row)
 		{
 			Debug::lo("Invalid credentials: $mUser, $mPass");
+			Session::set(SK::$userID, null);
 			return false;
 		}
-		else
-		{
-			Debug::lo("Login successful: $mUser, $mPass");
-			Session::set(SKeys::$loggedIn, true);
-			Session::set(SKeys::$userID, $userID);
-			return true;
-		}
+		
+		Debug::lo("Login successful: $mUser, $mPass");			
+		Session::set(SK::$userID, $row['id']);
+		return true;		
 	}
 
 	public static function tryLogout()
-	{
-		Session::set(SKeys::$loggedIn, false);
-		Session::set(SKeys::$userID, null);
+	{		
+		Session::set(SK::$userID, null);
 		return true;
 	}
 
 	public static function getCURow()
 	{
-		return Tables::$user->findByID(Session::get(SKeys::$userID));
+		return TBS::$user->findByID(Session::get(SK::$userID));
 	}
 
 	public static function getCalcPSet()
 	{
 		$groupID = Credentials::getCURow()['id_group'];
-		$group = Tables::$group->findByID($groupID);
-		$msg = "";
+		$group = TBS::$group->findByID($groupID);		
 
 		$calcPset = PrivSet::fromStr($group['privileges']);
 
-		Tables::$group->forChildren(function($mRow, $mDepth) use (&$calcPset)
+		TBS::$group->forParent(function(&$mRow, $mDepth) use (&$calcPset)
 		{
-			$id = $mRow['id_parent'];	
-			$privileges = $mRow['privileges'];
-
-			$calcPset = $calcPset->getOrWith(PrivSet::fromStr($privileges));
-
-			return $id;
-		}, $msg, $groupID);
+			$calcPset = $calcPset->getOrWith(PrivSet::fromStr($mRow['privileges']));
+		}, $groupID);
 
 		return $calcPset;
 	}

@@ -164,6 +164,35 @@
 
 </div>
 
+<hr>
+
+<div class="row">
+	<div class="col-md-4">
+		<h2>Group-section permissions</h2>
+		<div class="panel panel-default">
+			<div class="panel-heading"><h4 class="panel-title">Manage</h4></div>
+			<div class="panel-body">
+				<div class="form-group">
+					<label for="slGSPGr">Group</label>
+					<select class="form-control" id="slGSPGr">
+
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="slGSPSc">Section</label>
+					<select class="form-control" id="slGSPSc">
+
+					</select>
+				</div>		
+				<div class="btn-group pull-right">
+					<?php Gen::LinkBtn('btnGSPModal', 'glyphicon-arrow-right'); ?>				
+				</div>		
+			</div>
+		</div>
+	</div>
+
+</div>
+
 <div class="modal fade" id="modalUsAdd">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -231,6 +260,42 @@
 			<div class="modal-footer">
 				<div class="btn-group pull-right">
 					<?php Gen::LinkBtn('btnUsActionsOk', 'glyphicon-ok'); ?>					
+					<?php Gen::BtnCloseModal(); ?>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalGSPerms">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true"></span>
+				</button>
+				<h4 class="modal-title">Permissions</h4>
+				<div class="gspNameDiv"></div>
+			</div>
+			<div class="modal-body">
+				<div class="col-md-6">
+					<?php 
+						Gen::CheckBox("cbGSPCView", "Can view");
+						Gen::CheckBox("cbGSPCPost", "Can post");
+						Gen::CheckBox("cbGSPCreateThread", "Can create thread");
+					?>
+				</div>	
+				<div class="col-md-6">
+					<?php 
+						Gen::CheckBox("cbGSPCDeletePost", "Can delete post");
+						Gen::CheckBox("cbGSPCDeleteThread", "Can delete thread");
+						Gen::CheckBox("cbGSPCDeleteSection", "Can section");
+					?>
+				</div>	
+			</div>
+			<div class="modal-footer">
+				<div class="btn-group pull-right">
+					<?php Gen::LinkBtn('btnGSPModalOK', 'glyphicon-ok'); ?>					
 					<?php Gen::BtnCloseModal(); ?>
 				</div>
 			</div>
@@ -320,14 +385,36 @@
 			'showAPModal("Add/edit", mOut);',
 			'showAPModal("Add/edit - error", mErr);');
 
-	Gen::JS_PostAction('usDel(mId)', 'usDel',
-			array( 'id' => 'mId' ),
+	Gen::JS_PostAction('usDel(mID)', 'usDel',
+			array( 'id' => 'mID' ),
 			'showAPModal("Delete", mOut);',
 			'showAPModal("Delete - error", mErr);');
 
-	Gen::JS_PostAction('usGetData(mId)', 'usGetData',
-			array( 'id' => 'mId' ),
-			'fillUsEditModal(mId, mOut);',
+	Gen::JS_PostAction('usGetData(mID)', 'usGetData',
+			array( 'id' => 'mID' ),
+			'fillUsEditModal(mID, mOut);',
+			'showAPModal("Get data - error", mErr);');
+
+
+	Gen::JS_PostAction('startGSPEdit(mIDGroup, mIDSection)', 'getGSPData',
+			array( 'idgroup' => 'mIDGroup', 'idsection' => 'mIDSection' ),
+			'fillGSPModal(mOut); showGSPModal(mIDGroup, mIDSection);',
+			'showAPModal("Get data - error", mErr);');
+
+	Gen::JS_PostAction('endGSPEdit(mIDGroup, mIDSection, mA0, mA1, mA2, mA3, mA4, mA5)', 'setGSPData',
+			array
+			( 
+				'idgroup' => 'mIDGroup', 
+				'idsection' => 'mIDSection',
+
+				'cpost' => 'mA0',
+				'cview' => 'mA1',
+				'ccreatethread' => 'mA2',
+				'cdeletepost' => 'mA3',
+				'cdeletethread' => 'mA4',
+				'cdeletesection' => 'mA5'
+			),
+			'',
 			'showAPModal("Get data - error", mErr);');
 
 
@@ -347,6 +434,22 @@
 
 	Gen::JS_OnBtnClick('btnUsAddOk', 			'usAdd(); refreshAll();');
 	Gen::JS_OnBtnClick('btnUsActionsUsDel', 	'usDel(usEditModalId); refreshAll();');
+
+	Gen::JS_OnBtnClick('btnGSPModal',			'startGSPEdit($("#slGSPGr").val(), $("#slGSPSc").val());');
+	Gen::JS_OnBtnClick('btnGSPModalOK', 		
+		'endGSPEdit
+		(
+			$("#slGSPGr").val(),
+			$("#slGSPSc").val(),
+			$("#cbGSPCPost").prop("checked"),
+			$("#cbGSPCView").prop("checked"),
+			$("#cbGSPCreateThread").prop("checked"),
+			$("#cbGSPCDeletePost").prop("checked"),
+			$("#cbGSPCDeleteThread").prop("checked"),
+			$("#cbGSPCDeleteSection").prop("checked")
+		);
+
+		$("#modalGSPerms").modal("hide");');
 ?>
 
 <script>
@@ -356,11 +459,13 @@
 	{
 		refreshSections("#slScParent", true);
 		refreshSections("#slScToDel", false);
+		refreshSections("#slGSPSc", false);
 		refreshSectionHierarchy();
 
 		refreshGroups("#slGrParent", true);
 		refreshGroups("#slGrToDel", false);
 		refreshGroups("#slUsAddGroup", false);
+		refreshGroups("#slGSPGr", false);
 		refreshGroupHierarchy();
 
 		refreshUsers();
@@ -381,11 +486,11 @@
 		showAPModal("Info", "Debug mode " + (mX ? "enabled." : "disabled."));
 	}
 
-	function setUsEditId(mId)
+	function setUsEditId(mID)
 	{
-		usEditModalId = mId;
+		usEditModalId = mID;
 
-		if(mId != -1)
+		if(mID != -1)
 		{
 			$(".usIdDiv").text("ID: " + usEditModalId);
 		}
@@ -395,7 +500,7 @@
 		}
 	}
 
-	function fillUsEditModal(mId, mOut)
+	function fillUsEditModal(mID, mOut)
 	{	
 		var x = JSON.parse(mOut);
 
@@ -407,11 +512,24 @@
 		$("#slUsAddGroup").val(x["groupid"]);
 	}
 
-	function showUsEditModal(mId)
-	{
-		setUsEditId(mId);
 
-		if(mId == -1)
+	function fillGSPModal(mOut)
+	{	
+		var x = JSON.parse(mOut);
+
+		$("#cbGSPCPost").prop("checked", x["cpost"] == "1");
+		$("#cbGSPCView").prop("checked", x["cview"] == "1");
+		$("#cbGSPCreateThread").prop("checked", x["ccreatethread"] == "1");
+		$("#cbGSPCDeletePost").prop("checked", x["cdeletepost"] == "1");
+		$("#cbGSPCDeleteThread").prop("checked", x["cdeletethread"] == "1");
+		$("#cbGSPCDeleteSection").prop("checked", x["cdeletesection"] == "1");
+	}
+
+	function showUsEditModal(mID)
+	{
+		setUsEditId(mID);
+
+		if(mID == -1)
 		{
 			$("#modalUsAddPwd").show();
 
@@ -425,15 +543,21 @@
 		else
 		{
 			$("#modalUsAddPwd").hide();
-			usGetData(mId);
+			usGetData(mID);
 		}
 
 		$("#modalUsAdd").modal("show");
 	}
 
-	function showUsActionsModal(mId)
+	function showGSPModal(mIDGroup, mIDSection)
 	{
-		setUsEditId(mId);
+		$(".gspNameDiv").text("ID Group: " + mIDGroup + " || ID Section: " + mIDSection);
+		$("#modalGSPerms").modal("show");
+	}
+
+	function showUsActionsModal(mID)
+	{
+		setUsEditId(mID);
 		$("#modalUsActions").modal("show");
 	}
 

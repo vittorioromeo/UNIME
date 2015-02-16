@@ -12,18 +12,13 @@ class Tbl
 
 	public function setInsertFields(...$mFields)
 	{
-		$this->insertFields = array();
-
-		foreach($mFields as $x) 
-		{
-        	array_push($this->insertFields, $x);
-    	}
+		$this->insertFields = $mFields;
 	}
 
 	public function insert(...$mValues)
 	{
-		$insertFieldsStr = Utils::GetCSL($this->insertFields);
-		$insertValuesStr = Utils::GetCSL($mValues);
+		$insertFieldsStr = Utils::getCSL($this->insertFields);
+		$insertValuesStr = Utils::getCSL($mValues);
 		
 		Debug::loLn();
 		Debug::lo("Inserting into table $this->tblName:");
@@ -43,110 +38,106 @@ class Tbl
 		return DB::$lastError;
 	}
 
+
+
+	public function getAll()
+	{
+		return DB::query("SELECT * FROM $this->tblName");
+	}
+
+	public function getWhere($mX)
+	{
+		return DB::query("SELECT * FROM $this->tblName WHERE $mX");
+	}
+
+	public function getFirstWhere($mX)
+	{
+		$res = $this->getWhere($mX);
+		return $res->fetch_assoc();
+	}
+
+
+
 	public function deleteWhere($mX)
 	{
 		return DB::query("DELETE FROM $this->tblName WHERE $mX");
 	}
 
-	public function getAllRows()
+	public function deleteByID($mID)
 	{
-		return DB::query("SELECT * FROM $this->tblName");
+		return $this->deleteWhere('id = '.DB::v($mID));
+	}	
+
+	public function deleteRecursive($mID)
+	{
+		$qres = $this->getWhere('id_parent = '.DB::v($mID));
+
+		if(!$qres) return false;
+
+		while($row = $qres->fetch_assoc()) 
+		{
+			$this->deleteRecursive($row["id"]);
+		}
+
+		return $this->deleteByID($mID);		
+	}	
+	
+
+
+	public function findByID($mID)
+	{
+		return $this->getFirstWhere('id = '.DB::v($mID));
 	}
 
-	public function getAllRowsWhere($mX)
+	public function findAllByIDParent($mIDParent)
 	{
-		return DB::query("SELECT * FROM $this->tblName WHERE $mX");
+		if($mIDParent == null)
+		{
+			return $this->getWhere('id_parent IS NULL');
+		}
+
+		return $this->getWhere('id_parent = '.DB::v($mIDParent));
 	}
 
-	public function findByID($mId)
-	{
-		return $this->firstRowWhere("id = $mId");
-	}
 
-	public function firstRowWhere($mX)
-	{
-		$res = $this->getAllRowsWhere($mX);
-		$row = $res->fetch_assoc();
-		return $row;
-	}
 
 	public function hasAnyWhere($mX)
 	{
-		return $this->getAllRowsWhere($mX)->num_rows > 0;
+		return $this->getWhere($mX)->num_rows > 0;
 	}
 
-	public function deleteWithChildren($mId, &$mMsg)
+	public function hasID($mID)
 	{
-		$qres = DB::query("SELECT * FROM $this->tblName WHERE id_parent = $mId");
+		return $this->hasAnyWhere('id ='.DB::v($mID));
+	}
 
-		if($qres == null)
-		{
-			$mMsg = "Error! " . DB::$lastError;
-			return false;
-		}
+
+
+
+	public function forChildren($mFn, $mIDParent = null, $mDepth = 0)
+	{
+		$qres = $this->findAllByIDParent($mIDParent);
+		if(!$qres) return false;
 
 		while($row = $qres->fetch_assoc()) 
 		{
-			$this->deleteWithChildren($row["id"], $mMsg);
+			$mFn($row, $mDepth);
+			$this->forChildren($mFn, $row['id'], $mDepth + 1);
 		}
 
-		$this->deleteWhere("id = $mId");
-		$mMsg = "Success.";
-		return true;
-	}	
-
-	public function forHierarchy($mFn, &$mMsg, $mParent = 'null', $mDepth = 0)
-	{
-		$res = "";
-		$where = "";
-		if($mParent == 'null') 
-		{
-			$where = "id_parent IS NULL";
-		}
-		else
-		{
-			$where = "id_parent = $mParent";
-		}
-
-		$qres = DB::query("SELECT * FROM $this->tblName WHERE $where");
-
-		if($qres == null)
-		{
-			$mMsg = "Error getting $this->tblName hierarchy. " . DB::$lastError;
-			return false;
-		}
-
-		while($row = $qres->fetch_assoc()) 
-		{
-			$nextId = $mFn($row, $mDepth);
-			$this->forHierarchy($mFn, $mMsg, $nextId, $mDepth + 1);
-		}
-
-		$mMsg = "Success getting $this->tblName hierarchy.";
 		return true;
 	}
 
-	public function forChildren($mFn, &$mMsg, $mId, $mDepth = 0)
+	public function forParent($mFn, $mID, $mDepth = 0)
 	{
-		if($mId == 'null') return;
-		$res = "";
-		$where = "id = $mId";		
-
-		$qres = DB::query("SELECT * FROM $this->tblName WHERE $where");
-
-		if($qres == null)
-		{
-			$mMsg = "Error getting $this->tblName hierarchy. " . DB::$lastError;
-			return false;
-		}
-
-		while($row = $qres->fetch_assoc()) 
-		{
-			$nextId = $mFn($row, $mDepth);
-			$this->forChildren($mFn, $mMsg, $nextId, $mDepth + 1);
-		}
-
-		$mMsg = "Success getting $this->tblName hierarchy.";
+		if($mID == 'null') return false;
+		
+		$row = $this->findByID($mID);
+		if(!$row) return false;	
+		
+		$mFn($row, $mDepth);
+		$this->forParent($mFn, $row['id_parent'], $mDepth + 1);
+	
 		return true;
 	}
 }

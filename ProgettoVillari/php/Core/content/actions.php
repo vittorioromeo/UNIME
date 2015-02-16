@@ -68,7 +68,7 @@ class Actions
 		$name = $_POST["name"];
 		$msg = "";
 
-		Tables::$section->mkSection($idParent, DB::v($name), $msg);
+		TBS::$section->mkSection($idParent, DB::v($name), $msg);
 
 		print($msg);
 	}
@@ -76,19 +76,15 @@ class Actions
 	public static function scDel()
 	{
 		$id = $_POST["id"];
-		$res = Tables::$section->deleteWhere("id = $id");
+		$res = TBS::$section->deleteByID($id);
 
 		print(($res == null) ? DB::$lastError : "Success.");
 	}
 
 	public static function scDelRecursive()
-	{
-		$id = $_POST["id"];
-		$msg = "";
-		
-		Tables::$section->deleteWithChildren($id, $msg);
-
-		print($msg);
+	{		
+		$res = TBS::$section->deleteRecursive($_POST["id"]);
+		print($res ? "Success." : DB::$lastError);
 	}
 
 	public static function getSectionOptions()
@@ -100,7 +96,7 @@ class Actions
 			print('<option value="-1">NULL</option>');
 		}
 
-		foreach(Tables::$section->getAllRows() as $x)
+		foreach(TBS::$section->getAll() as $x)
 		{
 			print("<option value=".$x["id"].">(ID: ".$x["id"].") ".$x["name"]."</option>");
 		}
@@ -108,8 +104,7 @@ class Actions
 
 	public static function getSectionHierarchyStr()
 	{
-		$msg = "";
-		print(nl2br(Tables::$section->getHierarchyStr($msg)));
+		print(nl2br(TBS::$section->getHierarchyStr()));
 	}
 
 
@@ -126,7 +121,7 @@ class Actions
 		$pset = new PrivSet();
 		if($privileges) foreach($privileges as $x) $pset->add($x);
 
-		Tables::$group->mkGroup($idParent, DB::v($name), $pset, $msg);
+		TBS::$group->mkGroup($idParent, DB::v($name), $pset, $msg);
 
 		print($msg);	
 	}
@@ -134,19 +129,15 @@ class Actions
 	public static function grDel()
 	{
 		$id = $_POST["id"];
-		$res = Tables::$group->deleteWhere("id = $id");
+		$res = TBS::$group->deleteByID($id);
 
 		print(($res == null) ? DB::$lastError : "Success.");
 	}
 
 	public static function grDelRecursive()
 	{
-		$id = $_POST["id"];
-		$msg = "";
-		
-		Tables::$group->deleteWithChildren($id, $msg);
-
-		print($msg);
+		$res = TBS::$group->deleteRecursive($_POST["id"]);
+		print($res ? "Success." : DB::$lastError);
 	}
 
 	public static function getGroupOptions()
@@ -158,7 +149,7 @@ class Actions
 			print('<option value="-1">NULL</option>');
 		}
 
-		foreach(Tables::$group->getAllRows() as $x)
+		foreach(TBS::$group->getAll() as $x)
 		{
 			print("<option value=".$x["id"].">(ID: ".$x["id"].") ".$x["name"]."</option>");
 		}
@@ -166,8 +157,7 @@ class Actions
 
 	public static function getGroupHierarchyStr()
 	{
-		$msg = "";
-		print(nl2br(Tables::$group->getHierarchyStr($msg)));
+		print(nl2br(TBS::$group->getHierarchyStr()));
 	}
 
 	public static function usAdd()
@@ -185,7 +175,7 @@ class Actions
 
 		if($id == -1)
 		{
-			return Tables::$user->insert
+			return TBS::$user->insert
 			(
 				DB::v($groupId), 
 				DB::v($username), 
@@ -218,7 +208,7 @@ class Actions
 	{
 		$id = $_POST["id"];
 
-		Tables::$user->deleteWhere('id = '.DB::v($id));
+		TBS::$user->deleteByID($id);
 
 		print("Success.");
 	}
@@ -226,7 +216,7 @@ class Actions
 	public static function usGetData()
 	{
 		$id = $_POST["id"];
-		$r = Tables::$user->firstRowWhere('id = '.DB::v($id));
+		$r = TBS::$user->getFirstWhere('id = '.DB::v($id));
 		$res = array
 		(
 			'username' => $r['username'],
@@ -263,13 +253,13 @@ class Actions
 
 		print('<tbody>');
 
-			foreach(Tables::$user->getAllRows() as $x)
+			foreach(TBS::$user->getAll() as $x)
 			{
 				print('<tr>');
 
 				$userId = $x['id'];
 				$groupId = $x['id_group'];
-				$groupName = Tables::$group->firstRowWhere('id = '.DB::v($groupId))['name'];
+				$groupName = TBS::$group->getFirstWhere('id = '.DB::v($groupId))['name'];
 				$btnActionsId = 'btnUsActions_' . $userId;
 				$btnEditId = 'btnUsEdit_' . $userId;
 
@@ -294,6 +284,61 @@ class Actions
 			}
 				
 		print('</tbody>');
+	}
+
+	public static function getGSPData()
+	{
+		$idGroup = $_POST["idgroup"];
+		$idSection = $_POST["idsection"];
+		$where = 'id_group = '.DB::v($idGroup).' AND id_section = '.DB::v($idSection);
+
+		if(!TBS::$gsperms->hasAnyWhere($where))
+		{
+			TBS::$gsperms->mkGSPerm($idGroup, $idSection, false, false, false, false, false, false);
+		}
+
+		$r = TBS::$gsperms->getFirstWhere($where);
+		$res = array
+		(
+			'cpost' => $r['can_post'],
+			'cview' => $r['can_view'],
+			'ccreatethread' => $r['can_create_thread'],
+			'cdeletepost' => $r['can_delete_post'],
+			'cdeletethread' => $r['can_delete_thread'],
+			'cdeletesection' => $r['can_delete_section']
+		);
+
+		$tj = json_encode($res);
+		print($tj);
+	}
+
+	public static function setGSPData()
+	{
+		$idGroup = $_POST["idgroup"];
+		$idSection = $_POST["idsection"];;
+
+		$cpost = $_POST["cpost"];
+		$cview = $_POST["cview"];
+		$ccreatethread = $_POST["ccreatethread"];
+		$cdeletepost = $_POST["cdeletepost"];
+		$cdeletethread = $_POST["cdeletethread"];
+		$cdeletesection = $_POST["cdeletesection"];
+
+		$where = 'id_group = '.DB::v($idGroup).' AND id_section = '.DB::v($idSection);
+		$r = TBS::$gsperms->getFirstWhere($where);
+		$id = $r['id'];
+
+		return DB::query('UPDATE tbl_group_section_permission 
+				SET 					
+					can_post = '.$cpost.',
+					can_view = '.$cview.',
+					can_create_thread = '.$ccreatethread.',
+					can_delete_post = '.$cdeletepost.',
+					can_delete_thread = '.$cdeletethread.',
+					can_delete_section = '.$cdeletesection.'
+				WHERE 
+					id = '.DB::v($id)
+				);
 	}
 }
 

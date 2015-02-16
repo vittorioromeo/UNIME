@@ -22,10 +22,10 @@ class Gen
 		');
 	}
 
-	public static function LinkBtn($mId, $mIcon, $mText = '', $mCSS = '')
+	public static function LinkBtn($mID, $mIcon, $mText = '', $mCSS = '')
 	{
 		print('
-		<a class="btn btn-default '.$mCSS.'" href="#" role="button" id="'.$mId.'">
+		<a class="btn btn-default '.$mCSS.'" href="#" role="button" id="'.$mID.'">
 			<span class="glyphicon '.$mIcon.'" aria-hidden="true"></span>
 			'.$mText.'
 		</a>
@@ -39,6 +39,17 @@ class Gen
 			<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
 		</a>');
 	}
+
+	public static function CheckBox($mID, $mLabel, $mChecked = false)
+	{
+		print('
+		<div class="checkbox">
+			<label>
+				<input id="'.$mID.'" type="checkbox" '.($mChecked ? 'checked="true"' : '').'>
+				'.$mLabel.'
+			</label>
+		</div>');
+	}	
 
 	public static function JS_PostAction($mFnName, $mAction, $mKVArray, $mFnOk = '', $mFnFail = '')
 	{
@@ -66,10 +77,10 @@ class Gen
 		</script>');
 	}
 
-	public static function JS_OnBtnClick($mId, $mX)
+	public static function JS_OnBtnClick($mID, $mX)
 	{
 		print('<script>
-		$("#'.$mId.'").click(function(e)
+		$("#'.$mID.'").click(function(e)
 		{
 			e.preventDefault();
 			'.$mX.'
@@ -77,10 +88,10 @@ class Gen
 		</script>'); 
 	}
 
-	public static function JS_OnBtnClickDynamic($mId, $mX)
+	public static function JS_OnBtnClickDynamic($mID, $mX)
 	{
 		print('<script>
-		$(document).on("click", "#'.$mId.'", function(e)
+		$(document).on("click", "#'.$mID.'", function(e)
 		{
 			e.preventDefault();
 			'.$mX.'

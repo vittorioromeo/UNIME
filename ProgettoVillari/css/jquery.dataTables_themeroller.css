@@ -34,11 +34,11 @@ table.dataTable thead .sorting {
   cursor: pointer;
   *cursor: hand;
 }
-table.dataTable thead th div.DataTables_sort_wrapper {
+table.dataTable thead th div.DataTBS_sort_wrapper {
   position: relative;
   padding-right: 10px;
 }
-table.dataTable thead th div.DataTables_sort_wrapper span {
+table.dataTable thead th div.DataTBS_sort_wrapper span {
   position: absolute;
   top: 50%;
   margin-top: -8px;
@@ -62,7 +62,7 @@ table.dataTable tbody td {
 }
 table.dataTable th.center,
 table.dataTable td.center,
-table.dataTable td.dataTables_empty {
+table.dataTable td.dataTBS_empty {
   text-align: center;
 }
 table.dataTable th.right,
@@ -222,7 +222,7 @@ table.dataTable td.dt-left {
 }
 table.dataTable th.dt-center,
 table.dataTable td.dt-center,
-table.dataTable td.dataTables_empty {
+table.dataTable td.dataTBS_empty {
   text-align: center;
 }
 table.dataTable th.dt-right,
@@ -299,32 +299,32 @@ table.dataTable td {
 /*
  * Control feature layout
  */
-.dataTables_wrapper {
+.dataTBS_wrapper {
   position: relative;
   clear: both;
   *zoom: 1;
   zoom: 1;
 }
-.dataTables_wrapper .dataTables_length {
+.dataTBS_wrapper .dataTBS_length {
   float: left;
 }
-.dataTables_wrapper .dataTables_filter {
+.dataTBS_wrapper .dataTBS_filter {
   float: right;
   text-align: right;
 }
-.dataTables_wrapper .dataTables_filter input {
+.dataTBS_wrapper .dataTBS_filter input {
   margin-left: 0.5em;
 }
-.dataTables_wrapper .dataTables_info {
+.dataTBS_wrapper .dataTBS_info {
   clear: both;
   float: left;
   padding-top: 0.55em;
 }
-.dataTables_wrapper .dataTables_paginate {
+.dataTBS_wrapper .dataTBS_paginate {
   float: right;
   text-align: right;
 }
-.dataTables_wrapper .dataTables_paginate .fg-button {
+.dataTBS_wrapper .dataTBS_paginate .fg-button {
   box-sizing: border-box;
   display: inline-block;
   min-width: 1.5em;
@@ -337,18 +337,18 @@ table.dataTable td {
   color: #333333 !important;
   border: 1px solid transparent;
 }
-.dataTables_wrapper .dataTables_paginate .fg-button:active {
+.dataTBS_wrapper .dataTBS_paginate .fg-button:active {
   outline: none;
 }
-.dataTables_wrapper .dataTables_paginate .fg-button:first-child {
+.dataTBS_wrapper .dataTBS_paginate .fg-button:first-child {
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
 }
-.dataTables_wrapper .dataTables_paginate .fg-button:last-child {
+.dataTBS_wrapper .dataTBS_paginate .fg-button:last-child {
   border-top-right-radius: 3px;
   border-bottom-right-radius: 3px;
 }
-.dataTables_wrapper .dataTables_processing {
+.dataTBS_wrapper .dataTBS_processing {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -373,27 +373,27 @@ table.dataTable td {
   background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.9) 25%, rgba(255, 255, 255, 0.9) 75%, rgba(255, 255, 255, 0) 100%);
   /* W3C */
 }
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter,
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_processing,
-.dataTables_wrapper .dataTables_paginate {
+.dataTBS_wrapper .dataTBS_length,
+.dataTBS_wrapper .dataTBS_filter,
+.dataTBS_wrapper .dataTBS_info,
+.dataTBS_wrapper .dataTBS_processing,
+.dataTBS_wrapper .dataTBS_paginate {
   color: #333333;
 }
-.dataTables_wrapper .dataTables_scroll {
+.dataTBS_wrapper .dataTBS_scroll {
   clear: both;
 }
-.dataTables_wrapper .dataTables_scrollBody {
+.dataTBS_wrapper .dataTBS_scrollBody {
   *margin-top: -1px;
   -webkit-overflow-scrolling: touch;
 }
-.dataTables_wrapper .ui-widget-header {
+.dataTBS_wrapper .ui-widget-header {
   font-weight: normal;
 }
-.dataTables_wrapper .ui-toolbar {
+.dataTBS_wrapper .ui-toolbar {
   padding: 8px;
 }
-.dataTables_wrapper:after {
+.dataTBS_wrapper:after {
   visibility: hidden;
   display: block;
   content: "";
@@ -402,15 +402,15 @@ table.dataTable td {
 }
 
 @media screen and (max-width: 767px) {
-  .dataTables_wrapper .dataTables_length,
-  .dataTables_wrapper .dataTables_filter,
-  .dataTables_wrapper .dataTables_info,
-  .dataTables_wrapper .dataTables_paginate {
+  .dataTBS_wrapper .dataTBS_length,
+  .dataTBS_wrapper .dataTBS_filter,
+  .dataTBS_wrapper .dataTBS_info,
+  .dataTBS_wrapper .dataTBS_paginate {
     float: none;
     text-align: center;
   }
-  .dataTables_wrapper .dataTables_filter,
-  .dataTables_wrapper .dataTables_paginate {
+  .dataTBS_wrapper .dataTBS_filter,
+  .dataTBS_wrapper .dataTBS_paginate {
     margin-top: 0.5em;
   }
 }

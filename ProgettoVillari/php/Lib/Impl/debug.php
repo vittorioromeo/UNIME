@@ -4,36 +4,36 @@ class Debug
 {
 	public static function enable()
 	{			
-		Session::set(SKeys::$debugEnabled, true);
-		Session::set(SKeys::$debugLog, "");
+		Session::set(SK::$debugEnabled, true);
+		Session::set(SK::$debugLog, "");
 	}
 
 	public static function disable()
 	{
-		Session::set(SKeys::$debugEnabled, false);
+		Session::set(SK::$debugEnabled, false);
 	}
 
 	public static function isEnabled()
 	{
-		return Session::get(SKeys::$debugEnabled);
+		return Session::get(SK::$debugEnabled);
 	}
 
 	public static function lo($mX)
 	{
 		if(!Debug::isEnabled()) return;
 
-		$value = Session::get(SKeys::$debugLog);
+		$value = Session::get(SK::$debugLog);
 		$value .= $mX . '<br/>';
-		Session::set(SKeys::$debugLog, $value);
+		Session::set(SK::$debugLog, $value);
 	}
 
 	public static function loLn()
 	{
 		if(!Debug::isEnabled()) return;
 
-		$value = Session::get(SKeys::$debugLog);
+		$value = Session::get(SK::$debugLog);
 		$value .= '<br/>-------------------<br/>';
-		Session::set(SKeys::$debugLog, $value);		
+		Session::set(SK::$debugLog, $value);		
 	}
 
 	public static function echoLo()
@@ -41,7 +41,7 @@ class Debug
 		if(!Debug::isEnabled()) return;
 
 		print('<br/><hr><br/>');
-		print(Session::get(SKeys::$debugLog));
+		print(Session::get(SK::$debugLog));
 	}
 }
 

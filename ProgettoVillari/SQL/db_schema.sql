@@ -94,9 +94,9 @@ create table tbl_thread
 	title varchar(255) not null,
 
 	foreign key (id_creation_data)
-		references tbl_group(id)
-		on update no action
-		on delete no action,
+		references tbl_creation_data(id)
+		on update cascade
+		on delete cascade,
 
 	foreign key (id_section)
 		references tbl_section(id)
@@ -119,9 +119,9 @@ create table tbl_post
 	contents text not null,
 
 	foreign key (id_creation_data)
-		references tbl_group(id)
-		on update no action
-		on delete no action,
+		references tbl_creation_data(id)
+		on update cascade
+		on delete cascade,
 
 	foreign key (id_thread)
 		references tbl_thread(id)

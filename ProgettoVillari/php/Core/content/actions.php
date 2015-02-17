@@ -19,6 +19,22 @@ class SectionData
 		$this->newThreadID = 'btn_section_'.$this->row['id'].'newThread';
 	}
 
+	private function printThread($mRow)
+	{
+		print('<div class="panel panel-default">');
+			print('<div class="panel-body">');
+				print('<strong>'.$mRow['title'].'</strong><br/>');
+				print("author goes here");
+				print('<div class="btn-group-vertical pull-right">');
+						
+				Gen::LinkBtn('btnScGotoThread', 'glyphicon-arrow-right');
+						
+		
+				print('</div>');
+			print('</div>');
+		print('</div>');
+	}
+
 	private function printHeaderBtns()
 	{		
 		print('<div class="btn-group pull-right">');
@@ -42,11 +58,15 @@ class SectionData
 
 	private function printBody()
 	{
+		$id = $this->row['id'];
+
 		print('<div class="collapse" id="'.$this->collapseID.'">');
 			print('<div class="panel-body">');
 		
-				Gen::SectionThread("thread 1", "author 1");
-				Gen::SectionThread("thread 2", "author 2");
+		TBS::$thread->forWhere(function($mRow)
+		{
+			$this->printThread($mRow);
+		}, "id_section = $id");
 
 			print('</div>');
 		print('</div>');
@@ -56,6 +76,11 @@ class SectionData
 	{
 		$this->printHeader();
 		$this->printBody();
+	}
+
+	private function printScripts()
+	{
+		Gen::JS_OnBtnClick($this->newThreadID, 'showNewThreadModal('.$this->row['id'].');');
 	}
 
 	public function printAll($mDepth)
@@ -69,6 +94,8 @@ class SectionData
 				print('</div>');
 			print('</div>');
 		print('</div>');
+
+		$this->printScripts();
 	}
 }
 
@@ -90,6 +117,20 @@ class Actions
 			$sd->printAll($mDepth);			
 		});
 	}
+
+
+	public static function newThread()
+	{
+		$sectionId = $_POST["sectionId"];
+		$title = $_POST["title"];
+		
+		
+		$res = TBS::$thread->mkThreadAndCData($sectionId, $title);
+
+		ActionUtils::printQuerySuccess($res);
+	}
+
+
 
 
 	public static function setDebugEnabled()

@@ -36,6 +36,11 @@ class DB
 		return $res;
 	}
 
+	public static function getInsertedID()
+	{
+		return DB::$conn->insert_id;
+	}
+
 	public static function esc($mX)
 	{
 		return DB::$conn->real_escape_string($mX);

@@ -151,6 +151,19 @@ class Tbl
 		return true;
 	}
 
+	public function forWhere($mFn, $mWhere)
+	{
+		$qres = $this->getWhere($mWhere);
+		if(!$qres) return false;
+
+		while($row = $qres->fetch_assoc()) 
+		{
+			$mFn($row);			
+		}
+
+		return true;
+	}
+
 	public function forChildren($mFn, $mIDParent = null, $mDepth = 0)
 	{
 		$qres = $this->findAllByIDParent($mIDParent);

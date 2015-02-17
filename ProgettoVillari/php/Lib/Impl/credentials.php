@@ -30,9 +30,14 @@ class Credentials
 		return true;
 	}
 
+	public static function getCUID()
+	{
+		return Session::get(SK::$userID);
+	}
+
 	public static function getCURow()
 	{
-		return TBS::$user->findByID(Session::get(SK::$userID));
+		return TBS::$user->findByID(Credentials::getCUID());
 	}
 
 	public static function getCalcPSet()

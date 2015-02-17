@@ -70,7 +70,30 @@ class TblSection extends Tbl
 class TblGroupSectionPermission extends Tbl
 {
 
-};
+}
+
+class TblCData extends Tbl
+{
+	public function createCDataAndGetID()
+	{
+		$idAuthor = Credentials::getCUID();
+		$res = $this->insertValues(date('Y-m-d'), $idAuthor);
+
+		if(!$res) return null;
+		return DB::getInsertedID();
+	}
+}
+
+class TblThread extends Tbl
+{
+	public function mkThreadAndCData($mIDSection, $mTitle)
+	{
+		$cdID = TBS::$cdata->createCDataAndGetID();
+		$res = $this->insertValues($cdID, $mIDSection, $mTitle);
+
+		return $res;
+	}
+}
 
 class TBS
 {
@@ -78,6 +101,8 @@ class TBS
 	public static $group;
 	public static $user;
 	public static $gsperms;
+	public static $cdata;
+	public static $thread;
 }
 
 TBS::$section = new TblSection('tbl_section');
@@ -91,5 +116,11 @@ TBS::$user->setInsertFields('id_group', 'username', 'password_hash', 'email', 'r
 
 TBS::$gsperms = new TblGroupSectionPermission('tbl_group_section_permission');
 TBS::$gsperms->setInsertFields('id_group', 'id_section', 'can_view', 'can_post', 'can_create_thread', 'can_delete_post', 'can_delete_thread', 'can_delete_section');
+
+TBS::$cdata = new TblCData('tbl_creation_data');
+TBS::$cdata->setInsertFields('creation_date', 'id_author');
+
+TBS::$thread = new TblThread('tbl_thread');
+TBS::$thread->setInsertFields('id_creation_data', 'id_section', 'title');
 
 ?>

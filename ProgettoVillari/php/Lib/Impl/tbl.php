@@ -138,7 +138,18 @@ class Tbl
 	}
 
 
+	public function forRows($mFn)
+	{
+		$qres = $this->getAll();
+		if(!$qres) return false;
 
+		while($row = $qres->fetch_assoc()) 
+		{
+			$mFn($row);			
+		}
+
+		return true;
+	}
 
 	public function forChildren($mFn, $mIDParent = null, $mDepth = 0)
 	{

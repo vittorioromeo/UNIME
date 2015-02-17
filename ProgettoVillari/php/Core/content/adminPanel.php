@@ -4,6 +4,7 @@
 ?>
 
 <h1>Administration</h1>
+<hr>
 
 <div class="row">
 	<?php require_once("$root/php/Core/content/adminPanel/panelDebug.php"); ?>

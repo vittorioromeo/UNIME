@@ -6,6 +6,72 @@ require_once("$root/php/Lib/lib.php");
 $action = $_POST["action"];
 if(!isset($action)) exit(1);
 
+class SectionData
+{
+	public $row;
+	public $collapseID; 
+	public $newThreadID;
+
+	public function __construct($mRow)
+	{
+		$this->row = $mRow;
+		$this->collapseID = 'btn_section_'.$this->row['id'].'collapse';
+		$this->newThreadID = 'btn_section_'.$this->row['id'].'newThread';
+	}
+
+	private function printHeaderBtns()
+	{		
+		print('<div class="btn-group pull-right">');
+			Gen::LinkBtn($this->newThreadID, "glyphicon-plus", "New thread", "btn-xs");
+			print('
+				<a class="btn btn-default btn-xs" data-toggle="collapse" href="#'.$this->collapseID.'" aria-expanded="true" aria-controls="'.$this->collapseID.'">
+					<span class="glyphicon glyphicon-collapse-down"></span>
+				</a>');
+		print('</div>');
+	}
+
+	private function printHeader()
+	{
+		print('<div class="panel-heading">');
+			print('<div class="panel-title">');
+				print($this->row['name']);
+				$this->printHeaderBtns();
+			print('</div>');
+		print('</div>');
+	}
+
+	private function printBody()
+	{
+		print('<div class="collapse" id="'.$this->collapseID.'">');
+			print('<div class="panel-body">');
+		
+				Gen::SectionThread("thread 1", "author 1");
+				Gen::SectionThread("thread 2", "author 2");
+
+			print('</div>');
+		print('</div>');
+	}
+
+	private function printContents()
+	{
+		$this->printHeader();
+		$this->printBody();
+	}
+
+	public function printAll($mDepth)
+	{
+		print('<div class="row">');
+			print('<div class="col-md-12">');
+				print('<div class="panel panel-default">');
+					
+					$this->printContents();
+
+				print('</div>');
+			print('</div>');
+		print('</div>');
+	}
+}
+
 class ActionUtils
 {
 	public static function printQuerySuccess($mRes)
@@ -16,6 +82,16 @@ class ActionUtils
 
 class Actions
 {
+	public static function refreshSections()
+	{
+		TBS::$section->forChildren(function($mRow, $mDepth)
+		{
+			$sd = new SectionData($mRow);
+			$sd->printAll($mDepth);			
+		});
+	}
+
+
 	public static function setDebugEnabled()
 	{
 		Debug::setEnabled($_POST["enabled"] == "true");		
@@ -42,14 +118,12 @@ class Actions
 	{
 		if(Credentials::isLoggedIn() && Credentials::canCUViewCurrentPage())
 		{
-			if(Credentials::hasCUPrivilege(Privs::$superAdmin))
-			{				
-				print(Pages::getCurrent()->getURL());
-				return;
-			}
+			print(Pages::getCurrent()->getURL());
 		}
-		
-		print('php/Core/content/forbidden.php');		
+		else
+		{
+			print('php/Core/content/forbidden.php');		
+		}
 	}
 
 
@@ -65,8 +139,7 @@ class Actions
 	
 	public static function changeCurrentPage()
 	{
-		$idpage = $_POST["idpage"];
-		Session::set(SK::$pageID, $idpage);
+		Pages::setCurrent($_POST["idpage"]);		
 	}
 
 	public static function scDel()
@@ -312,15 +385,17 @@ class Actions
 		$r = TBS::$gsperms->getFirstWhere($where);
 		$id = $r['id'];
 
-		print(TBS::$gsperms->updateByID($id,
+		$res = TBS::$gsperms->updateByID($id,
 		[
 			'can_post' => $cpost,
 			'can_view' => $cview,
 			'can_create_thread' => $ccreatethread,
 			'can_delete_post' => $cdeletepost,
 			'can_delete_thread' => $cdeletethread,
-			'can_delete_section' => $cdeletesection,
-		]));
+			'can_delete_section' => $cdeletesection
+		]);
+
+		ActionUtils::printQuerySuccess($res);
 	}
 }
 

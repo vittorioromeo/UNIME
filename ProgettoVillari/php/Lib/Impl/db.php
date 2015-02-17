@@ -44,6 +44,7 @@ class DB
 	public static function v($mX)
 	{
 		$res = DB::esc($mX);
+		if($res == 'null') return $res;
 		return "'$res'";
 	}
 }

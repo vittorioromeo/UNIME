@@ -38,6 +38,13 @@ class Tbl
 		return DB::$lastError;
 	}
 
+	public function insertValues(...$mValues)
+	{
+		$vals = [];
+		foreach($mValues as $x) array_push($vals, DB::v($x));
+		return $this->insert(...$vals);
+	}
+
 
 	public function updateByID($mID, $mArray)
 	{	
@@ -87,7 +94,7 @@ class Tbl
 		return $this->deleteWhere('id = '.DB::v($mID));
 	}	
 
-	public function deleteRecursive($mID)
+	public function deleteRecursiveByID($mID)
 	{
 		$qres = $this->getWhere('id_parent = '.DB::v($mID));
 
@@ -95,7 +102,7 @@ class Tbl
 
 		while($row = $qres->fetch_assoc()) 
 		{
-			$this->deleteRecursive($row["id"]);
+			$this->deleteRecursiveByID($row["id"]);
 		}
 
 		return $this->deleteByID($mID);		

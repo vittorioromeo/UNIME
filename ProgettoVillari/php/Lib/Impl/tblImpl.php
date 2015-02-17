@@ -49,19 +49,6 @@ class TblGroup extends Tbl
 
 class TblSection extends Tbl
 {
-	public function mkSection($mIDParent, $mName, &$mMsg)
-	{
-		if(!Utils::checkEmptyStr($mName, $mMsg)) return false;
-
-		$parentId = Utils::getInsertParent($this, $mIDParent, $mMsg);
-		if(!$parentId) return false;
-
-		$res = $this->insert($parentId, $mName);
-		$mMsg = "Section created successfully.";
-		
-		return !$res ? false : true; 
-	}
-
 	public function getHierarchyStr()
 	{	
 		$res = "";
@@ -82,22 +69,7 @@ class TblSection extends Tbl
 
 class TblGroupSectionPermission extends Tbl
 {
-	public function mkGSPerm($mIDGroup, $mIDSection, $mCView, $mCPost, $mCCreateThread, $mCDeletePost, $mCDeleteThread, $mCDeleteSection)
-	{
-		$res = $this->insert
-		(
-			DB::v($mIDGroup), 
-			DB::v($mIDSection), 
-			DB::v($mCView), 
-			DB::v($mCPost), 
-			DB::v($mCCreateThread), 
-			DB::v($mCDeletePost), 
-			DB::v($mCDeleteThread), 
-			DB::v($mCDeleteSection)
-		);
 
-		return !$res ? false : true; 
-	}
 };
 
 class TBS

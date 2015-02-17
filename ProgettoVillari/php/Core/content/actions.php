@@ -6,12 +6,19 @@ require_once("$root/php/Lib/lib.php");
 $action = $_POST["action"];
 if(!isset($action)) exit(1);
 
+class ActionUtils
+{
+	public static function printQuerySuccess($mRes)
+	{
+		print($mRes ? "Success." : DB::$lastError);
+	}
+}
+
 class Actions
 {
 	public static function setDebugEnabled()
 	{
-		$enabled = $_POST["enabled"];
-		Debug::setEnabled($enabled == "true");		
+		Debug::setEnabled($_POST["enabled"] == "true");		
 	}
 
 	public static function refreshDebugLo()
@@ -23,11 +30,7 @@ class Actions
 	
 	public static function trySignIn()
 	{
-		$user = $_POST["user"];
-		$pass = $_POST["pass"];
-		
-		$res = Credentials::tryLogin($user, $pass);
-		print($res);
+		print(Credentials::tryLogin($_POST["user"], $_POST["pass"]));
 	}
 
 	public static function trySignOut()
@@ -54,12 +57,10 @@ class Actions
 	public static function scAdd()
 	{
 		$idParent = $_POST["idParent"];
-		$name = $_POST["name"];
-		$msg = "";
+		if($idParent == -1) $idParent = 'null';
 
-		TBS::$section->mkSection($idParent, DB::v($name), $msg);
-
-		print($msg);
+		$res = TBS::$section->insertValues($idParent, $_POST["name"]);
+		ActionUtils::printQuerySuccess($res);
 	}
 	
 	public static function changeCurrentPage()
@@ -70,16 +71,14 @@ class Actions
 
 	public static function scDel()
 	{
-		$id = $_POST["id"];
-		$res = TBS::$section->deleteByID($id);
-
-		print(($res == null) ? DB::$lastError : "Success.");
+		$res = TBS::$section->deleteByID($_POST["id"]);
+		ActionUtils::printQuerySuccess($res);
 	}
 
 	public static function scDelRecursive()
 	{		
-		$res = TBS::$section->deleteRecursive($_POST["id"]);
-		print($res ? "Success." : DB::$lastError);
+		$res = TBS::$section->deleteRecursiveByID($_POST["id"]);
+		ActionUtils::printQuerySuccess($res);
 	}
 
 	public static function getSectionOptions()
@@ -123,15 +122,13 @@ class Actions
 
 	public static function grDel()
 	{
-		$id = $_POST["id"];
-		$res = TBS::$group->deleteByID($id);
-
-		print(($res == null) ? DB::$lastError : "Success.");
+		$res = TBS::$group->deleteByID($_POST["id"]);
+		print($res ? "Success." : DB::$lastError);
 	}
 
 	public static function grDelRecursive()
 	{
-		$res = TBS::$group->deleteRecursive($_POST["id"]);
+		$res = TBS::$group->deleteRecursiveByID($_POST["id"]);
 		print($res ? "Success." : DB::$lastError);
 	}
 
@@ -172,17 +169,7 @@ class Actions
 
 		if($id == -1)
 		{
-			$res = TBS::$user->insert
-			(
-				DB::v($groupId), 
-				DB::v($username), 
-				DB::v($passwordHash), 
-				DB::v($email), 
-				DB::v($registrationDate), 
-				DB::v($firstname),
-				DB::v($lastname), 
-				DB::v($birthdate)
-			);
+			$res = TBS::$user->insertValues($groupId, $username, $passwordHash, $email, $registrationDate, $firstname, $lastname, $birthname);			
 		}
 		else
 		{
@@ -198,7 +185,7 @@ class Actions
 			]);
 		}
 
-		print(($res == null) ? DB::$lastError : "Success.");
+		print($res ? "Success." : DB::$lastError);
 	}
 
 	public static function usDel()
@@ -291,7 +278,7 @@ class Actions
 
 		if(!TBS::$gsperms->hasAnyWhere($where))
 		{
-			TBS::$gsperms->mkGSPerm($idGroup, $idSection, false, false, false, false, false, false);
+			TBS::$gsperms->insertValues($idGroup, $idSection, false, false, false, false, false, false);
 		}
 
 		$r = TBS::$gsperms->getFirstWhere($where);
@@ -325,17 +312,15 @@ class Actions
 		$r = TBS::$gsperms->getFirstWhere($where);
 		$id = $r['id'];
 
-		return DB::query('UPDATE tbl_group_section_permission 
-				SET 					
-					can_post = '.$cpost.',
-					can_view = '.$cview.',
-					can_create_thread = '.$ccreatethread.',
-					can_delete_post = '.$cdeletepost.',
-					can_delete_thread = '.$cdeletethread.',
-					can_delete_section = '.$cdeletesection.'
-				WHERE 
-					id = '.DB::v($id)
-				);
+		print(TBS::$gsperms->updateByID($id,
+		[
+			'can_post' => $cpost,
+			'can_view' => $cview,
+			'can_create_thread' => $ccreatethread,
+			'can_delete_post' => $cdeletepost,
+			'can_delete_thread' => $cdeletethread,
+			'can_delete_section' => $cdeletesection,
+		]));
 	}
 }
 

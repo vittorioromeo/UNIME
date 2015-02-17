@@ -4,25 +4,14 @@ $root = realpath($_SERVER["DOCUMENT_ROOT"]) . "/PV";
 require_once("$root/php/Lib/lib.php");
 
 $action = $_POST["action"];
-if(!isset($action))
-{
-	exit(1);
-}
+if(!isset($action)) exit(1);
 
 class Actions
 {
 	public static function setDebugEnabled()
 	{
 		$enabled = $_POST["enabled"];
-
-		if($enabled == "true")
-		{
-			Debug::enable();
-		}
-		else
-		{
-			Debug::disable();
-		}
+		Debug::setEnabled($enabled == "true");		
 	}
 
 	public static function refreshDebugLo()
@@ -48,11 +37,11 @@ class Actions
 
 	public static function getCurrentPage()
 	{
-		if(Credentials::isLoggedIn())
+		if(Credentials::isLoggedIn() && Credentials::canCUViewCurrentPage())
 		{
 			if(Credentials::hasCUPrivilege(Privs::$superAdmin))
-			{
-				print('php/Core/content/adminPanel.php');
+			{				
+				print(Pages::getCurrent()->getURL());
 				return;
 			}
 		}
@@ -73,6 +62,12 @@ class Actions
 		print($msg);
 	}
 	
+	public static function changeCurrentPage()
+	{
+		$idpage = $_POST["idpage"];
+		Session::set(SK::$pageID, $idpage);
+	}
+
 	public static function scDel()
 	{
 		$id = $_POST["id"];
@@ -191,18 +186,16 @@ class Actions
 		}
 		else
 		{
-			$res = DB::query('UPDATE tbl_user 
-				SET 
-					id_group = '.DB::v($groupId).',
-					username = '.DB::v($username).',
-					email = '.DB::v($email).',
-					registration_date = '.DB::v($registrationDate).',
-					firstname = '.DB::v($firstname).',
-					lastname = '.DB::v($lastname).',
-					birth_date = '.DB::v($birthdate).'
-				WHERE 
-					id = '.DB::v($id)
-				);
+			$res = TBS::$user->updateByID($id, 
+			[			
+				'id_group' => $groupId,
+				'username' => $username,
+				'email' => $email,
+				'registration_date' => $registrationDate,
+				'firstname' => $firstname,
+				'lastname' => $lastname,
+				'birth_date' => $birthdate
+			]);
 		}
 
 		print(($res == null) ? DB::$lastError : "Success.");
@@ -221,8 +214,8 @@ class Actions
 	{
 		$id = $_POST["id"];
 		$r = TBS::$user->getFirstWhere('id = '.DB::v($id));
-		$res = array
-		(
+		$res = 
+		[
 			'username' => $r['username'],
 			'email' => $r['email'],
 			'groupid' => $r['id_group'],
@@ -230,7 +223,7 @@ class Actions
 			'lastname' => $r['lastname'],
 			'registrationdate' => $r['registration_date'],
 			'birthdate' => $r['birth_date']
-		);
+		];
 
 		$tj = json_encode($res);
 		print($tj);
@@ -302,15 +295,15 @@ class Actions
 		}
 
 		$r = TBS::$gsperms->getFirstWhere($where);
-		$res = array
-		(
+		$res = 
+		[
 			'cpost' => $r['can_post'],
 			'cview' => $r['can_view'],
 			'ccreatethread' => $r['can_create_thread'],
 			'cdeletepost' => $r['can_delete_post'],
 			'cdeletethread' => $r['can_delete_thread'],
 			'cdeletesection' => $r['can_delete_section']
-		);
+		];
 
 		$tj = json_encode($res);
 		print($tj);

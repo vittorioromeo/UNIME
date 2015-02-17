@@ -19,7 +19,8 @@ class Credentials
 		}
 		
 		Debug::lo("Login successful: $mUser, $mPass");			
-		Session::set(SK::$userID, $row['id']);
+		Session::set(SK::$userID, $row['id']);		
+		Pages::setCurrent(PK::$sections);
 		return true;		
 	}
 
@@ -52,6 +53,11 @@ class Credentials
 	public static function hasCUPrivilege($mX)
 	{
 		return Credentials::getCalcPSet()->has($mX);
+	}
+
+	public static function canCUViewCurrentPage()
+	{
+		return Pages::getCurrent()->canViewWithPrivs(Credentials::getCalcPSet());
 	}
 }
 

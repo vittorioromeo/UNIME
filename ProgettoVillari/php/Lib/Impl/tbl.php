@@ -39,6 +39,25 @@ class Tbl
 	}
 
 
+	public function updateByID($mID, $mArray)
+	{	
+		$q = "UPDATE $this->tblName SET ";
+		
+		$notFirst = false;
+		foreach($mArray as $k => $v)
+		{
+			if($notFirst) $q .= ', ';			
+			
+			$notFirst = true;
+			$q .= $k.' = '.DB::v($v);
+		}
+
+		$q .= ' WHERE id = '.DB::v($mID);
+
+		return DB::query($q);
+	}
+
+	
 
 	public function getAll()
 	{

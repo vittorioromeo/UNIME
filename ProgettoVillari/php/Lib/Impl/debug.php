@@ -2,15 +2,10 @@
 
 class Debug
 {
-	public static function enable()
-	{			
-		Session::set(SK::$debugEnabled, true);
-		Session::set(SK::$debugLog, "");
-	}
-
-	public static function disable()
+	public static function setEnabled($mX)
 	{
-		Session::set(SK::$debugEnabled, false);
+		Session::set(SK::$debugEnabled, $mX);
+		Session::set(SK::$debugLog, "");
 	}
 
 	public static function isEnabled()
@@ -29,11 +24,7 @@ class Debug
 
 	public static function loLn()
 	{
-		if(!Debug::isEnabled()) return;
-
-		$value = Session::get(SK::$debugLog);
-		$value .= '<br/>-------------------<br/>';
-		Session::set(SK::$debugLog, $value);		
+		Debug::lo('<br/>-------------------<br/>');
 	}
 
 	public static function echoLo()

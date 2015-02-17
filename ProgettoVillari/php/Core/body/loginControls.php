@@ -20,8 +20,8 @@ function signIn()
 <?php
 
 Gen::JS_PostAction('trySignIn(mUser, mPass)', 'trySignIn',
-			array( 'user' => 'mUser', 'pass' => 'mPass' ),
-			' reloadNavbar(); reloadPage();'
+			[ 'user' => 'mUser', 'pass' => 'mPass' ],
+			'reloadNavbar(); reloadPage();'
 			);
 
 Gen::JS_OnBtnClick('btnSignIn', 'signIn();');

@@ -12,7 +12,7 @@
 </body>
 
 <?php 
-	Gen::JS_PostAction('reloadPage()', 'getCurrentPage', array(), 'reloadPageImpl(mOut);');
+	Gen::JS_PostAction('reloadPage()', 'getCurrentPage', [], 'reloadPageImpl(mOut);');
 ?>
 
 <script>

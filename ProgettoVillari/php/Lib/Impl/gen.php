@@ -2,7 +2,6 @@
 
 class Gen
 {
-
 	public static function Textbox($mID, $mLabel)
 	{
 		print("

@@ -11,9 +11,11 @@ class PrivSet
 {
 	private $bits = "";
 
-	public function __construct()
+	public function __construct(...$mPrivs)
 	{
 		$this->bits = str_repeat('F', Privs::$count);
+
+		foreach($mPrivs as $x) $this->add($x);
 	}
 
 	public static function fromStr($mX)
@@ -43,17 +45,33 @@ class PrivSet
 		return $this->bits[$mX] == 'T';
 	}
 
+	public function isEqualTo($mX)
+	{
+		for($i = 0; $i < Privs::$count; $i++)
+			if($this->has($i) != $mX->has($i))
+				return false;
+
+		return true;
+	}
+
 	public function getOrWith($mX)
 	{
 		$res = new PrivSet();
 		
 		for($i = 0; $i < Privs::$count; $i++)
-		{
 			if($this->has($i) || $mX->has($i))
-			{
 				$res->add($i);
-			}
-		}
+
+		return $res;
+	}
+
+	public function getAndWith($mX)
+	{
+		$res = new PrivSet();
+		
+		for($i = 0; $i < Privs::$count; $i++)		
+			if($this->has($i) && $mX->has($i))			
+				$res->add($i);		
 
 		return $res;
 	}

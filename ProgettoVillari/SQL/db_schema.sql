@@ -144,7 +144,17 @@ create table tbl_group_section_permission
 	can_create_thread boolean not null,
 	can_delete_post boolean not null,
 	can_delete_thread boolean not null,
-	can_delete_section boolean not null
+	can_delete_section boolean not null,
+
+	foreign key (id_group)
+		references tbl_group(id)
+		on update cascade
+		on delete cascade,
+
+	foreign key (id_section)
+		references tbl_section(id)
+		on update cascade
+		on delete cascade,	
 );
 
 

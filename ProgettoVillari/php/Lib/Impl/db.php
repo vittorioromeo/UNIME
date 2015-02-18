@@ -50,6 +50,8 @@ class DB
 	{
 		$res = DB::esc($mX);
 		if($res == 'null') return $res;
+		if($res == 'true') return 'true';
+		if($res == 'false') return 'false';
 		return "'$res'";
 	}
 }

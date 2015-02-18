@@ -95,6 +95,17 @@ class TblThread extends Tbl
 	}
 }
 
+class TblPost extends Tbl
+{
+	public function mkPostAndCData($mIDThread, $mContents)
+	{
+		$cdID = TBS::$cdata->createCDataAndGetID();
+		$res = $this->insertValues($cdID, $mIDThread, $mContents);
+
+		return $res;
+	}
+}
+
 class TBS
 {
 	public static $section;
@@ -103,6 +114,7 @@ class TBS
 	public static $gsperms;
 	public static $cdata;
 	public static $thread;
+	public static $post;
 }
 
 TBS::$section = new TblSection('tbl_section');
@@ -122,5 +134,8 @@ TBS::$cdata->setInsertFields('creation_date', 'id_author');
 
 TBS::$thread = new TblThread('tbl_thread');
 TBS::$thread->setInsertFields('id_creation_data', 'id_section', 'title');
+
+TBS::$post = new TblPost('tbl_post');
+TBS::$post->setInsertFields('id_creation_data', 'id_thread', 'contents');
 
 ?>

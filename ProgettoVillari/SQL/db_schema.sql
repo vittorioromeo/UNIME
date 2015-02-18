@@ -146,3 +146,9 @@ create table tbl_group_section_permission
 	can_delete_thread boolean not null,
 	can_delete_section boolean not null
 );
+
+
+insert into tbl_group(id_parent, name, privileges) values (null, 'Superadmins', 'T');
+
+insert into tbl_user(id_group, username, password_hash, email, registration_date, firstname, lastname, birth_date)
+	values('1', 'admin', '21232f297a57a5a743894a0e4a801fc3', 'vittorio.romeo@outlook.com', curdate(), 'Vittorio', 'Romeo', curdate());

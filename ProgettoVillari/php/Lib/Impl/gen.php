@@ -12,6 +12,16 @@ class Gen
 		");
 	}
 
+	public static function Textarea($mID, $mLabel)
+	{
+		print("
+		<div class=\"form-group\">
+			<label for=\"$mID\">$mLabel</label>
+			<textarea rows=\"3\" class=\"form-control\" id=\"$mID\" placeholder=\"$mLabel\"></textarea>
+		</div>
+		");
+	}
+
 	public static function LinkIcon($mID, $mIcon)
 	{
 		print('
@@ -114,34 +124,12 @@ class Gen
 
 	public static function SectionBody($mID)
 	{
-		print('
-			<div class="collapse" id="'.$mID.'">
-				<div class="panel-body">');
-		
-		Gen::SectionThread("thread 1", "author 1");
-		Gen::SectionThread("thread 2", "author 2");
-
-		print('
-				</div>
-			</div>');
+	
 	}
 
 	public static function SectionThread($mTitle, $mAuthor)
 	{
-		print('
-			<div class="panel panel-default">
-				<div class="panel-body">
-					<strong>'.$mTitle.'</strong>
-					<br/>'.$mAuthor.'
-
-					<div class="btn-group-vertical pull-right">');
-						
-		Gen::LinkBtn('btnScGotoThread', 'glyphicon-arrow-right');
-						
-		print('
-					</div>
-				</div>
-			</div>');
+		
 	}
 }
 

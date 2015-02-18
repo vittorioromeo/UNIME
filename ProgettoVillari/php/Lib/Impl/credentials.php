@@ -64,6 +64,20 @@ class Credentials
 	{
 		return Pages::getCurrent()->canViewWithPrivs(Credentials::getCalcPSet());
 	}
+
+	public static function getCUPermRow($mSID)
+	{
+		$idGroup = Credentials::getCURow()['id_group'];
+		$permRow = TBS::$gsperms->getFirstWhere("id_group = $idGroup AND id_section = $mSID");
+		return $permRow;
+	}
+
+	public static function canCUView($mSID){ return Credentials::getCUPermRow($mSID)['can_view']; }
+	public static function canCUPost($mSID){ return Credentials::getCUPermRow($mSID)['can_post']; }
+	public static function canCUCreateThread($mSID){ return Credentials::getCUPermRow($mSID)['can_create_thread']; }
+	public static function canCUDeletePost($mSID){ return Credentials::getCUPermRow($mSID)['can_delete_post']; }
+	public static function canCUDeleteThread($mSID){ return Credentials::getCUPermRow($mSID)['can_delete_thread']; }
+	public static function canCUDeleteSection($mSID){ return Credentials::getCUPermRow($mSID)['can_delete_section']; }
 }
 
 ?>

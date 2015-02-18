@@ -32,6 +32,10 @@ Gen::JS_PostAction('changeCurrentPage(mX)', 'changeCurrentPage',
 			[ 'idpage' => 'mX' ],
 			'reloadNavbar(); reloadPage();');
 
+Gen::JS_PostAction('gotoThread(mX)', 'gotoThread',
+			[ 'idThread' => 'mX' ],
+			'changeCurrentPage('.PK::$threadView.');');
+
 Gen::JS_OnBtnClick('btnSignOut', 'trySignOut(); ');
 Gen::JS_OnBtnClick('btnNavSections', 'changeCurrentPage('.PK::$sections.'); ');
 Gen::JS_OnBtnClick('btnNavAdministration', 'changeCurrentPage('.PK::$administration.'); ');

@@ -6,6 +6,7 @@ class SK
 	public static $debugLog = "A2";
 	public static $debugEnabled = "A3";
 	public static $pageID = "pageid";
+	public static $threadID = "threadid";
 }
 
 class Session

@@ -11,12 +11,14 @@ class SectionData
 	public $row;
 	public $collapseID; 
 	public $newThreadID;
+	public $delSectionID;
 
 	public function __construct($mRow)
 	{
 		$this->row = $mRow;
 		$this->collapseID = 'btn_section_'.$this->row['id'].'collapse';
 		$this->newThreadID = 'btn_section_'.$this->row['id'].'newThread';
+		$this->delSectionID = 'btn_section_'.$this->row['id'].'delSection';
 	}
 
 	private function printThread($mRow)
@@ -24,10 +26,20 @@ class SectionData
 		print('<div class="panel panel-default">');
 			print('<div class="panel-body">');
 				print('<strong>'.$mRow['title'].'</strong><br/>');
-				print("author goes here");
+
+				$rowCD = TBS::$cdata->findByID($mRow['id_creation_data']);
+				$authorName = TBS::$user->findByID($rowCD['id_author'])['username'];
+				$date = $rowCD['creation_date'];
+				print("By: $authorName<br/>");
+				print("On: $date");
+
 				print('<div class="btn-group-vertical pull-right">');
 						
-				Gen::LinkBtn('btnScGotoThread', 'glyphicon-arrow-right');
+					$threadID = $mRow['id'];
+					$btnID = 'btnScGotoThread_'.$threadID;
+					Gen::LinkBtn($btnID, 'glyphicon-arrow-right');
+
+					Gen::JS_OnBtnClick($btnID, 'gotoThread('.$threadID.');');
 						
 		
 				print('</div>');
@@ -38,11 +50,18 @@ class SectionData
 	private function printHeaderBtns()
 	{		
 		print('<div class="btn-group pull-right">');
+			
+		if(Credentials::canCUCreateThread($this->row['id']))
 			Gen::LinkBtn($this->newThreadID, "glyphicon-plus", "New thread", "btn-xs");
+
+		if(Credentials::canCUDeleteSection($this->row['id']))
+			Gen::LinkBtn($this->delSectionID, "glyphicon-remove", "Delete section", "btn-xs");
+		
 			print('
 				<a class="btn btn-default btn-xs" data-toggle="collapse" href="#'.$this->collapseID.'" aria-expanded="true" aria-controls="'.$this->collapseID.'">
 					<span class="glyphicon glyphicon-collapse-down"></span>
 				</a>');
+
 		print('</div>');
 	}
 
@@ -60,7 +79,7 @@ class SectionData
 	{
 		$id = $this->row['id'];
 
-		print('<div class="collapse" id="'.$this->collapseID.'">');
+		print('<div class="collapse in" id="'.$this->collapseID.'">');
 			print('<div class="panel-body">');
 		
 		TBS::$thread->forWhere(function($mRow)
@@ -80,11 +99,16 @@ class SectionData
 
 	private function printScripts()
 	{
-		Gen::JS_OnBtnClick($this->newThreadID, 'showNewThreadModal('.$this->row['id'].');');
+		$ids = $this->row['id'];
+		Gen::JS_PostAction('delSection(mX)', 'scDel', [ 'id' => "mX" ], 'refreshAll();');
+		Gen::JS_OnBtnClick($this->newThreadID, 'showNewThreadModal('.$ids.');');
+		Gen::JS_OnBtnClick($this->delSectionID, 'delSection('.$ids.');');
 	}
 
 	public function printAll($mDepth)
 	{
+		if(!Credentials::canCUView($this->row['id'])) return;
+
 		print('<div class="row">');
 			print('<div class="col-md-12">');
 				print('<div class="panel panel-default">');
@@ -105,10 +129,70 @@ class ActionUtils
 	{
 		print($mRes ? "Success." : DB::$lastError);
 	}
+
+	public static function printPost($mRow)
+	{
+		$id = $mRow['id'];
+		$idCD = $mRow['id_creation_data'];
+
+		$rowCD = TBS::$cdata->findByID($idCD);
+		$authorName = TBS::$user->findByID($rowCD['id_author'])['username'];
+		$postDate = $rowCD['creation_date'];
+
+		print('<div class="panel panel-default">');
+			print('<div class="panel-body">');
+
+			print('<strong>');
+			print("Post ID: $id<br/>Author: $authorName<br/>Posted on: $postDate");
+			print('</strong>');
+
+			print('<br/><br/>');
+
+			print('<div style="word-wrap: break-word;">');
+			print($mRow['contents']);
+			print('</div>');
+
+			print('</div>');
+		print('</div>');
+	}
 }
 
 class Actions
 {
+	public static function refreshThread()
+	{
+		$idThread = Session::get(SK::$threadID);
+		$tr = TBS::$thread->findByID($idThread);
+		$title = $tr['title'];
+
+		$rowCD = TBS::$cdata->findByID($tr['id_creation_data']);
+		$authorName = TBS::$user->findByID($rowCD['id_author'])['username'];
+		$date = $rowCD['creation_date'];
+
+		print("<h2>$title</h2>");
+		print("<strong>");
+		print("ID: $idThread<br/>");
+		print("Author: $authorName<br/>");
+		print("Date: $date<br/>");
+		print("</strong>");
+	}
+
+	public static function deleteCurrentPosts()
+	{
+		$idThread = Session::get(SK::$threadID);
+		TBS::$post->deleteWhere("id_thread = $idThread");
+	}
+
+	public static function deleteCurrentThread()
+	{
+		$idThread = Session::get(SK::$threadID);
+		$res = TBS::$thread->deleteByID($idThread);
+
+		header("Content-type: application/json; charset=ISO-8859-1");
+		if(!$res) print('false');
+		else print('true');
+	}
+
 	public static function refreshSections()
 	{
 		TBS::$section->forChildren(function($mRow, $mDepth)
@@ -118,6 +202,30 @@ class Actions
 		});
 	}
 
+	public static function refreshPosts()
+	{
+		$idThread = Session::get(SK::$threadID);
+
+		TBS::$post->forWhere(function($mRow)
+		{
+			ActionUtils::printPost($mRow);		
+		}, "id_thread = $idThread");
+	}
+
+	public static function gotoThread()
+	{
+		$idThread = $_POST["idThread"];
+		Session::set(SK::$threadID, $idThread);
+	}
+
+	public static function newPost()
+	{		
+		$contents = $_POST["contents"];
+				
+		$res = TBS::$post->mkPostAndCData(Session::get(SK::$threadID), $contents);
+
+		ActionUtils::printQuerySuccess($res);
+	}
 
 	public static function newThread()
 	{

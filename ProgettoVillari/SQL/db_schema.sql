@@ -154,7 +154,7 @@ create table tbl_group_section_permission
 	foreign key (id_section)
 		references tbl_section(id)
 		on update cascade
-		on delete cascade,	
+		on delete cascade	
 );
 
 

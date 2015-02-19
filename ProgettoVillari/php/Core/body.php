@@ -3,7 +3,7 @@
 		require_once("$root/php/Core/body/modalInfo.php");
 		require_once("$root/php/Core/body/navbar.php");
 	?>
-	<div class="container">
+	<div class="container" id="pageContainer">
 		<span id="page"></span>
 		<?php 
 			require_once("$root/php/Core/body/footer.php"); 
@@ -18,7 +18,11 @@
 <script>
 function reloadPageImpl(mX)
 {
-	$("#page").load(mX);
+	$("#pageContainer").fadeOut('fast', function()
+	{
+		$("#page").load(mX);
+		$("#pageContainer").fadeIn('fast');
+	});
 }
 
 $(document).ready(function()

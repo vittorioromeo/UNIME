@@ -121,15 +121,10 @@ class SectionData
 	{
 		if(!Credentials::canCUView($this->row['id'])) return;
 
+		print('<div class="panel panel-default">');					
+			$this->printContents();
+		print('</div>');
 	
-			print('<div class="panel panel-default">');
-
-					
-					$this->printContents();
-
-			print('</div>');
-	
-
 		$this->printScripts();
 	}
 }
@@ -208,14 +203,14 @@ class Actions
 	{
 		TBS::$section->forWhere(function($mRow)
 		{
-	print('<div class="row">');
-			print('<div class="col-md-12">');
+		 	print('<div class="row">');
+				print('<div class="col-md-12">');
 
-			$sd = new SectionData($mRow);
-			$sd->printAll();			
+					$sd = new SectionData($mRow);
+					$sd->printAll();			
 
-					print('</div>');
-		print('</div>');
+				print('</div>');
+			print('</div>');
 		}, "id_parent is null");
 	}
 
@@ -237,8 +232,7 @@ class Actions
 
 	public static function newPost()
 	{		
-		$contents = $_POST["contents"];
-				
+		$contents = $_POST["contents"];			
 		$res = TBS::$post->mkPostAndCData(Session::get(SK::$threadID), $contents);
 
 		ActionUtils::printQuerySuccess($res);
@@ -247,9 +241,7 @@ class Actions
 	public static function newThread()
 	{
 		$sectionId = $_POST["sectionId"];
-		$title = $_POST["title"];
-		
-		
+		$title = $_POST["title"];		
 		$res = TBS::$thread->mkThreadAndCData($sectionId, $title);
 
 		ActionUtils::printQuerySuccess($res);

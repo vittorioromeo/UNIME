@@ -5,9 +5,10 @@ class Tbl
 	protected $tblName;
 	private $insertFields;
 
-	public function __construct($mTblName) 
+	public function __construct($mTblName, ...$mInsertFields) 
 	{
 		$this->tblName = $mTblName;
+		$this->setInsertFields(...$mInsertFields);
 	}
 
 	public function setInsertFields(...$mFields)
@@ -74,6 +75,12 @@ class Tbl
 	public function getWhere($mX)
 	{
 		return DB::query("SELECT * FROM $this->tblName WHERE $mX");
+	}
+
+	public function getFirst($mX)
+	{
+		$res = $this->getAll();
+		return $res->fetch_assoc();
 	}
 
 	public function getFirstWhere($mX)

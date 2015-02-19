@@ -81,6 +81,8 @@ class SectionData
 
 		print('<div class="collapse in" id="'.$this->collapseID.'">');
 			print('<div class="panel-body">');
+
+			$this->printSubsections();					
 		
 		TBS::$thread->forWhere(function($mRow)
 		{
@@ -105,19 +107,28 @@ class SectionData
 		Gen::JS_OnBtnClick($this->delSectionID, 'delSection('.$ids.');');
 	}
 
-	public function printAll($mDepth)
+	public function printSubsections()
+	{
+		$id = $this->row['id'];
+		TBS::$section->forWhere(function($mRow)
+		{
+			$sd = new SectionData($mRow);
+			$sd->printAll();			
+		}, "id_parent = $id");
+	}
+
+	public function printAll()
 	{
 		if(!Credentials::canCUView($this->row['id'])) return;
 
-		print('<div class="row">');
-			print('<div class="col-md-12">');
-				print('<div class="panel panel-default">');
+	
+			print('<div class="panel panel-default">');
+
 					
 					$this->printContents();
 
-				print('</div>');
 			print('</div>');
-		print('</div>');
+	
 
 		$this->printScripts();
 	}
@@ -195,11 +206,17 @@ class Actions
 
 	public static function refreshSections()
 	{
-		TBS::$section->forChildren(function($mRow, $mDepth)
+		TBS::$section->forWhere(function($mRow)
 		{
+	print('<div class="row">');
+			print('<div class="col-md-12">');
+
 			$sd = new SectionData($mRow);
-			$sd->printAll($mDepth);			
-		});
+			$sd->printAll();			
+
+					print('</div>');
+		print('</div>');
+		}, "id_parent is null");
 	}
 
 	public static function refreshPosts()
@@ -253,6 +270,24 @@ class Actions
 
 
 	
+	public static function tryRegister()
+	{
+		$groupId = TBS::$group->getFirst()['id'];
+		$username = $_POST['username'];
+		$passwordHash = Utils::getPwdHash($_POST['password']);
+		$email = $_POST['email'];
+		$registrationDate = date('Y-m-d');
+		$firstname = $_POST['firstname'];
+		$lastname = $_POST['lastname'];
+		$birthdate = $_POST['birthdate'];
+
+		$res = TBS::$user->insertValues($groupId, $username, $passwordHash, $email, $registrationDate, $firstname, $lastname, $birthname);			
+		
+		print($res ? "Success." : DB::$lastError);
+	}
+
+
+
 	public static function trySignIn()
 	{
 		print(Credentials::tryLogin($_POST["user"], $_POST["pass"]));

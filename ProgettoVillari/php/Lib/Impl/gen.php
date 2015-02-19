@@ -112,25 +112,6 @@ class Gen
 		});
 		</script>'); 
 	}
-
-
-
-
-
-	public static function SectionHeader($mID, $mTitle)
-	{
-	
-	}
-
-	public static function SectionBody($mID)
-	{
-	
-	}
-
-	public static function SectionThread($mTitle, $mAuthor)
-	{
-		
-	}
 }
 
 ?>	

@@ -2,11 +2,6 @@
 
 class TblUser extends Tbl
 {
-	public function mkUser()
-	{
-
-	}
-
 	public function findByCredentials($mUser, $mPass)
 	{
 		$hash = Utils::getPwdHash($mPass);
@@ -89,9 +84,7 @@ class TblThread extends Tbl
 	public function mkThreadAndCData($mIDSection, $mTitle)
 	{
 		$cdID = TBS::$cdata->createCDataAndGetID();
-		$res = $this->insertValues($cdID, $mIDSection, $mTitle);
-
-		return $res;
+		return $this->insertValues($cdID, $mIDSection, $mTitle);
 	}
 }
 
@@ -100,9 +93,7 @@ class TblPost extends Tbl
 	public function mkPostAndCData($mIDThread, $mContents)
 	{
 		$cdID = TBS::$cdata->createCDataAndGetID();
-		$res = $this->insertValues($cdID, $mIDThread, $mContents);
-
-		return $res;
+		return $this->insertValues($cdID, $mIDThread, $mContents);
 	}
 }
 
@@ -117,25 +108,25 @@ class TBS
 	public static $post;
 }
 
-TBS::$section = new TblSection('tbl_section');
-TBS::$section->setInsertFields('id_parent', 'name');
+TBS::$section = new TblSection('tbl_section',
+	'id_parent', 'name');
 
-TBS::$group = new TblGroup('tbl_group');
-TBS::$group->setInsertFields('id_parent', 'name', 'privileges');
+TBS::$group = new TblGroup('tbl_group',
+	'id_parent', 'name', 'privileges');
 
-TBS::$user = new TblUser('tbl_user');
-TBS::$user->setInsertFields('id_group', 'username', 'password_hash', 'email', 'registration_date', 'firstname', 'lastname', 'birth_date');
+TBS::$user = new TblUser('tbl_user',
+	'id_group', 'username', 'password_hash', 'email', 'registration_date', 'firstname', 'lastname', 'birth_date');
 
-TBS::$gsperms = new TblGroupSectionPermission('tbl_group_section_permission');
-TBS::$gsperms->setInsertFields('id_group', 'id_section', 'can_view', 'can_post', 'can_create_thread', 'can_delete_post', 'can_delete_thread', 'can_delete_section');
+TBS::$gsperms = new TblGroupSectionPermission('tbl_group_section_permission',
+	'id_group', 'id_section', 'can_view', 'can_post', 'can_create_thread', 'can_delete_post', 'can_delete_thread', 'can_delete_section');
 
-TBS::$cdata = new TblCData('tbl_creation_data');
-TBS::$cdata->setInsertFields('creation_date', 'id_author');
+TBS::$cdata = new TblCData('tbl_creation_data',
+	'creation_date', 'id_author');
 
-TBS::$thread = new TblThread('tbl_thread');
-TBS::$thread->setInsertFields('id_creation_data', 'id_section', 'title');
+TBS::$thread = new TblThread('tbl_thread',
+	'id_creation_data', 'id_section', 'title');
 
-TBS::$post = new TblPost('tbl_post');
-TBS::$post->setInsertFields('id_creation_data', 'id_thread', 'contents');
+TBS::$post = new TblPost('tbl_post',
+	'id_creation_data', 'id_thread', 'contents');
 
 ?>

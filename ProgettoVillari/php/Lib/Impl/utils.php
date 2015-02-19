@@ -33,18 +33,15 @@ class Utils
 
 	public static function getInsertParent(&$mTbl, $mIDParent, &$mMsg)
 	{
-		if($mIDParent != -1)
+		if($mIDParent == -1) return 'null';
+		
+		if(!$mTbl->hasID($mIDParent))
 		{
-			if(!$mTbl->hasID($mIDParent))
-			{
-				$mMsg = "Invalid parent ID: $mIDParent";
-				return false;
-			}
-
-			return $mIDParent;
+			$mMsg = "Invalid parent ID: $mIDParent";
+			return false;
 		}
 
-		return 'null';
+		return $mIDParent;
 	}
 }
 

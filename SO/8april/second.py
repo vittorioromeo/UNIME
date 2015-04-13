@@ -116,7 +116,7 @@ class Allocator:
 				iStr += " "
 
 			if b.occupied:
-					bStr += "#"
+				bStr += "#"
 			else:
 				bStr += "_"
 

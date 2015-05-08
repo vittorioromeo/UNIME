@@ -1,10 +1,37 @@
+import os
+
+# Get the current console window width and height
+consoleHeight, consoleWidth = os.popen('stty size', 'r').read().split()
+consoleHeight = int(consoleHeight)
+consoleWidth = int(consoleWidth)
+
+# Set reasonable values for the printed memory graph
+graphHeight = 5
+graphWidth = consoleWidth
+
+# Open a log file stream
+logFile = open("log.txt", "w")
+
+# Print both to log and console
+def lo(x):
+	logFile.write(x + "\n")
+	print(x)
+
+# Print a separator line
+def loLn():
+	lo("_" * consoleWidth)
+
+# Print separator line and newline
+def loSep():
+	loLn()
+	lo("")
+
 # Returns the count of digits of the number 'mX'
 def getDigitCount(mX):
 	return len(str(mX))
 
 # Class representing a block of memory
 class Block:
-
 	# Constructor
 	def __init__(self, mAllocator, mStart, mEnd):
 		# Allocator that owns the block
@@ -36,11 +63,11 @@ class AlgorithmResult:
 		# Index of the block occupied in case of success
 		self.bIdx = mBIdx
 
-	# Prints the data to console
+	# Prints the data to console and log
 	def log(self):
-		print "Success: " + str(self.success)
-		print "Cost: " + str(self.cost)
-		print ""
+		lo("Success: " + str(self.success))
+		lo("Cost: " + str(self.cost))
+		loSep()
 
 # Class representing a memory allocator 
 class Allocator:
@@ -143,11 +170,11 @@ class Allocator:
 		for b in self.blocks:
 			b.occupied = False
 
-	def printInfo(self):
-		stepSize = 100
-		
+	def printInfo(self):				
+		graphStep = self.size / (graphWidth - 5 - (len(self.blocks) * 2))
+
 		aStr = "0"
-		for i in range(0, self.size / stepSize):
+		for i in range(0, self.size / graphStep):
 			aStr += " "
 
 		aStr += str(self.size)
@@ -171,7 +198,7 @@ class Allocator:
 			# iStr = iStr[:-getDigitCount(b.start) + 1]
 			# iStr += str(b.start)
 
-			for i in range(0, b.getSize() / stepSize):
+			for i in range(0, b.getSize() / graphStep):
 				if b.occupied:
 					bStr += "#"
 				else:
@@ -196,22 +223,21 @@ class Allocator:
 		pStr += "|"
 		iStr += "|"
 
-		print ""
-		print ""
-		print ""
-		#print aStr			
-		print pStr
-		print pStr
-		print bStr
-		print iStr
-		print pStr
-		print pStr
+		lo("")
+		lo("")
+		lo("")
+		lo(pStr)
+		lo(pStr)
+		lo(bStr)
+		lo(iStr)
+		lo(pStr)
+		lo(pStr)
 
 	# The "first fit" algorithm simply iterates over all blocks
 	# until it finds a block which is suitable for the desired
 	# memory allocation
 	def insertFirstFit(self, mX):
-		print ""
+		loSep()
 		result = AlgorithmResult()
 
 		for b in self.blocks:
@@ -234,7 +260,7 @@ class Allocator:
 	# This algorithm could be improved by keeping a separate list of memory blocks,
 	# ordered by size
 	def insertBestFit(self, mX):
-		print ""
+		loSep()
 		result = AlgorithmResult()
 
 		best = None
@@ -242,7 +268,7 @@ class Allocator:
 			result.cost += 1
 			b = self.blocks[i]
 
-			if (best == None or b.getSize() < best.getSize()) and b.getSize() >= mX:
+			if (best == None or b.getSize() < best.getSize()) and b.getSize() >= mX and b.occupied == False:
 				best = b
 
 		if best != None:
@@ -257,7 +283,7 @@ class Allocator:
 	# The "next fit" algorithm uses the same logic as the "first fit" algorithm,
 	# but starts looking for an unoccupied block at the last block index
 	def insertNextFit(self, mX):
-		print ""
+		loSep()
 		result = AlgorithmResult()
 
 		for i in range(0, len(self.blocks)):
@@ -283,46 +309,46 @@ def main():
 	allocator.printInfo()
 
 	while True:
-		print "\nChoose:"
-		print "\t0. First-fit"
-		print "\t1. Best-fit"
-		print "\t2. Next-fit"
-		print "\t3. Reclaim memory"
-		print "\t4. Free blocks"
-		print "\t5. Exit"
+		lo("\nChoose:")
+		lo("\t0. First-fit")
+		lo("\t1. Best-fit")
+		lo("\t2. Next-fit")
+		lo("\t3. Reclaim memory")
+		lo("\t4. Free blocks")
+		lo("\t5. Exit")
 
 		choice = int(raw_input())
 
 		if choice == 0:
-			print "First-fit selected"
+			lo("First-fit selected")
 
-			print "\tInsert requested memory size"
+			lo("\tInsert requested memory size")
 			rMem = int(raw_input())
 
 			allocator.insertFirstFit(rMem)
 
 		elif choice == 1:
-			print "Best-fit selected"
+			lo("Best-fit selected")
 
-			print "\tInsert requested memory size"
+			lo("\tInsert requested memory size")
 			rMem = int(raw_input())
 
 			allocator.insertBestFit(rMem)
 
 		elif choice == 2:
-			print "Next-fit selected"
+			lo("Next-fit selected")
 
-			print "\tInsert requested memory size"
+			lo("\tInsert requested memory size")
 			rMem = int(raw_input())
 
 			allocator.insertNextFit(rMem)
 
 		elif choice == 3:
-			print "Reclaim selected"
+			lo("Reclaim selected")
 			allocator.reclaim()
 
 		elif choice == 4:
-			print "Reclaim selected"
+			lo("Free selected")
 			allocator.free()
 
 		elif choice == 5:
@@ -332,4 +358,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+	loLn()
+	main()

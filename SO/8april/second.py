@@ -26,6 +26,18 @@ def loSep():
 	loLn()
 	lo("")
 
+# Get integer input from user - retry in case of error
+def getInputInt():
+	while True:
+		try:
+			result = int(raw_input())
+		except ValueError:
+			lo("\nvInserted value invalid - retry")
+		else:
+			break
+
+	return result
+
 # Returns the count of digits of the number 'mX'
 def getDigitCount(mX):
 	return len(str(mX))
@@ -303,9 +315,21 @@ class Allocator:
 		result.log()
 		return result
 
+def getInputMemorySize(mMax):
+	lo("\tInsert requested memory size")
+
+	while True:
+		result = getInputInt()
+
+		if result <= 0 or result >= mMax:
+			lo("Invalid memory size value")
+			continue
+
+		return result
+
 def main():
 	size = 10000
-	allocator = Allocator(10000)
+	allocator = Allocator(size)
 	allocator.printInfo()
 
 	while True:
@@ -321,26 +345,17 @@ def main():
 
 		if choice == 0:
 			lo("First-fit selected")
-
-			lo("\tInsert requested memory size")
-			rMem = int(raw_input())
-
+			rMem = getInputMemorySize(size)
 			allocator.insertFirstFit(rMem)
 
 		elif choice == 1:
 			lo("Best-fit selected")
-
-			lo("\tInsert requested memory size")
-			rMem = int(raw_input())
-
+			rMem = getInputMemorySize(size)
 			allocator.insertBestFit(rMem)
 
 		elif choice == 2:
 			lo("Next-fit selected")
-
-			lo("\tInsert requested memory size")
-			rMem = int(raw_input())
-
+			rMem = getInputMemorySize(size)
 			allocator.insertNextFit(rMem)
 
 		elif choice == 3:

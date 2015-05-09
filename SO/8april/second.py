@@ -191,7 +191,6 @@ class Allocator:
 
 		aStr += str(self.size)
 
-
 		bStr = ""
 		pStr = ""
 		iStr = ""
@@ -206,9 +205,6 @@ class Allocator:
 				iStr += "0"
 			else:
 				iStr += "|"
-
-			# iStr = iStr[:-getDigitCount(b.start) + 1]
-			# iStr += str(b.start)
 
 			for i in range(0, b.getSize() / graphStep):
 				if b.occupied:
@@ -227,7 +223,6 @@ class Allocator:
 			pStr += " "
 			iStr = iStr[:-getDigitCount(b.end) + 1]
 			iStr += str(b.end)
-			#pStr += str(lastIdx)
 
 			lastIdx += 1
 
@@ -315,6 +310,7 @@ class Allocator:
 		result.log()
 		return result
 
+# Gets a valid memory size integer from the user
 def getInputMemorySize(mMax):
 	lo("\tInsert requested memory size")
 
@@ -341,7 +337,7 @@ def main():
 		lo("\t4. Free blocks")
 		lo("\t5. Exit")
 
-		choice = int(raw_input())
+		choice = getInputInt()
 
 		if choice == 0:
 			lo("First-fit selected")
@@ -370,7 +366,6 @@ def main():
 			break
 
 		allocator.printInfo()
-
 
 if __name__ == "__main__":
 	loLn()

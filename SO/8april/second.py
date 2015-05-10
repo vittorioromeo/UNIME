@@ -87,15 +87,20 @@ class Allocator:
 	def __init__(self, mSize):
 		# List of the blocks owned by the allocator
 		self.blocks = []
+		
+		# Sorted list of block ids by size
+		self.sortedBlocks = []
 
 		# Total size of the allocator
-		self.size = mSize
-
-		# Initialize the allocator a single memory block including 'mSize'
-		self.blocks.append(Block(self, 0, mSize))
+		self.size = mSize	
 
 		# Last occupied block index
 		self.lastIdx = 0
+
+		# Initialize the allocator a single memory block including 'mSize'
+		firstBlock = Block(self, 0, mSize)
+		self.blocks.append(firstBlock)		
+		self.sortedBlocks.append(firstBlock)
 
 	# Return a tuple containing the block that includes the byte 'mX' and its index
 	def getBlockAt(self, mX):
@@ -112,6 +117,17 @@ class Allocator:
 
 		# If no block was found, 'mX' is an invalid value
 		raise Exception("'mX' is an invalid value")
+
+	# Inserts a block in the sorted list, in the correct position
+	def insertSorted(self, mX):
+		i = 0
+		for i in range(0, len(self.sortedBlocks)):
+			c = self.sortedBlocks[i]
+			
+			if c.getSize() >= mX.getSize():
+				break
+
+		self.sortedBlocks.insert(i, mX)
 
 	# Splits the memory owned by the allocator at the byte 'mX'
 	# Returns a tuple containing the two halves in which the block was split and the
@@ -144,6 +160,11 @@ class Allocator:
 		# Create an additional block including [m, r)
 		newBlock = Block(self, m, r)
 		self.blocks.insert(toSplitIdx + 1, newBlock)
+
+		# Refreh the sorted list
+		self.sortedBlocks.remove(toSplit)		
+		self.insertSorted(toSplit)
+		self.insertSorted(newBlock)		
 
 		# Return a tuple containing the two halves and the index of the first half
 		return (toSplit, newBlock, toSplitIdx)
@@ -266,7 +287,7 @@ class Allocator:
 	# and selects the one that wastes less space for the memory allocation
 	# This algorithm could be improved by keeping a separate list of memory blocks,
 	# ordered by size
-	def insertBestFit(self, mX):
+	def insertBestFitNaive(self, mX):
 		loSep()
 		result = AlgorithmResult()
 
@@ -289,7 +310,7 @@ class Allocator:
 
 	# The "next fit" algorithm uses the same logic as the "first fit" algorithm,
 	# but starts looking for an unoccupied block at the last block index
-	def insertNextFit(self, mX):
+	def insertNextFitNaive(self, mX):
 		loSep()
 		result = AlgorithmResult()
 
@@ -308,6 +329,56 @@ class Allocator:
 			break
 
 		result.log()
+		return result
+
+	# The "worst fit" algorithm iterates over all available blocks 
+	# and selects the one that wastes most space for the memory allocation
+	# This algorithm could be improved by keeping a separate list of memory blocks,
+	# ordered by size
+	def insertWorstFitNaive(self, mX):
+		loSep()
+		result = AlgorithmResult()
+
+		best = None
+		for i in range(0, len(self.blocks)):
+			result.cost += 1
+			b = self.blocks[i]
+
+			if (best == None or b.getSize() < best.getSize()) and b.getSize() >= mX and b.occupied == False:
+				best = b
+
+		if best != None:
+			result.success = True
+			l, r, idx = self.splitAt(best.start + mX)			
+			l.occupied = True
+			self.lastIdx = idx
+		
+		result.log()
+		return result
+
+	def insertBestFitSL(self, mX):
+		loSep()
+		result = AlgorithmResult()
+		
+		for i in range(0, len(self.sortedBlocks)):
+			result.cost += 1
+
+			b = self.sortedBlocks[i]
+
+			if b.occupied == False:
+				result.success = True
+				l, r, idx = self.splitAt(b.start + mX)			
+				l.occupied = True
+				self.lastIdx = idx
+				break
+
+		result.log()
+		return result
+
+	def insertWorstFitSL(self, mX):
+		loSep()
+		result = AlgorithmResult()
+
 		return result
 
 # Gets a valid memory size integer from the user
@@ -331,11 +402,14 @@ def main():
 	while True:
 		lo("\nChoose:")
 		lo("\t0. First-fit")
-		lo("\t1. Best-fit")
-		lo("\t2. Next-fit")
-		lo("\t3. Reclaim memory")
-		lo("\t4. Free blocks")
-		lo("\t5. Exit")
+		lo("\t1. Next-fit")
+		lo("\t2. Best-fit (naive)")
+		lo("\t3. Worst-fit (naive)")
+		lo("\t4. Best-fit (sorted list)")
+		lo("\t5. Worst-fit (sorted list)")
+		lo("\t6. Reclaim memory")
+		lo("\t7. Free blocks")
+		lo("\t8. Exit")
 
 		choice = getInputInt()
 
@@ -345,24 +419,39 @@ def main():
 			allocator.insertFirstFit(rMem)
 
 		elif choice == 1:
-			lo("Best-fit selected")
-			rMem = getInputMemorySize(size)
-			allocator.insertBestFit(rMem)
-
-		elif choice == 2:
 			lo("Next-fit selected")
 			rMem = getInputMemorySize(size)
 			allocator.insertNextFit(rMem)
 
+		elif choice == 2:
+			lo("Best-fit (naive) selected")
+			rMem = getInputMemorySize(size)
+			allocator.insertBestFitNaive(rMem)
+
 		elif choice == 3:
+			lo("Worst-fit (naive) selected")
+			rMem = getInputMemorySize(size)
+			allocator.insertWorstFitNaive(rMem)
+
+		elif choice == 4:
+			lo("Best-fit (sorted list) selected")
+			rMem = getInputMemorySize(size)
+			allocator.insertBestFitSL(rMem)
+
+		elif choice == 5:
+			lo("Worst-fit (sorted list) selected")
+			rMem = getInputMemorySize(size)
+			allocator.insertWorstFitSL(rMem)
+
+		elif choice == 6:
 			lo("Reclaim selected")
 			allocator.reclaim()
 
-		elif choice == 4:
+		elif choice == 7:
 			lo("Free selected")
 			allocator.free()
 
-		elif choice == 5:
+		elif choice == 8:
 			break
 
 		allocator.printInfo()

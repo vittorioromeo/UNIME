@@ -47,6 +47,8 @@ Choose:
 	6. Reclaim memory
 	7. Free blocks
 	8. Exit
+
+vInserted value invalid - retry
 First-fit selected
 	Insert requested memory size
 ______________________________________________________________________________
@@ -75,268 +77,16 @@ Choose:
 	6. Reclaim memory
 	7. Free blocks
 	8. Exit
-First-fit selected
-	Insert requested memory size
-______________________________________________________________________________
-
-Success: True
-Cost: 3
-______________________________________________________________________________
-
-
-
-
-|                                 |              |       |              |
-|                                 |              |       |              |
-|#################################|##############|#######|______________|
-0                             5000|          7000|   8000|         10000|
-|                                 |              |       |              |
-|                                 |              |       |              |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
 Free selected
-
-
-
-|                                 |              |       |              |
-|                                 |              |       |              |
-|_________________________________|______________|_______|______________|
-0                             5000|          7000|   8000|         10000|
-|                                 |              |       |              |
-|                                 |              |       |              |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Best-fit (sorted list) selected
-	Insert requested memory size
-______________________________________________________________________________
-
-Success: True
-Cost: 1
-______________________________________________________________________________
-
-
-
-
-|                                |             |       | |             |
-|                                |             |       | |             |
-|________________________________|_____________|#######|_|_____________|
-0                            5000|         7000|   808000|        10000|
-|                                |             |       | |             |
-|                                |             |       | |             |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Best-fit (sorted list) selected
-	Insert requested memory size
-______________________________________________________________________________
-
-Success: True
-Cost: 1
-______________________________________________________________________________
-
-
-
-
-|                               |             |       | |          |    |
-|                               |             |       | |          |    |
-|_______________________________|_____________|#######|_|##########|____|
-0                           5000|         7000|   808000|      950010000|
-|                               |             |       | |          |    |
-|                               |             |       | |          |    |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Free selected
-
-
-
-|                               |             |       | |          |    |
-|                               |             |       | |          |    |
-|_______________________________|_____________|_______|_|__________|____|
-0                           5000|         7000|   808000|      950010000|
-|                               |             |       | |          |    |
-|                               |             |       | |          |    |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Free selected
-
-
-
-|                               |             |       | |          |    |
-|                               |             |       | |          |    |
-|_______________________________|_____________|_______|_|__________|____|
-0                           5000|         7000|   808000|      950010000|
-|                               |             |       | |          |    |
-|                               |             |       | |          |    |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Reclaim selected
-
-
-
-|                                                                        |
-|                                                                        |
-|________________________________________________________________________|
-0                                                                   10000|
-|                                                                        |
-|                                                                        |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-First-fit selected
-	Insert requested memory size
-______________________________________________________________________________
-
-Success: True
-Cost: 1
-______________________________________________________________________________
-
-
-
-
-|                                   |                                   |
-|                                   |                                   |
-|###################################|___________________________________|
-0                               5000|                              10000|
-|                                   |                                   |
-|                                   |                                   |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-First-fit selected
-	Insert requested memory size
-______________________________________________________________________________
-
-Success: True
-Cost: 2
-______________________________________________________________________________
-
 
 
 
 |                                  |              |                     |
 |                                  |              |                     |
-|##################################|##############|_____________________|
+|__________________________________|______________|_____________________|
 0                              5000|          7000|                10000|
 |                                  |              |                     |
 |                                  |              |                     |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-First-fit selected
-	Insert requested memory size
-______________________________________________________________________________
-
-Success: True
-Cost: 3
-______________________________________________________________________________
-
-
-
-
-|                                 |              |       |              |
-|                                 |              |       |              |
-|#################################|##############|#######|______________|
-0                             5000|          7000|   8000|         10000|
-|                                 |              |       |              |
-|                                 |              |       |              |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Free selected
-
-
-
-|                                 |              |       |              |
-|                                 |              |       |              |
-|_________________________________|______________|_______|______________|
-0                             5000|          7000|   8000|         10000|
-|                                 |              |       |              |
-|                                 |              |       |              |
 
 Choose:
 	0. First-fit
@@ -353,67 +103,18 @@ Best-fit (naive) selected
 ______________________________________________________________________________
 
 Success: True
-Cost: 4
+Cost: 3
 ______________________________________________________________________________
 
 
 
 
-|                                |          |    |       |             |
-|                                |          |    |       |             |
-|________________________________|##########|____|_______|_____________|
-0                            5000|      6500|7000|   8000|        10000|
-|                                |          |    |       |             |
-|                                |          |    |       |             |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Free selected
-
-
-
-|                                |          |    |       |             |
-|                                |          |    |       |             |
-|________________________________|__________|____|_______|_____________|
-0                            5000|      6500|7000|   8000|        10000|
-|                                |          |    |       |             |
-|                                |          |    |       |             |
-
-Choose:
-	0. First-fit
-	1. Next-fit
-	2. Best-fit (naive)
-	3. Worst-fit (naive)
-	4. Best-fit (sorted list)
-	5. Worst-fit (sorted list)
-	6. Reclaim memory
-	7. Free blocks
-	8. Exit
-Best-fit (sorted list) selected
-	Insert requested memory size
-______________________________________________________________________________
-
-Success: True
-Cost: 1
-______________________________________________________________________________
-
-
-
-
-|                               |          |    |       |       |       |
-|                               |          |    |       |       |       |
-|_______________________________|__________|____|_______|#######|_______|
-0                           5000|      6500|7000|   8000|   9000|  10000|
-|                               |          |    |       |       |       |
-|                               |          |    |       |       |       |
+|                                 |          |    |                    |
+|                                 |          |    |                    |
+|_________________________________|##########|____|____________________|
+0                             5000|      6500|7000|               10000|
+|                                 |          |    |                    |
+|                                 |          |    |                    |
 
 Choose:
 	0. First-fit

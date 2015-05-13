@@ -5,7 +5,7 @@ consoleHeight, consoleWidth = os.popen('stty size', 'r').read().split()
 consoleHeight = int(consoleHeight)
 consoleWidth = int(consoleWidth)
 
-# Set reasonable values for the printed memory graph
+# Set reasonable values for the ASCII memory graph
 graphHeight = 5
 graphWidth = consoleWidth
 
@@ -261,36 +261,30 @@ class Allocator:
 		lo(pStr)
 		lo(pStr)
 
-	# The "first fit" algorithm simply iterates over all blocks
-	# until it finds a block which is suitable for the desired
-	# memory allocation
-	def insertFirstFit(self, mX):
+	def executeAlgorithm(self, mAlgorithm, mX):
 		loSep()
 		result = AlgorithmResult()
 
-		for b in self.blocks:
-			result.cost += 1
-
-			if b.occupied or b.getSize() < mX:
-				continue
-
-			l, r, idx = self.splitAt(b.start + mX)			
-			l.occupied = True
-			result.success = True
-			self.lastIdx = idx
-			break
+		mAlgorithm(result, mX)
 
 		result.log()
 		return result
 
-	# The "best fit" algorithm iterates over all available blocks 
-	# and selects the one that wastes less space for the memory allocation
-	# This algorithm could be improved by keeping a separate list of memory blocks,
-	# ordered by size
-	def insertBestFitNaive(self, mX):
-		loSep()
-		result = AlgorithmResult()
+	def successOn(self, result, b, mX):
+		l, r, idx = self.splitAt(b.start + mX)			
+		l.occupied = True
+		result.success = True
+		self.lastIdx = idx
 
+	def implFirstFit(self, result, mX):
+		for b in self.blocks:
+			result.cost += 1
+
+			if b.occupied == False and b.getSize() >= mX:
+				self.successOn(result, b, mX)
+				return
+
+	def implBestFitNaive(self, result, mX):
 		best = None
 		for i in range(0, len(self.blocks)):
 			result.cost += 1
@@ -300,13 +294,20 @@ class Allocator:
 				best = b
 
 		if best != None:
-			result.success = True
-			l, r, idx = self.splitAt(best.start + mX)			
-			l.occupied = True
-			self.lastIdx = idx
+			self.successOn(result, best, mX)
 		
-		result.log()
-		return result
+	# The "first fit" algorithm simply iterates over all blocks
+	# until it finds a block which is suitable for the desired
+	# memory allocation
+	def insertFirstFit(self, mX):
+		return self.executeAlgorithm(self.implFirstFit, mX)
+
+	# The "best fit" algorithm iterates over all available blocks 
+	# and selects the one that wastes less space for the memory allocation
+	# This algorithm could be improved by keeping a separate list of memory blocks,
+	# ordered by size
+	def insertBestFitNaive(self, mX):
+		return self.executeAlgorithm(self.implBestFitNaive, mX)
 
 	# The "next fit" algorithm uses the same logic as the "first fit" algorithm,
 	# but starts looking for an unoccupied block at the last block index
@@ -379,6 +380,19 @@ class Allocator:
 		loSep()
 		result = AlgorithmResult()
 
+		for i in range(0, len(self.sortedBlocks)):
+			result.cost += 1
+
+			b = self.sortedBlocks[len(self.sortedBlocks) - i - 1]
+
+			if b.occupied == False:
+				result.success = True
+				l, r, idx = self.splitAt(b.start + mX)			
+				l.occupied = True
+				self.lastIdx = idx
+				break
+
+		result.log()
 		return result
 
 # Gets a valid memory size integer from the user

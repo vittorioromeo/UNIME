@@ -6,10 +6,11 @@ import os
 import sys
 
 # Generated a random number between 'mMin' and 'mMax'
+# 'mMin' is inclusive, 'mMax' is exclusive
 def rndI(mMin, mMax):
     return random.randint(mMin, mMax - 1)
 
-# Get the current co1nsole window width and height
+# Get the current console window width and height
 consoleHeight, consoleWidth = os.popen('stty size', 'r').read().split()
 consoleHeight = int(consoleHeight)
 consoleWidth = int(consoleWidth)
@@ -161,9 +162,7 @@ class Allocator:
     # Return a tuple containing the block that includes the byte 'mX' and its index
     def getBlockAt(self, mX):
         # Loop through all the blocks...
-        for i in range(0, len(self.blocks)):
-            b = self.blocks[i]
-
+        for i, b in enumerate(self.blocks):
             # If the current block ends before 'mX', skip it 
             if b.end < mX:
                 continue
@@ -251,6 +250,7 @@ class Allocator:
             # If both blocks are unoccupied, merge them by removing
             # the second one and resizing the first one to fill the empty space
             b1.end = b2.end
+            self.sortedBlocks.remove(b2)
             self.blocks.remove(b2)
 
             # Call this function recursively if reclaiming was successful
@@ -261,6 +261,7 @@ class Allocator:
         for b in self.blocks:
             b.occupied = False
 
+    # Print an ASCII graph of the state of the allocator
     def printInfo(self):                
         graphStep = self.size / (graphWidth - 5 - (len(self.blocks) * 2))
 
@@ -287,7 +288,7 @@ class Allocator:
 
             for i in range(0, b.getSize() / graphStep):
                 if b.occupied:
-                    bStr += Color.red + "#" + Color.default
+                    bStr += Color.cyan + "#" + Color.default
                 else:
                     bStr += Color.dgray + "_" + Color.default
                 
@@ -295,7 +296,7 @@ class Allocator:
                 iStr += " "
 
             if b.occupied:
-                bStr += Color.red + "#" + Color.default
+                bStr += Color.cyan + "#" + Color.default
             else:
                 bStr += Color.dgray + "_" + Color.default
 
@@ -319,6 +320,7 @@ class Allocator:
         lo(pStr)
         lo(pStr)
 
+    # Return a number representing the average fragmentation of the allocator
     def getFragmentation(self):
         result = len(self.blocks)
 
@@ -328,6 +330,7 @@ class Allocator:
 
         return result
 
+    # Execute an algorithm and print its result
     def executeAlgorithm(self, mAlgorithm, mX):
         loSep()
         result = AlgorithmResult()
@@ -337,6 +340,7 @@ class Allocator:
         result.log()
         return result
 
+    # Function that's called when an algorithm succeeds
     def successOn(self, result, b, mX):
         l, r, idx = self.splitAt(b.start + mX)          
         l.occupied = True
@@ -344,6 +348,7 @@ class Allocator:
         result.block = b
         self.lastIdx = idx
 
+    # Implementation: first-fit algorithm
     def implFirstFit(self, result, mX):
         for b in self.blocks:
             result.cost += 1
@@ -352,11 +357,11 @@ class Allocator:
                 self.successOn(result, b, mX)
                 return
 
+    # Implementation: best-fit algorithm (naive)
     def implBestFitNaive(self, result, mX):
         best = None
-        for i in range(0, len(self.blocks)):
+        for b in self.blocks:
             result.cost += 1
-            b = self.blocks[i]
 
             if (best == None or b.getSize() < best.getSize()) and b.getSize() >= mX and b.occupied == False:
                 best = b
@@ -364,11 +369,11 @@ class Allocator:
         if best != None:
             self.successOn(result, best, mX)
 
+    # Implementation: worst-fit algorithm (naive)
     def implWorstFitNaive(self, result, mX):
         best = None
-        for i in range(0, len(self.blocks)):
-            result.cost += 1
-            b = self.blocks[i]
+        for b in self.blocks:
+            result.cost += 1            
 
             if (best == None or b.getSize() < best.getSize()) and b.getSize() >= mX and b.occupied == False:
                 best = b
@@ -376,6 +381,7 @@ class Allocator:
         if best != None:
             self.successOn(result, best, mX)
 
+    # Implementation: next-fit algorithm
     def implNextFit(self, result, mX):
         for i in range(0, len(self.blocks)):
             result.cost += 1
@@ -388,6 +394,7 @@ class Allocator:
             self.successOn(result, b, mX)
             break
 
+    # Implementation: best-fit algorithm (sorted list)
     def implBestFitSL(self, result, mX):
         for b in self.sortedBlocks:
             result.cost += 1
@@ -396,6 +403,7 @@ class Allocator:
                 self.successOn(result, b, mX)
                 break
 
+    # Implementation: worst-fit algorithm (sorted list)
     def implWorstFitSL(self, result, mX):
         for i in range(0, len(self.sortedBlocks)):
             result.cost += 1
@@ -431,11 +439,11 @@ class Allocator:
     def insertWorstFitNaive(self, mX):
         return self.executeAlgorithm(self.implWorstFitNaive, mX)
 
-    # TODO
+    # The "best fit" algorithm starts from the beginning of the sorted list 
     def insertBestFitSL(self, mX):
         return self.executeAlgorithm(self.implBestFitSL, mX)
 
-    # TODO
+    # The "best fit" algorithm starts from the end of the sorted list 
     def insertWorstFitSL(self, mX):
         return self.executeAlgorithm(self.implWorstFitSL, mX)
 
@@ -447,17 +455,33 @@ def getInputMemorySize(mMax):
         result = getInputInt()
 
         if result <= 0 or result >= mMax:
-            lo("Invalid memory size value")
+            loC(Color.red)
+            lo("Invalid memory size value\n")
+            loCD()
             continue
 
         return result
 
-# TODO
+# Get a valid simulation count fro the user
+def getInputSimulationCount():
+    loCD()
+    lo("Insert number of ")
+    loC(Color.cyan)
+    lo("simulations: ")
+    loCD()
+    numSim = int(raw_input())
+    lo("\n")
+
+    return numSim
+
+
+# Class representing a possible menu choice
 class Choice:
-    # TODO
+    # Constructor
     def __init__(self, mTitle):        
         self.number = -1
         self.title = mTitle
+        self.action = None
 
     # Print menu choice
     def loChoice(self):
@@ -475,30 +499,34 @@ class Choice:
         loCD()
         lo(" selected\n")
 
-# TODO
+# Class representing the command line menu
 class Menu:
-    # TODO
+    # Constructor
     def __init__(self):
         self.choices = []
         self.nextNumber = 0
 
-    # TODO
-    def add(self, mChoice):
-        self.choices.append(mChoice)
-        mChoice.number = self.nextNumber
+    # Insert a choice in the menu
+    def add(self, mTitle, mAction):
+        c = Choice(mTitle)
+        c.action = mAction
+        c.number = self.nextNumber
+        
+        self.choices.append(c)
         self.nextNumber += 1
 
-    # TODO
+    # Print all possible choices
     def loAllChoices(self):
         lo("\nChoose:\n")
         for c in self.choices:
             c.loChoice()
 
-    # TODO
+    # Select one of the choice from user input
     def selectChoice(self):
         inputNumber = getInputInt()
         c = self.choices[inputNumber]
         c.loSelection()
+        c.action()
         return inputNumber
 
 # Class representing a single process
@@ -524,93 +552,124 @@ class Process:
     def finished(self):
         return self.required <= 0
 
-# Simula un algoritmo
+# Pretty-print a time unit
+def loTime(mTime):
+    loC(Color.default)
+    lo("T(")
+    loC(Color.cyan)
+    lo(str(mTime))
+    loC(Color.default)
+    lo("): ")
+
+# Pretty-print a process ID
+def loProcess(mProcess):
+    loC(Color.default)
+    lo("P[")
+    loC(Color.red)
+    lo(str(mProcess.id))
+    loC(Color.default)
+    lo("] ")    
+
+# Runs a simulation with the selected algorithm of a list of process
 def simulate(mName, mProcesses, mAllocator, mAlgorithm):
-    # Copia lista dei processi da far partire
+    # Perform a deep copy of the process list
     toAdd = copy.deepcopy(mProcesses)
 
-    # Lista dei processi in corso
+    # List of processes that are being executed
     toRem = []
 
-    # Allocatore
+    # Reset the state of the allocator
     mAllocator.reset()
 
-    # Dati statistici
+    # Initialize statistic variables
     comparisons = 0
     fragmentation = 0
 
-    # Tempo corrente
+    # Current time unit
     t = 0
 
-    # Finche' ci sono processi da aggiungere o in corso...
-    while len(toAdd) > 0 or len(toRem) > 0:
-        # Per ogni processo da aggiungere...
+    # While there are processes that need to be started or must end...
+    while toAdd or toRem:
+        mustPrint = False
+
+        # For every process that needs to begin...
         for p in toAdd:
-            # Se il processo entra al tempo t...
+            # If the process should start...
             if p.start <= t:
-                lo("t{0}: P{1} deve entrare\n".format(t, p.id))
+                loTime(t)
+                loProcess(p)
+                lo("must start\n")                
 
                 # Prova ad inserirlo
                 res = mAlgorithm(p.size)
                 comparisons += res.cost
 
+                loProcess(p)
+
                 if res.success == False:
-                    lo("Inserimento di P{0} fallito\n".format(p.id))
+                    lo("- insertion failed\n")
                 else:
-                    lo("Inserimento di P{0} riuscito\n".format(p.id))
+                    lo("successfully inserted\n")
                     p.block = res.block
                     toAdd.remove(p)
                     toRem.append(p)
 
-        # Per ogni processo in esecuzione...
+                    mustPrint = True
+
+        # For every process in execution...
         for p in toRem:
-            # Decrementa tempo necessario
+            # Decrement required execution time
             p.required -= 1
 
-            # Se il processo e' terminato...
+            # If the process has finished execution...
             if p.finished() == True:
-                lo("t{0}: P{1} terminato\n".format(t, p.id))
+                loTime(t)
+                loProcess(p)
+                lo("finished its execution\n")     
 
-                # Disalloca il blocco e prova a riunificare la memoria
-                lo("Rimozione di P{0}\n".format(p.id))
+                # Deallocate block and reclaim memory
                 p.block.occupied = False
                 mAllocator.reclaim()
                 toRem.remove(p)
 
-        # Incrementa il tempo
+                mustPrint = True
+
+        # Increment current time
         t += 1
 
-        # Accumula frammentazione
+        # Accumulate allocator fragmentation
         fragmentation += mAllocator.getFragmentation()
 
-        # Stampa stato
-        mAllocator.printInfo()
-        lo("\n")
+        if mustPrint == True:
+            # Print allocator graph
+            mAllocator.printInfo()
+            lo("\n")
 
-    # Restituisci risultato
-    rstr = "RISULTATO {0}:".format(mName) + "\n"
-    rstr += "Comparazioni: {0}".format(comparisons) + "\n"
-    rstr += "Frammentazione media: {0}".format(fragmentation / t) + "\n"
-    rstr += "Punteggio: {0}".format(((fragmentation / t) * comparisons) / 1000000.0) + "\n"
+    # Calculate simulation statistics
+    avgFragmentation = fragmentation / t
+    score = ((fragmentation / t) * comparisons) / 1000000.0
+
+    # Print simulation results
+    rstr = Color.default + "Results for " + Color.cyan + mName + ":\n" + Color.default
+    rstr += "\t" + Color.cyan + "Comparazioni: " + Color.default + str(comparisons) + "\n"
+    rstr += "\t" + Color.cyan + "Frammentazione media: " + Color.default + str(avgFragmentation) + "\n"
+    rstr += "\t" + Color.cyan + "Punteggio: " + Color.default + str(score) + "\n\n"
 
     return rstr
 
-# TODO
-def runSimulations(mAllocator):
-    # Inserisci il numero di simulazioni da tastiera
-    loCD()
-    lo("Insert number of ")
-    loC(Color.cyan)
-    lo("simulations: ")
-    loCD()
-    numSim = int(raw_input())
-    lo("\n")
-
-    for s in range(0, numSim):
-        lo("SIMULAZIONE " + str(s) + "\n")
+# Run 'mCount' simulations on an allocator and report statistics
+def runSimulations(mAllocator, mCount):
+    for s in range(0, mCount):
+        
+        loCD()
+        lo("Simulation: ")
+        loC(Color.cyan)
+        lo(str(s))
+        loCD()
+        lo("\n")
 
         # Genera una situazione iniziale di processi
-        lo("Generazione processi\n")
+        lo("Process generation:\n")
         
         loC(Color.cyan)
         lo("PROC\t")
@@ -624,7 +683,7 @@ def runSimulations(mAllocator):
         processes = []
 
         # Genera N processi casuali
-        for i in range(0, rndI(10, 50)):
+        for i in range(0, rndI(8, 16)):
             # Tempo di entrata del processo i-esimo
             enter = rndI(0, 45)
 
@@ -639,13 +698,13 @@ def runSimulations(mAllocator):
             processes.append(p)
 
             # Stampa informazioni sul processo generato
-            loC(Color.cyan)
+            loC(Color.cyan if i % 2 else Color.default)
             lo("{0}\t".format(i))
-            loCD()
+            loC(Color.default if i % 2 else Color.cyan)
             lo("{0}\t".format(enter))
-            loC(Color.cyan)
+            loC(Color.cyan if i % 2 else Color.default)
             lo("{0}\t".format(exit))
-            loCD()
+            loC(Color.default if i % 2 else Color.cyan)
             lo("{0}\n".format(size))
 
         raw_input()
@@ -675,58 +734,23 @@ def main():
     allocator = Allocator(size)
     allocator.printInfo()
 
+    inputSz = lambda: getInputMemorySize(size)
+
     menu = Menu()
-    menu.add(Choice("First-fit"))
-    menu.add(Choice("Next-fit"))
-    menu.add(Choice("Best-fit (naive)"))
-    menu.add(Choice("Worst-fit (naive)"))
-    menu.add(Choice("Best-fit (sorted-list)"))
-    menu.add(Choice("Worst-fit (sorted-list)"))
-    menu.add(Choice("Reclaim memory"))
-    menu.add(Choice("Free blocks"))
-    menu.add(Choice("Run simulations"))
-    menu.add(Choice("Exit"))
+    menu.add("First-fit",               lambda: allocator.insertFirstFit(inputSz()))
+    menu.add("Next-fit",                lambda: allocator.insertNextFit(inputSz()))
+    menu.add("Best-fit (naive)",        lambda: allocator.insertBestFitNaive(inputSz()))
+    menu.add("Worst-fit (naive)",       lambda: allocator.insertWorstFitNaive(inputSz()))
+    menu.add("Best-fit (sorted-list)",  lambda: allocator.insertBestFitSL(inputSz()))
+    menu.add("Worst-fit (sorted-list)", lambda: allocator.insertWorstFitSL(inputSz()))
+    menu.add("Reclaim memory",          lambda: allocator.reclaim())
+    menu.add("Free blocks",             lambda: allocator.free())
+    menu.add("Run simulations",         lambda: runSimulations(allocator, getInputSimulationCount()))
+    menu.add("Exit",                    lambda: sys.exit())
 
     while True:
         menu.loAllChoices()    
-        choice = menu.selectChoice()        
-        
-        if choice == 0:
-            rMem = getInputMemorySize(size)
-            allocator.insertFirstFit(rMem)
-
-        elif choice == 1:
-            rMem = getInputMemorySize(size)
-            allocator.insertNextFit(rMem)
-
-        elif choice == 2:
-            rMem = getInputMemorySize(size)
-            allocator.insertBestFitNaive(rMem)
-
-        elif choice == 3:
-            rMem = getInputMemorySize(size)
-            allocator.insertWorstFitNaive(rMem)
-
-        elif choice == 4:
-            rMem = getInputMemorySize(size)
-            allocator.insertBestFitSL(rMem)
-
-        elif choice == 5:
-            rMem = getInputMemorySize(size)
-            allocator.insertWorstFitSL(rMem)
-
-        elif choice == 6:
-            allocator.reclaim()
-
-        elif choice == 7:
-            allocator.free()
-
-        elif choice == 8:  
-            runSimulations(allocator)
-            break
-
-        elif choice == 9:
-            break
+        choice = menu.selectChoice()                
 
         allocator.printInfo()
 

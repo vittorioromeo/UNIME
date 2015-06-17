@@ -107,7 +107,7 @@ class Block:
         return self.end - self.start
 
 # Class representing the results of an algorithm
-class AlgorithmResult:  
+class AlgorithmResult:
     # Constructor
     def __init__(self, mSuccess = False, mCost = 0, mBlock = None):
         # 'True' if the algorithm succedeed
@@ -133,12 +133,12 @@ class AlgorithmResult:
 
         loSep()
 
-# Class representing a memory allocator 
+# Class representing a memory allocator
 class Allocator:
     # Constructor
-    def __init__(self, mSize):        
+    def __init__(self, mSize):
         # Total size of the allocator
-        self.size = mSize   
+        self.size = mSize
 
         # Reset state
         self.reset()
@@ -147,7 +147,7 @@ class Allocator:
     def reset(self):
         # List of the blocks owned by the allocator
         self.blocks = []
-        
+
         # Sorted list of block ids by size
         self.sortedBlocks = []
 
@@ -156,14 +156,14 @@ class Allocator:
 
         # Initialize the allocator a single memory block including 'self.size'
         firstBlock = Block(self, 0, self.size)
-        self.blocks.append(firstBlock)      
+        self.blocks.append(firstBlock)
         self.sortedBlocks.append(firstBlock)
 
     # Return a tuple containing the block that includes the byte 'mX' and its index
     def getBlockAt(self, mX):
         # Loop through all the blocks...
         for i, b in enumerate(self.blocks):
-            # If the current block ends before 'mX', skip it 
+            # If the current block ends before 'mX', skip it
             if b.end < mX:
                 continue
 
@@ -178,7 +178,7 @@ class Allocator:
         i = 0
         for i in range(0, len(self.sortedBlocks)):
             c = self.sortedBlocks[i]
-            
+
             if c.getSize() >= mX.getSize():
                 break
 
@@ -196,7 +196,7 @@ class Allocator:
             raise Exception("Cannot split occupied block")
 
         # To split a block in a specific byte location, we're gonna
-        # resize it to end at the specific byte location, then we're 
+        # resize it to end at the specific byte location, then we're
         # going to create an additional block to fill the empty space
 
         # 'l' is the beginning of the first block
@@ -209,7 +209,7 @@ class Allocator:
         r = toSplit.end
 
         # Remove the old block from the sorted list
-        self.sortedBlocks.remove(toSplit)       
+        self.sortedBlocks.remove(toSplit)
 
         # Resize the first block to [l, m)
         toSplit.start = l
@@ -219,9 +219,9 @@ class Allocator:
         newBlock = Block(self, m, r)
         self.blocks.insert(toSplitIdx + 1, newBlock)
 
-        # Refresh the sorted list        
+        # Refresh the sorted list
         self.insertSorted(toSplit)
-        self.insertSorted(newBlock)     
+        self.insertSorted(newBlock)
 
         # Return a tuple containing the two halves and the index of the first half
         return (toSplit, newBlock, toSplitIdx)
@@ -229,7 +229,7 @@ class Allocator:
     # Merges adjacent unoccupied blocks
     def reclaim(self):
         # If we have less than two blocks, there's nothing to merge
-        if len(self.blocks) < 2: 
+        if len(self.blocks) < 2:
             return
 
         # Loop through all the blocks but the last...
@@ -262,7 +262,7 @@ class Allocator:
             b.occupied = False
 
     # Print an ASCII graph of the state of the allocator
-    def printInfo(self):                
+    def printInfo(self):
         graphStep = self.size / (graphWidth - 5 - (len(self.blocks) * 2))
 
         aStr = "0"
@@ -277,21 +277,21 @@ class Allocator:
 
         lastIdx = 0
 
-        for b in self.blocks:           
+        for b in self.blocks:
             bStr += Color.dgray + "|" + Color.default
             pStr += Color.dgray + "|" + Color.default
-            
+
             if lastIdx == 0:
                 iStr += "0"
             else:
-                iStr += "|" 
+                iStr += "|"
 
             for i in range(0, b.getSize() / graphStep):
                 if b.occupied:
                     bStr += Color.cyan + "#" + Color.default
                 else:
                     bStr += Color.dgray + "_" + Color.default
-                
+
                 pStr += " "
                 iStr += " "
 
@@ -342,7 +342,7 @@ class Allocator:
 
     # Function that's called when an algorithm succeeds
     def successOn(self, result, b, mX):
-        l, r, idx = self.splitAt(b.start + mX)          
+        l, r, idx = self.splitAt(b.start + mX)
         l.occupied = True
         result.success = True
         result.block = b
@@ -373,7 +373,7 @@ class Allocator:
     def implWorstFitNaive(self, result, mX):
         best = None
         for b in self.blocks:
-            result.cost += 1            
+            result.cost += 1
 
             if (best == None or b.getSize() < best.getSize()) and b.getSize() >= mX and b.occupied == False:
                 best = b
@@ -420,7 +420,7 @@ class Allocator:
     def insertFirstFit(self, mX):
         return self.executeAlgorithm(self.implFirstFit, mX)
 
-    # The "best fit" algorithm iterates over all available blocks 
+    # The "best fit" algorithm iterates over all available blocks
     # and selects the one that wastes less space for the memory allocation
     # This algorithm could be improved by keeping a separate list of memory blocks,
     # ordered by size
@@ -432,18 +432,18 @@ class Allocator:
     def insertNextFit(self, mX):
         return self.executeAlgorithm(self.implNextFit, mX)
 
-    # The "worst fit" algorithm iterates over all available blocks 
+    # The "worst fit" algorithm iterates over all available blocks
     # and selects the one that wastes most space for the memory allocation
     # This algorithm could be improved by keeping a separate list of memory blocks,
     # ordered by size
     def insertWorstFitNaive(self, mX):
         return self.executeAlgorithm(self.implWorstFitNaive, mX)
 
-    # The "best fit" algorithm starts from the beginning of the sorted list 
+    # The "best fit" algorithm starts from the beginning of the sorted list
     def insertBestFitSL(self, mX):
         return self.executeAlgorithm(self.implBestFitSL, mX)
 
-    # The "best fit" algorithm starts from the end of the sorted list 
+    # The "best fit" algorithm starts from the end of the sorted list
     def insertWorstFitSL(self, mX):
         return self.executeAlgorithm(self.implWorstFitSL, mX)
 
@@ -478,7 +478,7 @@ def getInputSimulationCount():
 # Class representing a possible menu choice
 class Choice:
     # Constructor
-    def __init__(self, mTitle):        
+    def __init__(self, mTitle):
         self.number = -1
         self.title = mTitle
         self.action = None
@@ -511,7 +511,7 @@ class Menu:
         c = Choice(mTitle)
         c.action = mAction
         c.number = self.nextNumber
-        
+
         self.choices.append(c)
         self.nextNumber += 1
 
@@ -568,7 +568,7 @@ def loProcess(mProcess):
     loC(Color.red)
     lo(str(mProcess.id))
     loC(Color.default)
-    lo("] ")    
+    lo("] ")
 
 # Runs a simulation with the selected algorithm of a list of process
 def simulate(mName, mProcesses, mAllocator, mAlgorithm):
@@ -598,7 +598,7 @@ def simulate(mName, mProcesses, mAllocator, mAlgorithm):
             if p.start <= t:
                 loTime(t)
                 loProcess(p)
-                lo("must start\n")                
+                lo("must start\n")
 
                 # Prova ad inserirlo
                 res = mAlgorithm(p.size)
@@ -625,7 +625,7 @@ def simulate(mName, mProcesses, mAllocator, mAlgorithm):
             if p.finished() == True:
                 loTime(t)
                 loProcess(p)
-                lo("finished its execution\n")     
+                lo("finished its execution\n")
 
                 # Deallocate block and reclaim memory
                 p.block.occupied = False
@@ -660,7 +660,7 @@ def simulate(mName, mProcesses, mAllocator, mAlgorithm):
 # Run 'mCount' simulations on an allocator and report statistics
 def runSimulations(mAllocator, mCount):
     for s in range(0, mCount):
-        
+
         loCD()
         lo("Simulation: ")
         loC(Color.cyan)
@@ -670,7 +670,7 @@ def runSimulations(mAllocator, mCount):
 
         # Genera una situazione iniziale di processi
         lo("Process generation:\n")
-        
+
         loC(Color.cyan)
         lo("PROC\t")
         loCD()
@@ -678,7 +678,7 @@ def runSimulations(mAllocator, mCount):
         loC(Color.cyan)
         lo("OUT\t")
         loCD()
-        lo("SIZE\n")        
+        lo("SIZE\n")
 
         processes = []
 
@@ -729,31 +729,43 @@ def runSimulations(mAllocator, mCount):
         lo(r4)
         lo(r5)
 
+# Manual execution, display a menu with choices
+def mainManual(mAllocator):
+    inputSz = lambda: getInputMemorySize(size)
+
+    m = Menu()
+    m.add("First-fit",               lambda: mAllocator.insertFirstFit(inputSz()))
+    m.add("Next-fit",                lambda: mAllocator.insertNextFit(inputSz()))
+    m.add("Best-fit (naive)",        lambda: mAllocator.insertBestFitNaive(inputSz()))
+    m.add("Worst-fit (naive)",       lambda: mAllocator.insertWorstFitNaive(inputSz()))
+    m.add("Best-fit (sorted-list)",  lambda: mAllocator.insertBestFitSL(inputSz()))
+    m.add("Worst-fit (sorted-list)", lambda: mAllocator.insertWorstFitSL(inputSz()))
+    m.add("Reclaim memory",          lambda: mAllocator.reclaim())
+    m.add("Free blocks",             lambda: mAllocator.free())
+    m.add("Run simulations",         lambda: runSimulations(mAllocator, getInputSimulationCount()))
+    m.add("Exit",                    lambda: sys.exit())
+
+    while True:
+        m.loAllChoices()
+        choice = m.selectChoice()
+        mAllocator.printInfo()
+
+# Automatic execution, runs a number of simulations passed as a program argument
+def mainAutomatic(mAllocator):
+    runSimulations(mAllocator, int(sys.argv[1]))
+
+# Initialize an 'Allocator' an start manual or automatic execution
 def main():
     size = 10000
     allocator = Allocator(size)
     allocator.printInfo()
 
-    inputSz = lambda: getInputMemorySize(size)
+    if len(sys.argv) > 1:
+        mainAutomatic(allocator)
+    else:
+        mainManual(allocator)
 
-    menu = Menu()
-    menu.add("First-fit",               lambda: allocator.insertFirstFit(inputSz()))
-    menu.add("Next-fit",                lambda: allocator.insertNextFit(inputSz()))
-    menu.add("Best-fit (naive)",        lambda: allocator.insertBestFitNaive(inputSz()))
-    menu.add("Worst-fit (naive)",       lambda: allocator.insertWorstFitNaive(inputSz()))
-    menu.add("Best-fit (sorted-list)",  lambda: allocator.insertBestFitSL(inputSz()))
-    menu.add("Worst-fit (sorted-list)", lambda: allocator.insertWorstFitSL(inputSz()))
-    menu.add("Reclaim memory",          lambda: allocator.reclaim())
-    menu.add("Free blocks",             lambda: allocator.free())
-    menu.add("Run simulations",         lambda: runSimulations(allocator, getInputSimulationCount()))
-    menu.add("Exit",                    lambda: sys.exit())
-
-    while True:
-        menu.loAllChoices()    
-        choice = menu.selectChoice()                
-
-        allocator.printInfo()
-
+# If the program is ran as an executable, start 'main'
 if __name__ == "__main__":
     loLn()
     main()

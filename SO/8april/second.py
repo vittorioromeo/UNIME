@@ -1,5 +1,10 @@
 #!/usr/bin/python2
 
+# Copyright (c) 2015 Vittorio Romeo
+# License: MIT License | http://opensource.org/licenses/MIT
+# http://vittorioromeo.info | vittorio.romeo@outlook.com
+
+# Import required libraries
 import random
 import copy
 import os
@@ -11,6 +16,7 @@ def rndI(mMin, mMax):
     return random.randint(mMin, mMax - 1)
 
 # Get the current console window width and height
+# Required to draw the ASCII graph properly
 consoleHeight, consoleWidth = os.popen('stty size', 'r').read().split()
 consoleHeight = int(consoleHeight)
 consoleWidth = int(consoleWidth)
@@ -62,6 +68,7 @@ def loLn():
     loC(Color.dgray)
     lo("_" * consoleWidth)
     loCD()
+    lo("\n")
 
 # Print separator line and newline
 def loSep():
@@ -131,7 +138,7 @@ class AlgorithmResult:
         loCD()
         lo(str(self.cost) + "\n")
 
-        loSep()
+        lo("\n")
 
 # Class representing a memory allocator
 class Allocator:
@@ -263,6 +270,7 @@ class Allocator:
 
     # Print an ASCII graph of the state of the allocator
     def printInfo(self):
+        # Size of a graph unit
         graphStep = self.size / (graphWidth - 5 - (len(self.blocks) * 2))
 
         aStr = "0"
@@ -322,17 +330,24 @@ class Allocator:
 
     # Return a number representing the average fragmentation of the allocator
     def getFragmentation(self):
-        result = len(self.blocks)
+        if self.blocks == False:
+            return 0
 
-        for b in self.blocks:
-            if b.occupied == False:
-                result += b.getSize()
+        result = 0
+        lastOcc = self.blocks[0].occupied
+
+        for i in range(1, len(self.blocks)):
+            b = self.blocks[i]
+
+            if lastOcc != b.occupied:
+                lastOcc = b.occupied
+                result += 1
 
         return result
 
     # Execute an algorithm and print its result
     def executeAlgorithm(self, mAlgorithm, mX):
-        loSep()
+        lo("\n")
         result = AlgorithmResult()
 
         mAlgorithm(result, mX)
@@ -443,13 +458,17 @@ class Allocator:
     def insertBestFitSL(self, mX):
         return self.executeAlgorithm(self.implBestFitSL, mX)
 
-    # The "best fit" algorithm starts from the end of the sorted list
+    # The "worst fit" algorithm starts from the end of the sorted list
     def insertWorstFitSL(self, mX):
         return self.executeAlgorithm(self.implWorstFitSL, mX)
 
 # Gets a valid memory size integer from the user
 def getInputMemorySize(mMax):
-    lo("\nInsert requested " + Color.cyan + "memory size: " + Color.default)
+    loCD()
+    lo("\nInsert requested ")
+    loC(Color.cyan)
+    lo("memory size: ")
+    loCD()
 
     while True:
         result = getInputInt()
@@ -465,7 +484,7 @@ def getInputMemorySize(mMax):
 # Get a valid simulation count fro the user
 def getInputSimulationCount():
     loCD()
-    lo("Insert number of ")
+    lo("\nInsert number of ")
     loC(Color.cyan)
     lo("simulations: ")
     loCD()
@@ -590,6 +609,7 @@ def simulate(mName, mProcesses, mAllocator, mAlgorithm):
 
     # While there are processes that need to be started or must end...
     while toAdd or toRem:
+        # The graph must be printed only in case of modifications
         mustPrint = False
 
         # For every process that needs to begin...
@@ -640,27 +660,26 @@ def simulate(mName, mProcesses, mAllocator, mAlgorithm):
         # Accumulate allocator fragmentation
         fragmentation += mAllocator.getFragmentation()
 
+        # Print allocator graph if needed
         if mustPrint == True:
-            # Print allocator graph
             mAllocator.printInfo()
             lo("\n")
 
     # Calculate simulation statistics
     avgFragmentation = fragmentation / t
-    score = ((fragmentation / t) * comparisons) / 1000000.0
+    score = ((fragmentation / t) * comparisons) / 100.0
 
     # Print simulation results
     rstr = Color.default + "Results for " + Color.cyan + mName + ":\n" + Color.default
-    rstr += "\t" + Color.cyan + "Comparazioni: " + Color.default + str(comparisons) + "\n"
-    rstr += "\t" + Color.cyan + "Frammentazione media: " + Color.default + str(avgFragmentation) + "\n"
-    rstr += "\t" + Color.cyan + "Punteggio: " + Color.default + str(score) + "\n\n"
+    rstr += "\t" + Color.cyan + "Comparisons: " + Color.default + str(comparisons) + "\n"
+    rstr += "\t" + Color.cyan + "Avg. fragmentation: " + Color.default + str(avgFragmentation) + "\n"
+    rstr += "\t" + Color.cyan + "Score: " + Color.default + str(score) + "\n\n"
 
     return rstr
 
 # Run 'mCount' simulations on an allocator and report statistics
 def runSimulations(mAllocator, mCount):
     for s in range(0, mCount):
-
         loCD()
         lo("Simulation: ")
         loC(Color.cyan)
@@ -668,36 +687,44 @@ def runSimulations(mAllocator, mCount):
         loCD()
         lo("\n")
 
-        # Genera una situazione iniziale di processi
-        lo("Process generation:\n")
+        # Generate a random starting situation (processes) 
+        lo("Generated processes:\n")
+
+        loC(Color.dgray)
+        lo("----------------------------\n")
+        loCD()
 
         loC(Color.cyan)
-        lo("PROC\t")
+        lo("P.ID\t")
         loCD()
-        lo("IN\t")
+        lo("T.In\t")
         loC(Color.cyan)
-        lo("OUT\t")
+        lo("T.Out\t")
         loCD()
-        lo("SIZE\n")
+        lo("Mem\n")
+
+        loC(Color.dgray)
+        lo("----------------------------\n")
+        loCD()
 
         processes = []
 
-        # Genera N processi casuali
+        # Generate a number of random process
         for i in range(0, rndI(8, 16)):
-            # Tempo di entrata del processo i-esimo
+            # Generate random start time for process number i
             enter = rndI(0, 45)
 
-            # Tempo necessario del processo i-esimo
+            # Generate random required time for process number i
             exit = rndI(4, 40)
 
-            # Memoria richiesta dal processo i-esimo
-            size = rndI(10, 1500)
+            # Generate random required memory for process number i
+            size = rndI(10, 3500)
 
-            # Instanzia il processo ed aggiungilo alla lista
+            # Create a process instance and append it to the list
             p = Process(i, enter, exit, size)
             processes.append(p)
 
-            # Stampa informazioni sul processo generato
+            # Display information about the generated process
             loC(Color.cyan if i % 2 else Color.default)
             lo("{0}\t".format(i))
             loC(Color.default if i % 2 else Color.cyan)
@@ -709,26 +736,30 @@ def runSimulations(mAllocator, mCount):
 
         raw_input()
 
-        # Crea una funzione lambda chiamata sim che prende come input una stringa ed una funzione binaria
-        # Quando sim viene chiamata, genera un test di simulazione con il nome e l'algoritmo passato
-        sim = lambda n, l: simulate(n, processes, mAllocator, l)
+        # Storage for simulation results
+        simResults = []
 
-        # Instanzia 5 simulazioni utilizzando i 5 algoritmi implementati
-        r0 = sim("first-fit", lambda x: mAllocator.insertFirstFit(x))
-        r1 = sim("next-fit", lambda x: mAllocator.insertNextFit(x))
-        r2 = sim("best-fit naive", lambda x: mAllocator.insertBestFitNaive(x))
-        r3 = sim("worst-fit naive", lambda x: mAllocator.insertWorstFitNaive(x))
-        r4 = sim("best-fit ordinato", lambda x: mAllocator.insertBestFitSL(x))
-        r5 = sim("worst-fit ordinato", lambda x: mAllocator.insertWorstFitSL(x))
+        # Define a lambda shortcut function that takes the simulation title and an unary allocator 
+        # function - it begins testing the passed algorithm
+        sim = lambda n, l: simResults.append(simulate(n, processes, mAllocator, l))
 
-        # Stampa i risultati delle 5 simulazioni
-        lo(r0)
-        lo(r1)
-        lo(r2)
-        lo(r3)
-        lo(r4)
-        lo(r5)
+        # Start a simulation for every allocator algorithm
+        sim("first-fit",               lambda x: mAllocator.insertFirstFit(x))
+        sim("next-fit",                lambda x: mAllocator.insertNextFit(x))
+        sim("best-fit (naive)",        lambda x: mAllocator.insertBestFitNaive(x))
+        sim("worst-fit (naive)",       lambda x: mAllocator.insertWorstFitNaive(x))
+        sim("best-fit (sorted list)",  lambda x: mAllocator.insertBestFitSL(x))
+        sim("worst-fit (sorted list)", lambda x: mAllocator.insertWorstFitSL(x))
 
+        loC(Color.cyan)
+        lo("\nResults:\n")
+        loCD()
+        lo("(lower score = better)\n\n")
+
+        # Print out the results of the simulations
+        for r in simResults:
+            lo(r)
+        
 # Manual execution, display a menu with choices
 def mainManual(mAllocator):
     inputSz = lambda: getInputMemorySize(size)
@@ -753,6 +784,7 @@ def mainManual(mAllocator):
 # Automatic execution, runs a number of simulations passed as a program argument
 def mainAutomatic(mAllocator):
     runSimulations(mAllocator, int(sys.argv[1]))
+    sys.exit()
 
 # Initialize an 'Allocator' an start manual or automatic execution
 def main():

@@ -10,29 +10,29 @@
 /// @brief Multiplies `mA` and `mB`, and returns the result. Iterative version.
 int multIterative(int mA, int mB)
 {
-	if(mA == 0 || mB == 0) return 0;
+    if(mA == 0 || mB == 0) return 0;
 
-	int result = mA;
+    int result = mA;
 
-	while(mB != 1)
-	{
-		mA *= 2;
-		mB = floor(mB / 2.0);
+    while(mB != 1)
+    {
+        mA *= 2;
+        mB = floor(mB / 2.0);
 
-		result += mA;
-	}
+        result += mA;
+    }
 
-	return result;
+    return result;
 }
 
 /// @brief Multiplies `mA` and `mB`, and returns the result. Recursive version.
 int multRecursive(int mA, int mB)
 {
-	if(mA == 0 || mB == 0) return 0;
-	if(mA == 1) return mB;
-	if(mB == 1) return mA;
+    if(mA == 0 || mB == 0) return 0;
+    if(mA == 1) return mB;
+    if(mB == 1) return mA;
 
-	return mA + multRecursive(mA * 2, floor(mB / 2.0));
+    return mA + multRecursive(mA * 2, floor(mB / 2.0));
 }
 
 // Proof:
@@ -50,13 +50,13 @@ int multRecursive(int mA, int mB)
 
 int main()
 {
-	vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
-	printf("Iterative (%d * %d): ", 71, 15);
-	vlc_resetFmt();
-	printf("%d\n", multIterative(71, 15));
+    vlc_setFmt(vlc_StyleBold, vlc_ColorRed);
+    printf("Iterative (%d * %d): ", 71, 15);
+    vlc_resetFmt();
+    printf("%d\n", multIterative(71, 15));
 
-	vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
-	printf("Recursive (%d * %d): ", 71, 15);
-	vlc_resetFmt();
-	printf("%d\n", multRecursive(71, 15));
+    vlc_setFmt(vlc_StyleBold, vlc_ColorGreen);
+    printf("Recursive (%d * %d): ", 71, 15);
+    vlc_resetFmt();
+    printf("%d\n", multRecursive(71, 15));
 }

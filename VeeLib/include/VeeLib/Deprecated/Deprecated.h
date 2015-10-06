@@ -9,13 +9,15 @@
 #include "VeeLib/Utils/Math.h"
 
 /// @brief Returns the reverse of an integer. (naive version)
-/// @details Internally uses mod, division and pow. 
+/// @details Internally uses mod, division and pow.
 /// @param mValue Number to reverse.
 inline int vldpr_getReversedNaive(int mValue)
 {
-	int result = 0, numberOfDigits = vlm_getNumberOfDigitsI(mValue), k;
-	for(k = 0; k < numberOfDigits; ++k) result += vlm_getDigitFromRightAtI(mValue, k) * pow(10, (numberOfDigits - k - 1));
-	return result;
+    int result = 0, numberOfDigits = vlm_getNumberOfDigitsI(mValue), k;
+    for(k = 0; k < numberOfDigits; ++k)
+        result += vlm_getDigitFromRightAtI(mValue, k) *
+                  pow(10, (numberOfDigits - k - 1));
+    return result;
 }
 
 #endif

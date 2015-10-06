@@ -5,9 +5,9 @@
 #ifndef VL_UTILS_CONSOLE_IMPL
 #define VL_UTILS_CONSOLE_IMPL
 
-inline const char* vlc_impl_getStyleStr(Style mStyle)	{ return ""; }
+inline const char* vlc_impl_getStyleStr(Style mStyle) { return ""; }
 inline const char* vlc_impl_getColorFGStr(Color mColor) { return ""; }
 inline const char* vlc_impl_getColorBGStr(Color mColor) { return ""; }
-inline const char* vlc_impl_getResetFmtStr() 			{ return ""; }
+inline const char* vlc_impl_getResetFmtStr() { return ""; }
 
 #endif

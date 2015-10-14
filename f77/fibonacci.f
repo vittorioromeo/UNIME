@@ -5,8 +5,11 @@ c parametri come puntatori? come copiare?
 	program fibonacci_bello
 	character*32 text
 
-	call fibonacci(10)
-c	call factorial(6)
+c	call fibonacci(10)
+	real*8 v 
+	v = 35.0
+
+	call factorial(v)
 
 	end
 
@@ -14,12 +17,11 @@ c 	`n` viene passato come puntatore
 c 	se devo modificare `n`, devo prima copiarlo
 	subroutine factorial(n)
 c 		specifico il tipo del parametro `n`
-		integer n
+		real*8 n
 
 c 		dichiaro variabili locali
-		integer iteration_count
-		integer result
-		character*64 buffer
+		real*8 iteration_count
+		real*8 result
 		
 c 		esegui operazioni
 		iteration_count = n
@@ -30,11 +32,7 @@ c 		esegui operazioni
 			iteration_count = iteration_count - 1
 		enddo
 
-		write (buffer, *) 'factorial'
-		write (buffer(12:), '(i6)') n
-		write (buffer(20:), *) '='
-		write (buffer(26:), '(i10)') result
-		write (*, *) buffer
+		write (*, *) 'factorial', n, ' = ', result
 	end
 
 	subroutine fibonacci(iteration_count)
@@ -51,11 +49,13 @@ c 		esegui operazioni
 		current_iteration = 0
 
 		do while (current_iteration < iteration_count + 1)
-			write (buffer, *) 'fibonacci'
-			write (buffer(12:), '(i6)') current_iteration
-			write (buffer(20:), *) '='
-			write (buffer(26:), '(i10)') i0
-			write (*, *) buffer
+c 			write (buffer, *) 'fibonacci'
+c 			write (buffer(12:), '(i6)') current_iteration
+c 			write (buffer(20:), *) '='
+c 			write (buffer(26:), '(i10)') i0
+c 			write (*, *) buffer
+
+			write (*, *) 'fibonacci', current_iteration, ' = ', i0
 
 			i2 = i0 + i1
 			i0 = i1

@@ -57,6 +57,10 @@ namespace nc
         return std::sqrt(x);
     }
 
+    // TODO:
+    // * fix extra subtraction in modulus
+    // * complex results in 2nd grade equation
+
     template <typename T0, typename T1, typename T2>
     auto solve_grade2_equation(T0 a, T1 b, T2 c)
     {

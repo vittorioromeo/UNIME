@@ -553,13 +553,13 @@ namespace nc
     {
         auto sum = 0;
 
-        if(i > 0)
-            for(auto k(0); k < i - 1; ++k)
+        if(j > 0)
+            for(auto k(0); k < j - 1; ++k)
             {
-                sum += (a(i, k) * a(k, j));// / a(j, j);
+                sum += (a(i, k) * a(k, j));
             }
 
-        return a(i, j) - sum;
+        return (a(i, j) - sum) /  a(j, j);
     }
 
     template <typename T0, std::size_t TDim>

@@ -351,6 +351,37 @@ namespace nc
             }
         }
 
+        template <typename TF>
+        void for_row_idxs(std::size_t i, TF&& f)
+        {
+            for(auto j(0); j < TColumnCount; ++j)
+            {
+                f((*this)(i, j));
+            }
+        }
+
+        template <typename TF>
+        void for_column_idxs(std::size_t j, TF&& f)
+        {
+            for(auto i(0); i < TRowCount; ++i)
+            {
+                f((*this)(i, j));
+            }
+        }
+
+        template <typename TF>
+        void for_idxs(TF&& f)
+        {
+            for(auto i(0); i < TRowCount; ++i)
+            {
+                for(auto j(0); j < TColumnCount; ++j)
+                {
+                    f(i, j);
+                }
+            }
+        }
+
+
         matrix(dont_init) {}
         matrix() { clear(); }
         matrix(init_identity) { clear_to_identity(); }
@@ -508,11 +539,10 @@ namespace nc
     {
         matrix<T0, TDim, TDim> result;
 
-        for(std::size_t i(0); i < TDim; ++i)
-            for(std::size_t j(0); j < TDim; ++j)
+        result.for_idxs([&result](auto i, auto j)
             {
                 result(i, j) = 1 / (i + j - 1);
-            }
+            });
 
         return result;
     }
@@ -522,11 +552,10 @@ namespace nc
     {
         matrix<T0, TDim, TDim> result;
 
-        for(std::size_t i(0); i < TDim; ++i)
-            for(std::size_t j(0); j < TDim; ++j)
+        result.for_idxs([&result](auto i, auto j)
             {
                 result(i, j) = std::pow(v(0, i), j - 1);
-            }
+            });
 
         return result;
     }
@@ -559,7 +588,7 @@ namespace nc
                 sum += (a(i, k) * a(k, j));
             }
 
-        return (a(i, j) - sum) /  a(j, j);
+        return (a(i, j) - sum) / a(j, j);
     }
 
     template <typename T0, std::size_t TDim>
@@ -594,7 +623,7 @@ namespace nc
     {
         // matrix<T0, TDim, TDim> u, l;
         // u = m;
-//        matrix<T0, TDim, TDim> r = m;
+        //        matrix<T0, TDim, TDim> r = m;
 
         auto row_start(0);
         auto row_offset(0);
@@ -605,13 +634,14 @@ namespace nc
         {
             if(row_start < TDim && row_offset < TDim)
             {
-/*
-                std::cout << "\n";
+                /*
+                                std::cout << "\n";
 
-                std::cout << "calc_lu_row:\n";
-                std::cout << "rs=" << row_start << ", ro=" << row_offset
-                          << "\n";
-*/
+                                std::cout << "calc_lu_row:\n";
+                                std::cout << "rs=" << row_start << ", ro=" <<
+                   row_offset
+                                          << "\n";
+                */
                 calc_lu_row(m, row_start, row_offset);
             }
             else
@@ -622,12 +652,13 @@ namespace nc
 
             if(col_start < TDim && col_offset < TDim)
             {
-/*
-                std::cout << "\n";
-                std::cout << "calc_lu_col:\n";
-                std::cout << "cs=" << col_start << ", co=" << col_offset
-                          << "\n";
-*/
+                /*
+                                std::cout << "\n";
+                                std::cout << "calc_lu_col:\n";
+                                std::cout << "cs=" << col_start << ", co=" <<
+                   col_offset
+                                          << "\n";
+                */
                 calc_lu_col(m, col_start, col_offset);
             }
             else

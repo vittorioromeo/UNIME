@@ -552,7 +552,7 @@ namespace nc
     {
         matrix<T0, TDim, TDim> result;
 
-        result.for_idxs([&result](auto i, auto j)
+        result.for_idxs([&v, &result](auto i, auto j)
             {
                 result(i, j) = std::pow(v(0, i), j - 1);
             });

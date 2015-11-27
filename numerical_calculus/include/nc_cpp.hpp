@@ -617,7 +617,7 @@ namespace nc
         }
     }
 
-
+    // TODO: fix using data
     template <typename T0, std::size_t TDim>
     auto make_ul_decomposition(matrix<T0, TDim, TDim> m)
     {

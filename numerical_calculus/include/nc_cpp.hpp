@@ -9,6 +9,9 @@
 #include <algorithm>
 #include <limits>
 
+#include <armadillo>
+#include <eigen3/Eigen/Dense>
+
 namespace nc
 {
     template <typename T0>
@@ -210,8 +213,8 @@ namespace nc
                 --j;
             }
 
-            impl::sort_vector(a, i);
-            impl::sort_vector(a + i, n - i);
+            sort_vector(a, i);
+            sort_vector(a + i, n - i);
         }
 
         template <typename T0>
@@ -308,6 +311,10 @@ namespace nc
     template <typename T0, std::size_t TRowCount, std::size_t TColumnCount>
     class matrix
     {
+    public:
+        constexpr static auto row_count() noexcept { return TRowCount; }
+        constexpr static auto column_count() noexcept { return TColumnCount; }
+
     private:
         std::array<T0, TRowCount * TColumnCount> _data;
 
@@ -316,16 +323,14 @@ namespace nc
             assert(row < TRowCount);
             assert(column < TColumnCount);
 
-            // std::cout << "(" << row << ", " << column << ")\n";
-
             return column + TColumnCount * row;
         }
 
         auto calc_1d_index(std::size_t i) const noexcept
         {
             assert(i >= 0 && TColumnCount != 0);
-            auto y(i / TColumnCount);
 
+            auto y(i / TColumnCount);
             return std::make_tuple(y, i - y * TColumnCount);
         }
 
@@ -356,7 +361,7 @@ namespace nc
         {
             for(auto j(0); j < TColumnCount; ++j)
             {
-                f((*this)(i, j));
+                f(i, j);
             }
         }
 
@@ -365,7 +370,7 @@ namespace nc
         {
             for(auto i(0); i < TRowCount; ++i)
             {
-                f((*this)(i, j));
+                f(i, j);
             }
         }
 
@@ -373,14 +378,21 @@ namespace nc
         void for_idxs(TF&& f)
         {
             for(auto i(0); i < TRowCount; ++i)
-            {
                 for(auto j(0); j < TColumnCount; ++j)
                 {
                     f(i, j);
                 }
-            }
         }
 
+        template <typename TF>
+        void for_idxs(TF&& f) const
+        {
+            for(auto i(0); i < TRowCount; ++i)
+                for(auto j(0); j < TColumnCount; ++j)
+                {
+                    f(i, j);
+                }
+        }
 
         matrix(dont_init) {}
         matrix() { clear(); }
@@ -426,48 +438,75 @@ namespace nc
             return _data[calc_index(row, column)];
         }
 
+    private:
+        template <typename T1, typename TF>
+        auto simple_binary_op(
+            const matrix<T1, TRowCount, TColumnCount>& rhs, TF&& f) const
+        {
+            using common = std::common_type_t<T0, T1>;
+            matrix<common, TRowCount, TColumnCount> result{dont_init{}};
+
+            for_idxs([this, &rhs, &result, &f](auto i, auto j)
+                {
+                    result(i, j) = f((*this)(i, j), rhs(i, j));
+                });
+
+            return result;
+        }
+
+    public:
         template <typename T1>
         auto operator+(const matrix<T1, TRowCount, TColumnCount>& rhs) const
         {
-            matrix<T1, TRowCount, TColumnCount> result{dont_init{}};
-
-            for(std::size_t i(0); i < TRowCount; ++i)
-                for(std::size_t j(0); j < TColumnCount; ++j)
+            return simple_binary_op(rhs, [](const auto& lv, const auto& rv)
                 {
-                    result(i, j) = (*this)(i, j) + rhs(i, j);
-                }
-
-            return result;
+                    return lv + rv;
+                });
         }
 
         template <typename T1>
         auto operator-(const matrix<T1, TRowCount, TColumnCount>& rhs) const
         {
-            matrix<T1, TRowCount, TColumnCount> result{dont_init{}};
-
-            for(std::size_t i(0); i < TRowCount; ++i)
-                for(std::size_t j(0); j < TColumnCount; ++j)
+            return simple_binary_op(rhs, [](const auto& lv, const auto& rv)
                 {
-                    result(i, j) = (*this)(i, j) - rhs(i, j);
-                }
+                    return lv - rv;
+                });
+        }
 
-            return result;
+        template <typename T1>
+        auto operator==(const matrix<T1, TRowCount, TColumnCount>& rhs) const
+        {
+            for(auto i(0); i < TRowCount; ++i)
+            {
+                for(auto j(0); j < TColumnCount; ++j)
+                {
+                    if((*this)(i, j) != rhs(i, j))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        template <typename T1>
+        auto operator!=(const matrix<T1, TRowCount, TColumnCount>& rhs) const
+        {
+            return !(*this == rhs);
         }
 
         template <typename T1, std::size_t TRhsColumnCount>
         auto operator*(
             const matrix<T1, TColumnCount, TRhsColumnCount>& rhs) const
         {
-            matrix<T1, TRowCount, TRhsColumnCount> result{dont_init{}};
-
-            std::cout << "result size: " << TRhsColumnCount << " * "
-                      << TRhsColumnCount << "\n";
+            using common = std::common_type_t<T0, T1>;
+            matrix<common, TRowCount, TRhsColumnCount> result{dont_init{}};
 
             for(std::size_t ri(0); ri < TRowCount; ++ri)
                 for(std::size_t rj(0); rj < TRhsColumnCount; ++rj)
                 {
-                    using value_type = std::common_type_t<T0, T1>;
-                    value_type x(0);
+                    common x(0);
 
                     for(auto k(0); k < TColumnCount; ++k)
                     {
@@ -478,6 +517,70 @@ namespace nc
                 }
 
             return result;
+        }
+
+        auto norm_1() const noexcept
+        {
+            T0 curr_max(0);
+
+            for(auto j(0); j < TColumnCount; ++j)
+            {
+                T0 temp_max(0);
+
+                for(auto i(0); i < TRowCount; ++i)
+                {
+                    temp_max += abs((*this)(i, j));
+                }
+
+                curr_max = std::max(curr_max, temp_max);
+            }
+
+            return curr_max;
+        }
+
+        auto norm_inf() const noexcept
+        {
+            T0 curr_max(0);
+
+            for(auto i(0); i < TRowCount; ++i)
+            {
+                T0 temp_max(0);
+
+                for(auto j(0); j < TColumnCount; ++j)
+                {
+                    temp_max += abs((*this)(i, j));
+                }
+
+                curr_max = std::max(curr_max, temp_max);
+            }
+
+            return curr_max;
+        }
+
+        auto as_mapped_eigen() const noexcept
+        {
+
+            using eigen_matrix_type =
+                Eigen::Matrix<T0, TRowCount, TColumnCount>;
+
+            return Eigen::Map<const eigen_matrix_type>(
+                _data.data(), TRowCount, TColumnCount);
+        }
+
+        auto norm_2() const noexcept
+        {
+            std::vector<double> v;
+            for(const auto& x : _data) v.emplace_back(x);
+
+
+            auto m = arma::mat::fixed<TRowCount, TColumnCount>(v.data());
+            return arma::norm(m, 2);
+            //  return as_mapped_eigen().template lpNorm<2>();
+        }
+
+        auto norm_frobenius() const noexcept
+        {
+            return as_mapped_eigen().norm();
         }
     };
 
@@ -560,114 +663,76 @@ namespace nc
         return result;
     }
 
-    template <typename T0, std::size_t TDim>
-    auto calc_u_ij(
-        const matrix<T0, TDim, TDim>& a, std::size_t i, std::size_t j)
+    namespace impl
     {
-        auto sum = 0;
-
-        if(i > 0)
-            for(auto k(0); k < i - 1; ++k)
-            {
-                sum += a(i, k) * a(k, j);
-            }
-
-
-        return a(i, j) - sum;
-    }
-
-    template <typename T0, std::size_t TDim>
-    auto calc_l_ij(
-        const matrix<T0, TDim, TDim>& a, std::size_t i, std::size_t j)
-    {
-        auto sum = 0;
-
-        if(j > 0)
-            for(auto k(0); k < j - 1; ++k)
-            {
-                sum += (a(i, k) * a(k, j));
-            }
-
-        return (a(i, j) - sum) / a(j, j);
-    }
-
-    template <typename T0, std::size_t TDim>
-    auto calc_lu_row(
-        matrix<T0, TDim, TDim>& a, std::size_t fixed_i, std::size_t offset)
-    {
-        for(std::size_t j(offset); j < TDim; ++j)
+        template <typename TF, typename... Ts>
+        void for_args(TF&& f, Ts&&... xs)
         {
-            // std::cout << "a(" << fixed_i << ", " << j
-            //          << ") = " << calc_u_ij(a, fixed_i, j) << "\n";
-
-            a(fixed_i, j) = calc_u_ij(a, fixed_i, j);
+            using intarray = int[];
+            (void)intarray{(f(xs), 0)...};
         }
     }
 
-    template <typename T0, std::size_t TDim>
-    auto calc_lu_col(
-        matrix<T0, TDim, TDim>& a, std::size_t fixed_j, std::size_t offset)
+    template <typename... Ts>
+    auto make_diagonal_dominant_square_matrix(Ts&&... xs)
     {
-        for(std::size_t i(offset); i < TDim; ++i)
-        {
-            // std::cout << "a(" << i << ", " << fixed_j
-            //           << ") = " << calc_l_ij(a, i, fixed_j) << "\n";
+        constexpr auto dim(sizeof...(xs));
+        static_assert(dim > 0, "");
 
-            a(i, fixed_j) = calc_l_ij(a, i, fixed_j);
-        }
+        using type = std::common_type_t<Ts...>;
+        matrix<type, dim, dim> result{};
+
+        std::size_t i(0);
+
+        impl::for_args(
+            [&result, &i](auto x)
+            {
+                result(i, i) = x;
+                ++i;
+            },
+            xs...);
+
+        return result;
     }
 
-    // TODO: fix using data
     template <typename T0, std::size_t TDim>
-    auto make_ul_decomposition(matrix<T0, TDim, TDim> m)
+    auto make_crout_decomposition(const matrix<T0, TDim, TDim>& a)
     {
-        // matrix<T0, TDim, TDim> u, l;
-        // u = m;
-        //        matrix<T0, TDim, TDim> r = m;
+        auto n = TDim;
 
-        auto row_start(0);
-        auto row_offset(0);
-        auto col_start(0);
-        auto col_offset(1);
+        matrix<T0, TDim, TDim> m;
+        matrix<T0, TDim, TDim> u{init_identity{}};
 
-        while(true)
+        for(std::size_t i(0); i < n; ++i)
         {
-            if(row_start < TDim && row_offset < TDim)
+            for(std::size_t j(i); j < n; ++j)
             {
-                /*
-                                std::cout << "\n";
+                T0 sum(0);
+                // for(std::size_t k(0); k < n; ++k)
+                for(std::size_t k(0); k < i; ++k)
+                {
+                    sum += m(j, k) * u(k, i);
+                }
 
-                                std::cout << "calc_lu_row:\n";
-                                std::cout << "rs=" << row_start << ", ro=" <<
-                   row_offset
-                                          << "\n";
-                */
-                calc_lu_row(m, row_start, row_offset);
+                m(j, i) = a(j, i) - sum;
             }
-            else
-                break;
 
-            ++row_start;
-            ++row_offset;
-
-            if(col_start < TDim && col_offset < TDim)
+            // for(std::size_t j(i + 1); j < n; ++j)
+            for(std::size_t j(i); j < n; ++j)
             {
-                /*
-                                std::cout << "\n";
-                                std::cout << "calc_lu_col:\n";
-                                std::cout << "cs=" << col_start << ", co=" <<
-                   col_offset
-                                          << "\n";
-                */
-                calc_lu_col(m, col_start, col_offset);
-            }
-            else
-                break;
+                T0 sum(0);
+                // for(std::size_t k(0); k < n; ++k)
+                for(std::size_t k(0); k < i; ++k)
+                {
+                    sum += m(i, k) * u(k, j);
+                }
 
-            ++col_start;
-            ++col_offset;
+                assert(m(i, i) != 0);
+
+                u(i, j) = (a(i, j) - sum) / m(i, i);
+            }
         }
 
-        return m;
+        return std::make_tuple(std::move(m), std::move(u));
     }
 }

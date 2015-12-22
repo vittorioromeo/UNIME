@@ -3,36 +3,46 @@
 
 int main()
 {
-    auto m = nc::make_square_matrix<float, 3>( // .
+    auto a = nc::make_square_matrix<float, 3>( // .
         1, 2, 4,                               // .
         3, 8, 14,                              // .
         2, 6, 13);
 
-    auto r = nc::make_ul_decomposition(m);
+    const auto& result(nc::make_crout_decomposition(a));
 
-    for(std::size_t i(0); i < 3; ++i)
+    const auto& l(std::get<0>(result));
+    const auto& u(std::get<1>(result));
+
+    /*
+    auto print_matrix = [](const auto& x)
     {
-        for(std::size_t j(0); j < 3; ++j)
+        for(std::size_t i(0); i < x.row_count(); ++i)
         {
-            //std::cout << "I:" << i << "\tJ: " << j << "\n";
-            std::cout << r(i, j) << ", ";
+            for(std::size_t j(0); j < x.column_count(); ++j)
+            {
+                std::cout << x(i, j) << ", ";
+            }
+
+            std::cout << "\n";
         }
+    };
+    */
 
-        std::cout << "\n";
-    }
+    TEST_ASSERT_NS_OP(l * u, ==, a);
 
-    std::cout << "\n";std::cout << "\n";
-/*
-    for(std::size_t i(0); i < 3; ++i)
-    {
-        for(std::size_t j(0); j < 3; ++j)
-        {
-            //std::cout << "I:" << i << "\tJ: " << j << "\n";
-            std::cout << std::get<1>(r)(i, j) << ", ";
-        }
+    /*
+    std::cout << "L:\n";
+    print_matrix(l);
+    std::cout << "\n\n\n";
 
-        std::cout << "\n";
-    }
-*/
+    std::cout << "U:\n";
+    print_matrix(u);
+    std::cout << "\n\n\n";
+
+    std::cout << "LU:\n";
+    print_matrix(l * u);
+    std::cout << "\n\n\n";
+    */
+
     return 0;
 }

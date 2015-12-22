@@ -91,5 +91,43 @@ int main()
         TEST_ASSERT_OP(t(1, 1), ==, 24);
     }
 
+    {
+        auto m = nc::make_matrix<int, 1, 1>(3);
+
+        TEST_ASSERT_OP(m.determinant(), ==, 3);
+    }
+
+    {
+        auto m = nc::make_matrix<int, 2, 2>( // .
+            3, 4,                            // .
+            2, 3);
+
+        TEST_ASSERT_OP(m.determinant(), ==, 1);
+    }
+
+    {
+        auto m = nc::make_matrix<int, 3, 3>( // .
+            1, 2, 3,                         // .
+            2, 1, 5,                         //.
+            4, 3, 1);
+
+        TEST_ASSERT_OP(m.determinant(), ==, 28);
+    }
+
+    {
+        auto x = nc::make_matrix<int, 1, 1>(1);
+        auto m = x.inverse();
+
+        TEST_ASSERT_OP(m(0, 0), ==, 1);
+    }
+
+    {
+        auto x = nc::make_matrix<int, 2, 2>(3, 4, 2, 3);
+        auto m = x.inverse();
+        auto d = nc::make_matrix<int, 2, 2>(3, -4, -2, 3);
+
+        TEST_ASSERT_NS_OP(m, ==, d);
+    }
+
     return 0;
 }

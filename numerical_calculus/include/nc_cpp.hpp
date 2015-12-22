@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <vrm/core/static_if.hpp>
 
 #include <armadillo>
 #include <eigen3/Eigen/Dense>
@@ -581,6 +582,111 @@ namespace nc
         auto norm_frobenius() const noexcept
         {
             return as_mapped_eigen().norm();
+        }
+
+        constexpr auto static is_square() noexcept
+        {
+            return TRowCount == TColumnCount;
+        }
+
+        constexpr auto static order() noexcept
+        {
+            static_assert(is_square(), "");
+            return TRowCount;
+        }
+
+        auto calc_minor(
+            std::size_t row_to_skip, std::size_t column_to_skip) const noexcept
+        {
+            static_assert(is_square(), "");
+            constexpr auto order(TRowCount);
+
+            auto result = matrix<T0, order - 1, order - 1>{dont_init{}};
+
+            std::size_t target_column(0);
+            std::size_t target_row(0);
+
+            for(auto i(0); i < order; ++i)
+            {
+                if(i == row_to_skip) continue;
+
+                target_column = 0;
+                for(auto j(0); j < order; ++j)
+                {
+                    if(j == column_to_skip) continue;
+
+                    result(target_row, target_column) = (*this)(i, j);
+                    ++target_column;
+                }
+
+                ++target_row;
+            }
+
+            return result;
+        }
+
+        auto determinant() const noexcept
+        {
+            static_assert(is_square(), "");
+
+
+            return vrm::core::static_if(vrm::core::bool_v<(order() == 1)>)
+                .then([](const auto& x)
+                    {
+                        return x(0, 0);
+                    })
+                .else_([](const auto& x)
+                    {
+                        T0 result(0);
+
+                        for(int i = 0; i < order(); i++)
+                        {
+                            auto my_minor(x.calc_minor(0, i));
+
+                            result += (i % 2 == 1 ? -1.0 : 1.0) * x(0, i) *
+                                      my_minor.determinant();
+                        }
+
+                        return result;
+                    })(*this);
+        }
+
+        auto inverse() const noexcept
+        {
+            return vrm::core::static_if(vrm::core::bool_v<(order() == 1)>)
+                .then([](const auto& x)
+                    {
+                        auto result =
+                            matrix<T0, TRowCount, TColumnCount>{dont_init{}};
+                        result(0, 0) = 1.0 / x(0, 0);
+                        return result;
+                    })
+                .else_([](const auto& x)
+                    {
+                        auto result =
+                            matrix<T0, TRowCount, TColumnCount>{dont_init{}};
+                        auto det = 1.0 / x.determinant();
+
+                        for(int j = 0; j < x.order(); j++)
+                        {
+                            for(int i = 0; i < x.order(); i++)
+                            {
+                                auto my_minor(x.calc_minor(j, i));
+                                result(i, j) = det * my_minor.determinant();
+                                if((i + j) % 2 == 1)
+                                    result(i, j) = -result(i, j);
+                            }
+                        }
+
+                        return result;
+                    })(*this);
+        }
+
+        auto perturbation_index() const noexcept
+        {
+            // autosubl
+
+            //   return norm_2() * arma::norm(inv, 2);
         }
     };
 

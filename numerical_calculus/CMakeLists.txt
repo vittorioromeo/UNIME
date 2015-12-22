@@ -10,6 +10,8 @@ include(SSVCMake)
 
 # Basic project setup.
 vrm_cmake_init_project(nc_cpp)
+# vrm_cmake_find_extlib(vrm_pp)
+# vrm_cmake_find_extlib(vrm_core)
 
 # Alias the include directory.
 set(NC_CPP_INC_DIR "${NC_CPP_SOURCE_DIR}/include/")

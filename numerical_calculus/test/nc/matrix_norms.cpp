@@ -7,7 +7,7 @@ using int_v = std::integral_constant<int, TV>;
 
 auto print_matrix = [](const auto& x)
 {
-    std::cout << "matrix([";
+    std::cout << "matrix(\n[\n";
     for(std::size_t i(0); i < x.row_count(); ++i)
     {
         std::cout << "[";
@@ -19,7 +19,7 @@ auto print_matrix = [](const auto& x)
 
         std::cout << "],\n";
     }
-    std::cout << "])";
+    std::cout << "\n]\n)";
 };
 
 std::random_device rd;
@@ -33,6 +33,18 @@ auto rnd_float = [](auto min, auto max)
 auto make_rnd_matrix_8 = []
 {
     constexpr auto order(8);
+    nc::matrix<float, order, order> m;
+    m.for_idxs([&](auto xi, auto xj)
+        {
+            m(xi, xj) = rnd_float(-100.f, 100.f);
+        });
+
+    return m;
+};
+
+auto make_rnd_matrix_3 = []
+{
+    constexpr auto order(3);
     nc::matrix<float, order, order> m;
     m.for_idxs([&](auto xi, auto xj)
         {
@@ -285,17 +297,53 @@ int main()
             auto x1 = nc::access_column_vector(r, 1);
             auto x2 = nc::access_column_vector(r, 2);
 
-            std::cout << "solutions: " << x0 << ", " << x1 << ", " << x2 << "\n";
+            std::cout << "solutions: " << x0 << ", " << x1 << ", " << x2
+                      << "\n";
 
             // non mal condizionata
-/*
-            TEST_ASSERT(float_test(x0, 4.f));
-            TEST_ASSERT(float_test(x1, -2.f));
-            TEST_ASSERT(float_test(x2, -2.f));*/
+            /*
+                        TEST_ASSERT(float_test(x0, 4.f));
+                        TEST_ASSERT(float_test(x1, -2.f));
+                        TEST_ASSERT(float_test(x2, -2.f));*/
         }
 
 
         //
+    }
+
+    // teorema wilk
+    {
+        for(int i = 0; i < 5; ++i)
+        {
+            auto n = 3;
+            auto m = make_rnd_matrix_3();
+            auto lu = nc::make_crout_decomposition(m);
+            const auto& u(std::get<1>(lu));
+            auto u_nn(std::abs(u(n - 1, n - 1)));
+
+            float max_m = 0;
+            m.for_idxs([&](auto xi, auto xj)
+                {
+                    max_m = std::max(max_m, std::abs(m(xi, xj)));
+                });
+
+            auto coeff = std::pow(2.f, n - 1);
+            auto rhs = coeff * max_m;
+
+            TEST_ASSERT_OP(u_nn, <=, rhs);
+        }
+    }
+
+
+    // ese matrici wilk
+    {
+        auto m = nc::make_wilkinson_p_matrix<float, 7>();
+        print_matrix(m);
+    }
+
+    {
+        auto m = nc::make_wilkinson_m_matrix<float, 7>();
+        print_matrix(m);
     }
 
     return 0;

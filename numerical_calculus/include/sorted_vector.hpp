@@ -1,0 +1,125 @@
+#pragma once
+
+#include <cstddef>
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <tuple>
+#include <vector>
+#include <algorithm>
+#include <limits>
+#include <vrm/core/static_if.hpp>
+
+#include <armadillo>
+#include <eigen3/Eigen/Dense>
+
+namespace nc
+{
+    namespace impl
+    {
+        template <typename T0>
+        void sort_vector(T0* a, int n)
+        {
+            auto i(0);
+            auto j(n - 1);
+
+            if(n < 2) return;
+            auto pivot(a[n / 2]);
+
+            while(true)
+            {
+                while(a[i] < pivot) i++;
+                while(pivot < a[j]) j--;
+
+                if(i >= j) break;
+
+                std::swap(a[i], a[j]);
+
+                ++i;
+                --j;
+            }
+
+            sort_vector(a, i);
+            sort_vector(a + i, n - i);
+        }
+
+        template <typename T0>
+        auto binsearch(const T0* a, int len, const T0& x)
+        {
+            if(len == 0) return -1;
+            int mid = len / 2;
+
+            if(a[mid] == x) return mid;
+
+            if(a[mid] < x)
+            {
+                auto result(binsearch(a + mid + 1, len - (mid + 1), x));
+
+                if(result == -1) return -1;
+
+                return result + mid + 1;
+            }
+
+            if(a[mid] > x) return binsearch(a, mid, x);
+        }
+
+        template <typename T0>
+        void insert_at(const T0& x, std::vector<T0>& vec)
+        {
+            auto old_size(vec.size());
+            vec.resize(vec.size() + 1);
+
+            int i(0);
+
+            for(; i < old_size; ++i)
+            {
+                if(vec[i] < x) continue;
+
+                for(int j(old_size); j > i; --j)
+                {
+                    vec[j] = vec[j - 1];
+                }
+
+                break;
+            }
+
+            vec[i] = x;
+        }
+
+        template <typename T0>
+        void remove_at(int idx, std::vector<T0>& vec)
+        {
+            for(; idx < vec.size() - 1; ++idx)
+            {
+                vec[idx] = vec[idx + 1];
+            }
+
+            vec.pop_back();
+        }
+    }
+
+    template <typename T0>
+    auto& sort_vector(std::vector<T0>& vec)
+    {
+        impl::sort_vector(vec.data(), vec.size());
+        return vec;
+    }
+
+    template <typename T0>
+    auto find_in_sorted_vector(const T0& x, const std::vector<T0>& vec)
+    {
+        return impl::binsearch(vec.data(), vec.size(), x);
+    }
+
+    template <typename T0>
+    void insert_in_sorted_vector(const T0& x, std::vector<T0>& vec)
+    {
+        impl::insert_at(x, vec);
+    }
+
+    template <typename T0>
+    void remove_from_sorted_vector(int idx, std::vector<T0>& vec)
+    {
+        impl::remove_at(idx, vec);
+    }
+}

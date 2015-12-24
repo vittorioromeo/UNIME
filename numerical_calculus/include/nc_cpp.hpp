@@ -653,18 +653,15 @@ namespace nc
 
         auto inverse() const noexcept
         {
-            return vrm::core::static_if(vrm::core::bool_v<(order() == 1)>)
-                .then([](const auto& x)
+            auto result = matrix<T0, TRowCount, TColumnCount>{dont_init{}};
+
+            vrm::core::static_if(vrm::core::bool_v<(order() == 1)>)
+                .then([&result](const auto& x)
                     {
-                        auto result =
-                            matrix<T0, TRowCount, TColumnCount>{dont_init{}};
                         result(0, 0) = 1.0 / x(0, 0);
-                        return result;
                     })
-                .else_([](const auto& x)
+                .else_([&result](const auto& x)
                     {
-                        auto result =
-                            matrix<T0, TRowCount, TColumnCount>{dont_init{}};
                         auto det = 1.0 / x.determinant();
 
                         for(int j = 0; j < x.order(); j++)
@@ -678,17 +675,36 @@ namespace nc
                             }
                         }
 
-                        return result;
                     })(*this);
+
+            return result;
         }
 
         auto perturbation_index() const noexcept
         {
-            // autosubl
-
-            //   return norm_2() * arma::norm(inv, 2);
+            auto result( norm_2() * inverse().norm_2());
+            assert(result >= 1);
+            return result;
         }
     };
+
+    template <typename T0, std::size_t TComponentCount>
+    using row_vector = matrix<T0, 1, TComponentCount>;
+
+    template <typename T>
+    decltype(auto) access_row_vector(T&& v, std::size_t j) noexcept
+    {
+        return v(0, j);
+    }
+
+    template <typename T0, std::size_t TComponentCount>
+    using column_vector = matrix<T0, TComponentCount, 1>;
+
+    template <typename T>
+    decltype(auto) access_column_vector(T&& v, std::size_t i) noexcept
+    {
+        return v(i, 0);
+    }
 
     template <typename T0, std::size_t TRowCount, std::size_t TColumnCount,
         typename... Ts>

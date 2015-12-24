@@ -55,13 +55,13 @@ auto confront_norms = [](const auto& title, const auto& m)
     auto norm2 = m.norm_2();
     auto norminf = m.norm_inf();
     auto normfrob = m.norm_frobenius();
+    auto pindex = m.perturbation_index();
 
-    std::cout << "Norm 1 of random matrix: " << norm1 << "\n";
-    std::cout << "Norm 2 of random matrix: " << norm2 << "\n";
-    std::cout << "Norm inf of random matrix: " << norminf << "\n";
-    std::cout << "Norm (Frobenius) of random matrix: " << normfrob << "\n\n\n";
-
-
+    std::cout << "Norm 1 of " << title << ": " << norm1 << "\n";
+    std::cout << "Norm 2 of " << title << ": " << norm2 << "\n";
+    std::cout << "Norm inf of " << title << ": " << norminf << "\n";
+    std::cout << "Norm (Frobenius) of " << title << ": " << normfrob << "\n";
+    std::cout << "Perturbation index of " << title << ": " << pindex << "\n\n\n";
 };
 
 
@@ -168,9 +168,9 @@ int main()
         auto verify_relationship_2 = [](const auto& m)
         {
             auto curr_max = m(0, 0);
-            m.for_idxs([&curr_max, &m](auto i, auto j)
+            m.for_idxs([&curr_max, &m](auto xi, auto xj)
                 {
-                    curr_max = std::max(curr_max, m(i, j));
+                    curr_max = std::max(curr_max, m(xi, xj));
                 });
 
             double x0(curr_max);
@@ -200,6 +200,55 @@ int main()
             verify_relationship_2(x);
             verify_relationship_3(x);
         }
+    }
+
+    // TODO: vettori equidistanti
+    {
+        nc::impl::for_args(
+            [](auto x)
+            {
+                using precision = float;
+
+                constexpr auto component_count(decltype(x){});
+                nc::row_vector<precision, component_count> v;
+
+                constexpr precision interval_left(-1);
+                constexpr precision interval_right(1);
+
+                constexpr precision interval_range(
+                    -(interval_left - interval_right));
+
+                constexpr auto max_step(interval_range / (component_count - 1));
+
+                for(auto j(0); j < component_count; ++j)
+                {
+                    nc::access_row_vector(v, j) = interval_left + max_step * j;
+                }
+
+                std::cout << "Norms of:\n";
+                print_matrix(v);
+                std::cout << "\n"
+                          << "\tNorm   1: " << v.norm_1() << "\n"
+                          << "\tNorm   2: " << v.norm_2() << "\n"
+                          << "\tNorm inf: " << v.norm_inf() << "\n\n\n";
+            },
+            int_v<2>{}, int_v<3>{}, int_v<4>{}, int_v<5>{}, int_v<6>{},
+            int_v<7>{}, int_v<8>{}, int_v<9>{}, int_v<10>{}, int_v<11>{},
+            int_v<12>{}, int_v<13>{}, int_v<14>{}, int_v<15>{});
+    }
+
+    // perturbazioni
+    {
+        auto m = nc::make_matrix<float, 3, 3>( // .
+            4, -1, 2,                          // .
+            1, 3, 1,                           // .
+            0, -3, 5);
+
+        auto p_index = m.perturbation_index();
+        // = ~2.42486
+
+        TEST_ASSERT_OP(p_index, >, 2.4);
+        TEST_ASSERT_OP(p_index, <, 2.45);
     }
 
     return 0;

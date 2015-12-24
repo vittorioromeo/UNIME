@@ -479,5 +479,56 @@ namespace nc
 
             return x;
         }
+
+        auto solve_jacobi() const noexcept
+        {
+            double accuracy = 0.0001;
+
+            static_assert(TColumnCount == TRowCount + 1, "");
+            constexpr auto n(TRowCount);
+
+            std::vector<double> newSolution(n, 0);
+            std::vector<double> solution = newSolution;
+
+            double maxDivergence = 0;
+
+
+            do
+            {
+                maxDivergence = std::numeric_limits<double>::lowest();
+
+                for(int row = 0; row < TRowCount; row++)
+                {
+                    auto x = (*this)(row, n);
+
+                    for(int column = 0; column < n; column++)
+                    {
+                        if(row != column)
+                        {
+                            x -= (*this)(row, column) * solution[column];
+                        }
+                    }
+
+                    x /= (*this)(row, row);
+
+                    newSolution[row] = x;
+
+                    double divergence =
+                        std::fabs(solution[row] - newSolution[row]);
+
+                    if(divergence > maxDivergence)
+                    {
+                        maxDivergence = divergence;
+                    }
+                }
+
+                for(auto j : solution) std:: cout << j << " ";
+                std:: cout <<  "\n divergence:  " << maxDivergence << "\n\n";
+                solution = newSolution;
+            } while(maxDivergence > accuracy);
+            // TODO: verificare divergenza -> no soluzioni
+
+            return solution;
+        }
     };
 }

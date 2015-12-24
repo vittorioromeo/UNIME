@@ -264,6 +264,44 @@ int main()
         TEST_ASSERT_OP(p_index, <, 2.45);
     }
 
+    // jacobi test
+    {
+        auto float_test = [](auto a, auto b)
+        {
+            return std::abs(a - b) < 0.001;
+        };
+
+        auto m2 = nc::make_matrix<float, 3, 4>( // .
+            3, 0, 4, 7,                        // .
+            7, 4, 2, 13,                       // .
+            -1, -1, -2, -4);
+
+        auto m = nc::make_matrix<float, 3, 4>( // .
+            -3, 3, -6, -6,                        // .
+            -4, 7, -8, -5,                       // .
+            5, 7, -9, 3);
+
+        {
+
+
+            auto rj = m.solve_jacobi();
+            std::cout << "\n\n";
+
+            auto r = m.solve_gauss();
+            std::cout << nc::access_column_vector(r, 0) << ", ";
+            std::cout << nc::access_column_vector(r, 1) << ", ";
+            std::cout << nc::access_column_vector(r, 2) << "\n";
+
+            auto xj0 = rj[0];
+            auto xj1 = rj[1];
+            auto xj2 = rj[2];
+
+            //TEST_ASSERT(float_test(xj0, 4.f));
+           // TEST_ASSERT(float_test(xj1, -2.f));
+          //  TEST_ASSERT(float_test(xj2, -2.f));
+        }
+    }
+
     // gauss
     {
         auto float_test = [](auto a, auto b)
@@ -277,7 +315,6 @@ int main()
             1, 2, -1, 2);
         {
             auto r = m.solve_gauss();
-
 
             auto x0 = nc::access_column_vector(r, 0);
             auto x1 = nc::access_column_vector(r, 1);

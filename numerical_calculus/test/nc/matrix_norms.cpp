@@ -61,7 +61,8 @@ auto confront_norms = [](const auto& title, const auto& m)
     std::cout << "Norm 2 of " << title << ": " << norm2 << "\n";
     std::cout << "Norm inf of " << title << ": " << norminf << "\n";
     std::cout << "Norm (Frobenius) of " << title << ": " << normfrob << "\n";
-    std::cout << "Perturbation index of " << title << ": " << pindex << "\n\n\n";
+    std::cout << "Perturbation index of " << title << ": " << pindex
+              << "\n\n\n";
 };
 
 
@@ -249,6 +250,52 @@ int main()
 
         TEST_ASSERT_OP(p_index, >, 2.4);
         TEST_ASSERT_OP(p_index, <, 2.45);
+    }
+
+    // gauss
+    {
+        auto float_test = [](auto a, auto b)
+        {
+            return std::abs(a - b) < 0.001;
+        };
+
+        auto m = nc::make_matrix<float, 3, 4>( // .
+            1, 1, 1, 0,                        // .
+            1, -2, 2, 4,                       // .
+            1, 2, -1, 2);
+        {
+            auto r = m.solve_gauss();
+
+
+            auto x0 = nc::access_column_vector(r, 0);
+            auto x1 = nc::access_column_vector(r, 1);
+            auto x2 = nc::access_column_vector(r, 2);
+
+            TEST_ASSERT(float_test(x0, 4.f));
+            TEST_ASSERT(float_test(x1, -2.f));
+            TEST_ASSERT(float_test(x2, -2.f));
+        }
+
+        // perturbazione
+        m(1, 1) += 0.001;
+
+        {
+            auto r = m.solve_gauss();
+            auto x0 = nc::access_column_vector(r, 0);
+            auto x1 = nc::access_column_vector(r, 1);
+            auto x2 = nc::access_column_vector(r, 2);
+
+            std::cout << "solutions: " << x0 << ", " << x1 << ", " << x2 << "\n";
+
+            // non mal condizionata
+/*
+            TEST_ASSERT(float_test(x0, 4.f));
+            TEST_ASSERT(float_test(x1, -2.f));
+            TEST_ASSERT(float_test(x2, -2.f));*/
+        }
+
+
+        //
     }
 
     return 0;

@@ -682,9 +682,76 @@ namespace nc
 
         auto perturbation_index() const noexcept
         {
-            auto result( norm_2() * inverse().norm_2());
+            auto result(norm_2() * inverse().norm_2());
             assert(result >= 1);
             return result;
+        }
+
+        auto solve_gauss() const noexcept
+        {
+            static_assert(TColumnCount == TRowCount + 1, "");
+            constexpr auto n(TRowCount);
+
+            auto a = *this;
+
+            for(int i = 0; i < n; i++)
+            {
+                // Search for maximum in this column
+                double maxEl = abs(a(i, i));
+                int maxRow = i;
+                for(int k = i + 1; k < n; k++)
+                {
+                    if(abs(a(k, i)) > maxEl)
+                    {
+                        maxEl = abs(a(k, i));
+                        maxRow = k;
+                    }
+                }
+
+                // Swap maximum row with current row (column by column)
+                for(int k = i; k < n + 1; k++)
+                {
+                    std::swap(a(maxRow, k), a(i, k));
+
+                    /*
+                    double tmp = a(maxRow, k);
+                    a(maxRow, k) = a(i, k);
+                    a(i, k) = tmp;
+                    */
+                }
+
+                // Make all rows below this one 0 in current column
+                for(int k = i + 1; k < n; k++)
+                {
+                    double c = -a(k, i) / a(i, i);
+                    for(int j = i; j < n + 1; j++)
+                    {
+                        if(i == j)
+                        {
+                            a(k, j) = 0;
+                        }
+                        else
+                        {
+                            a(k, j) += c * a(i, j);
+                        }
+                    }
+                }
+            }
+
+            // result
+            matrix<T0, n, 1> x;
+
+            // Solve equation Ax=b for an upper triangular matrix A
+            for(int i = n - 1; i >= 0; i--)
+            {
+                x(i, 0) = a(i, n) / a(i, i);
+                for(int k = i - 1; k >= 0; k--)
+                {
+                    a(k, n) -= a(k, i) * x(i, 0);
+                }
+            }
+
+            return x;
         }
     };
 

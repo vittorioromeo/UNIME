@@ -1,6 +1,9 @@
 # Object files
 *.o
 *.ko
+*.txt.user
+*.txt.user.*
+/build-numerical_calculus
 
 # Libraries
 *.lib

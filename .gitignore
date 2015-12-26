@@ -3,7 +3,7 @@
 *.ko
 *.txt.user
 *.txt.user.*
-/build-numerical_calculus
+/build-numerical_calculus*
 
 # Libraries
 *.lib

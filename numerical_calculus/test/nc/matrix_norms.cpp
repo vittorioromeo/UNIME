@@ -416,6 +416,34 @@ int main()
         std::cout << "cond indx: " << m.perturbation_index() << "\n";
     }
 
+    // ese parte V
+    {
+        auto f = [](auto value)
+        {
+            return 1.0 / value;
+        };
+
+        std::vector<float> x;
+        std::vector<float> fx;
+
+        auto add = [&](auto value)
+        {
+            x.emplace_back(value);
+            fx.emplace_back(f(value));
+        };
+
+        add(2.0);
+        add(2.5);
+        add(4.0);
+
+        auto li = nc::lagrange_interpolator(x, fx);
+
+        for(int i = 0; i < 20; ++i)
+        {
+            std::cout << "r: " << li(i) << "\n";
+        }
+    }
+
     return 0;
 }
 

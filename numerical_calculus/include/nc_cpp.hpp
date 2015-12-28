@@ -235,4 +235,35 @@ namespace nc
                 return std::abs(std::floor((int)k - ((int)TDim / 2)));
             });
     }
+
+    auto lagrange_interpolator(
+        const std::vector<float>& x, const std::vector<float>& fx)
+    {
+        return [x, fx](float value)
+        {
+            if(fx.size() != x.size() || (x.size() == 0))
+            {
+                return 0.0;
+            }
+
+            float result = 0;
+
+            float up, down;
+            for(int i = 0; i < x.size(); i++)
+            {
+                up = down = 1;
+                for(int j = 0; j < x.size(); j++)
+                {
+                    if(j != i)
+                    {
+                        up *= (value - x[j]);
+                        down *= (x[i] - x[j]);
+                    }
+                }
+                result += ((up / down) * fx[i]);
+            }
+
+            return result;
+        };
+    }
 }

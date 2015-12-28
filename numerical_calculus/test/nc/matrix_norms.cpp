@@ -416,7 +416,8 @@ int main()
         std::cout << "cond indx: " << m.perturbation_index() << "\n";
     }
 
-    // ese parte V
+    // lagrange test
+    if(false)
     {
         auto f = [](auto value)
         {
@@ -436,11 +437,105 @@ int main()
         add(2.5);
         add(4.0);
 
-        auto li = nc::lagrange_interpolator(x, fx);
-
-        for(int i = 0; i < 20; ++i)
         {
-            std::cout << "r: " << li(i) << "\n";
+            auto li = nc::lagrange_interpolator(x, fx);
+
+            auto f2 = [](auto value)
+            {
+                return 0.05 * std::pow(value, 2) - 0.425 * value + 1.15;
+            };
+
+            for(int i = 0; i < 20; ++i)
+            {
+                std::cout << "r: " << li(i) << " == " << f2(i) << " == " << f(i)
+                          << "\n";
+            }
+        }
+
+        std::cout << "newton xd: \n\n";
+
+        {
+            auto li = nc::newton_interpolator(x, fx);
+
+            auto f2 = [](auto value)
+            {
+                return 0.05 * std::pow(value, 2) - 0.425 * value + 1.15;
+            };
+
+            for(int i = 0; i < 20; ++i)
+            {
+                std::cout << "r: " << li(i) << " == " << f2(i) << " == " << f(i)
+                          << "\n";
+            }
+        }
+    }
+
+    {
+        auto f = [](auto value)
+        {
+            return value + 10;
+        };
+
+        std::vector<float> x;
+        std::vector<float> fx;
+
+        auto add = [&](auto xx, auto xfx)
+        {
+            x.emplace_back(xx);
+            fx.emplace_back(xfx);
+        };
+        /*
+                add(-2.0, 2.0);
+                add(-1.0, 3.0);
+                add(0.0, 1.0);
+        */
+        add(-3.0, 10.0);
+        add(-2.0, 2.0);
+        add(1.0, 3.0);
+        add(3.0, 12.0);
+        add(2.0, 10.0);
+
+        if(false)
+        {
+            auto li = nc::lagrange_interpolator(x, fx);
+
+            for(int i = 0; i < 20; ++i)
+            {
+                std::cout << "r: " << li(i) << " == " << f(i) << "\n";
+            }
+        }
+
+        std::cout << "newton xd: \n\n";
+
+        {
+            auto li = nc::newton_interpolator(x, fx);
+
+            auto f2 = [](auto v)
+            {
+                auto c1 = (-1.0 / 8.0) * std::pow(v, 4);
+                auto c2 = (-1.0 / 3.0) * std::pow(v, 3);
+                auto c3 = (21.0 / 8.0) * std::pow(v, 2);
+                auto c4 = (10.0 / 3.0) * v;
+                auto c5 = -5.0 / 2.0;
+                /*
+                #define PRINT(x) std::cout << #x << " : " << x << "\n";
+
+                                        PRINT(c1)
+                                        PRINT(c2)
+                                        PRINT(c3)
+                                        PRINT(c4)
+                                        PRINT(c5)
+                */
+                return c1 + c2 + c3 + c4 + c5;
+
+                // return (1.0 / 3.0) *
+                //    (2 * std::pow(v, 3) - 9 * std::pow(v, 2) + 10 * v);
+            };
+
+            std::cout << "r: " << li(1) << " == " << f2(1) << "\n";
+            for(int i = 0; i < 20; ++i)
+            {
+            }
         }
     }
 

@@ -243,7 +243,7 @@ namespace nc
         {
             if(fx.size() != x.size() || (x.size() == 0))
             {
-                return 0.0;
+                return 0.f;
             }
 
             float result = 0;
@@ -264,6 +264,91 @@ namespace nc
             }
 
             return result;
+        };
+    }
+
+    auto newton_interpolator(std::vector<float> x, std::vector<float> fx)
+    {
+        auto n = x.size();
+
+        std::vector<std::vector<double>> table;
+        table.resize(n);
+        for(auto& t : table) t.resize(n + 1);
+
+        for(auto& c : table)
+            for(auto& k : c) k = -99;
+
+        for(int i = 0; i < n; ++i)
+        {
+            table[i][0] = x[i];
+            table[i][1] = fx[i];
+        }
+
+        for(int c = 2; c < n + 1; ++c)
+        {
+            int curr = 0;
+
+            for(int r = c - 1; r < n; ++r)
+            {
+                auto prev_r = r - 1;
+                auto prev_c = c - 1;
+
+                auto prev0 = table[r][prev_c];
+                auto prev1 = table[prev_r][prev_c];
+                auto num = prev0 - prev1;
+
+                auto den_v0 = table[r][0];
+                auto den_v1 = table[curr][0];
+                auto den = den_v0 - den_v1;
+
+                auto frac = num / den;
+
+                std::cout << r << ", " << c << " -> " << frac << "\n";
+                table[r][c] = frac;
+
+                ++curr;
+            }
+        }
+
+        for(int ix = 0; ix < n; ++ix)
+        {
+            for(int iy = 0; iy < n + 1; ++iy)
+            {
+                std::cout << table[ix][iy] << "\t";
+            }
+
+            std::cout << "\n";
+        }
+
+        return [=](auto value)
+        {
+            auto uesimo = [=](auto u)
+            {
+                std::cout << "uesimo(" << u << ") = " << table[u][u + 1]
+                          << "\n";
+
+                return table[u][u + 1];
+            };
+
+            double acc = 0;
+
+            for(int i = 0; i < n; ++i)
+            {
+                double pacc = 1;
+                for(int j = 0; j < i; ++j)
+                {
+                    // pacc *= value - table[j][0];
+                    pacc *= value - x[j];
+                }
+
+                // TODO: test e pulizia
+
+                // std::cout << "pacc = " << pacc << "\n";
+
+                acc += uesimo(i) * pacc;
+            }
+
+            return acc;
         };
     }
 }

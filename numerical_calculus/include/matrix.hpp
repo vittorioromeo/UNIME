@@ -316,14 +316,14 @@ namespace nc
 
         constexpr auto static order() noexcept
         {
-            static_assert(is_square(), "");
-            return TRowCount;
+            // static_assert(is_square(), "");
+            return TColumnCount < TRowCount ? TColumnCount : TRowCount;
         }
 
         auto calc_minor(
             std::size_t row_to_skip, std::size_t column_to_skip) const noexcept
         {
-            static_assert(is_square(), "");
+            // static_assert(is_square(), "");
 
             auto result = matrix<T0, order() - 1, order() - 1>{dont_init{}};
 
@@ -351,7 +351,7 @@ namespace nc
 
         auto determinant() const noexcept
         {
-            static_assert(is_square(), "");
+            // static_assert(is_square(), "");
 
 
             return vrm::core::static_if(vrm::core::bool_v<(order() == 1)>)
@@ -522,13 +522,69 @@ namespace nc
                     }
                 }
 
-                for(auto j : solution) std:: cout << j << " ";
-                std:: cout <<  "\n divergence:  " << maxDivergence << "\n\n";
+                for(auto j : solution) std::cout << j << " ";
+                std::cout << "\n divergence:  " << maxDivergence << "\n\n";
                 solution = newSolution;
             } while(maxDivergence > accuracy);
             // TODO: verificare divergenza -> no soluzioni
 
             return solution;
+        }
+
+        template <typename TSolutions>
+        auto solve_gauss_seidel(TSolutions phi)
+        {
+            double accuracy = 0.00000001;
+
+            static_assert(TColumnCount == TRowCount + 1, "");
+            constexpr auto n(TRowCount);
+
+            // std::vector<double> phi(n, 0);
+            auto old_phi = phi;
+            double sigma;
+
+            double maxDivergence = 0;
+
+            do
+            {
+
+                maxDivergence = std::numeric_limits<double>::lowest();
+
+                for(int i = 0; i < n; ++i)
+                {
+                    sigma = 0.0;
+
+                    for(int j = 0; j < n; ++j)
+                    {
+                        if(i == j) continue;
+                        sigma += (*this)(i, j) * phi[j];
+                    }
+
+                    phi[i] = (1.0 / ((*this)(i, i))) * ((*this)(i, n) - sigma);
+
+                    double divergence = std::fabs(phi[i] - old_phi[i]);
+                    if(divergence > maxDivergence)
+                    {
+                        maxDivergence = divergence;
+                    }
+                }
+
+                old_phi = phi;
+
+            } while(maxDivergence > accuracy);
+
+            for(auto kk : phi) std::cout << kk << " | ";
+            std::cout << "\n";
+            return phi;
+        }
+
+        auto solve_gauss_seidel()
+        {
+            static_assert(TColumnCount == TRowCount + 1, "");
+            constexpr auto n(TRowCount);
+
+            std::vector<double> phi(n, 0);
+            return solve_gauss_seidel(phi);
         }
     };
 }

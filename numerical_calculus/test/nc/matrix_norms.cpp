@@ -272,20 +272,35 @@ int main()
         };
 
         auto m2 = nc::make_matrix<float, 3, 4>( // .
-            3, 0, 4, 7,                        // .
-            7, 4, 2, 13,                       // .
+            3, 0, 4, 7,                         // .
+            7, 4, 2, 13,                        // .
             -1, -1, -2, -4);
 
         auto m = nc::make_matrix<float, 3, 4>( // .
-            -3, 3, -6, -6,                        // .
-            -4, 7, -8, -5,                       // .
+            -3, 3, -6, -6,                     // .
+            -4, 7, -8, -5,                     // .
             5, 7, -9, 3);
 
+        // gauss seidel test (0.81, -0.66)
+        {
+            auto m_gs = nc::make_matrix<float, 2, 3>( // .
+                16, 3, 11,                            // .
+                7, -11, 13                            // .
+                );
+
+            auto rgs = m_gs.solve_gauss_seidel();
+            std::cout << "GAUSS_SEIDEL ^ \n\n";
+        }
+
+        // jacobi test (1,1,1)
         {
 
 
+
             auto rj = m.solve_jacobi();
-            std::cout << "\n\n";
+            std::cout << "JACOBBO ^ \n\n";
+
+
 
             auto r = m.solve_gauss();
             std::cout << nc::access_column_vector(r, 0) << ", ";
@@ -296,9 +311,9 @@ int main()
             auto xj1 = rj[1];
             auto xj2 = rj[2];
 
-            //TEST_ASSERT(float_test(xj0, 4.f));
-           // TEST_ASSERT(float_test(xj1, -2.f));
-          //  TEST_ASSERT(float_test(xj2, -2.f));
+            // TEST_ASSERT(float_test(xj0, 4.f));
+            // TEST_ASSERT(float_test(xj1, -2.f));
+            //  TEST_ASSERT(float_test(xj2, -2.f));
         }
     }
 
@@ -381,6 +396,24 @@ int main()
     {
         auto m = nc::make_wilkinson_m_matrix<float, 7>();
         print_matrix(m);
+    }
+
+    // ese parte IV n 4
+    {
+        auto m = nc::make_matrix<float, 2, 3>( // .
+            0.96326, 0.81321, 0.88824,         // .
+            0.81321, 0.68654, 0.74988          // .
+            );
+
+        std::vector<double> our_phi{0.33116, 0.7};
+
+        auto res = m.solve_gauss_seidel(our_phi);
+        (void)res;
+
+        std::cout << "\n\n\n";
+        m.solve_gauss_seidel();
+
+        std::cout << "cond indx: " << m.perturbation_index() << "\n";
     }
 
     return 0;

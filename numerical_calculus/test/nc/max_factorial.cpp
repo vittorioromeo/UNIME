@@ -3,10 +3,10 @@
 
 int main()
 {
-    TEST_ASSERT_OP(1932053504, ==, nc::max_representable_factoral<int>());
+    TEST_ASSERT_OP(1932053504, ==, nc::max_representable_factorial<int>());
 
     TEST_ASSERT_OP(
-        2.95232e+38 - nc::max_representable_factoral_real<float>(), <, 1.f);
+        2.95232e+38 - nc::max_representable_factorial_real<float>(), <, 1.f);
 
     return 0;
 }

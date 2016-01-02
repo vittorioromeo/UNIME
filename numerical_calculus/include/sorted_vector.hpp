@@ -8,15 +8,13 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
-#include <vrm/core/static_if.hpp>
-
-#include <armadillo>
-#include <eigen3/Eigen/Dense>
 
 namespace nc
 {
+    // Dettagli di implementazione.
     namespace impl
     {
+        // Implemetazione del quicksort.
         template <typename T0>
         void sort_vector(T0* a, int n)
         {
@@ -43,6 +41,7 @@ namespace nc
             sort_vector(a + i, n - i);
         }
 
+        // Ricerca binaria su un vettore `a` di lunghezza `len`.
         template <typename T0>
         auto binsearch(const T0* a, int len, const T0& x)
         {
@@ -63,6 +62,7 @@ namespace nc
             if(a[mid] > x) return binsearch(a, mid, x);
         }
 
+        // Inserzione in ordine.
         template <typename T0>
         void insert_at(const T0& x, std::vector<T0>& vec)
         {
@@ -86,6 +86,7 @@ namespace nc
             vec[i] = x;
         }
 
+        // Rimozione in ordine.
         template <typename T0>
         void remove_at(int idx, std::vector<T0>& vec)
         {
@@ -98,6 +99,7 @@ namespace nc
         }
     }
 
+    // Interfaccia che chiama il quicksort su un vettore standard.
     template <typename T0>
     auto& sort_vector(std::vector<T0>& vec)
     {
@@ -105,18 +107,21 @@ namespace nc
         return vec;
     }
 
+    // Interfaccia che chiama la ricerca binaria di un vettore standard.
     template <typename T0>
     auto find_in_sorted_vector(const T0& x, const std::vector<T0>& vec)
     {
         return impl::binsearch(vec.data(), vec.size(), x);
     }
 
+    // Interfaccia che chiama l'inserzione ordinata in un vettore standard.
     template <typename T0>
     void insert_in_sorted_vector(const T0& x, std::vector<T0>& vec)
     {
         impl::insert_at(x, vec);
     }
 
+    // Interfaccia che chiama la rimozione ordinata in un vettore standard.
     template <typename T0>
     void remove_from_sorted_vector(int idx, std::vector<T0>& vec)
     {

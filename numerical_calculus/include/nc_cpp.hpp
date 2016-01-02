@@ -23,30 +23,46 @@
 
 namespace nc
 {
+    // I nostri vettori sono implementati come matrici.
+    // Definiamo qui due alias per i tipi di matrici che rappresentano i
+    // vettori, uno per colonna, uno per riga.
+
+    // Alias per vettore riga (1 riga, N colonne).
+    // `T0` è il tipo di dato.
     template <typename T0, std::size_t TComponentCount>
     using row_vector = matrix<T0, 1, TComponentCount>;
 
+    // Alias per vettore colonna (N righe, 1 colonna).
+    template <typename T0, std::size_t TComponentCount>
+    using column_vector = matrix<T0, TComponentCount, 1>;
+
+    // Per evitare errori durante l'accesso ai dati dei vettori, definiamo due
+    // funzioni che permettono di ottenere la n-esima componente.
+
+    // Accedi alla j-esima componente di un vettore riga.
     template <typename T>
     decltype(auto) access_row_vector(T&& v, std::size_t j) noexcept
     {
         return v(0, j);
     }
 
-    template <typename T0, std::size_t TComponentCount>
-    using column_vector = matrix<T0, TComponentCount, 1>;
-
+    // Accedi alla i-esima componente di un vettore colonna.
     template <typename T>
     decltype(auto) access_column_vector(T&& v, std::size_t i) noexcept
     {
         return v(i, 0);
     }
 
+    // Crea una matrice NxM passando NxM argomenti variadici.
     template <typename T0, std::size_t TRowCount, std::size_t TColumnCount,
         typename... Ts>
     auto make_matrix(Ts&&... xs)
     {
         matrix<T0, TRowCount, TColumnCount> result;
-        result.set_from_vector(xs...);
+
+        // TODO:
+        result.set_from_variadic(xs...);
+
         return result;
     }
 
@@ -73,7 +89,7 @@ namespace nc
     auto make_column_vector(Ts&&... xs)
     {
         matrix<T0, sizeof...(Ts), 1> result;
-        result.set_from_column_vector(xs...);
+        result.set_from_variadic(xs...);
         return result;
     }
 

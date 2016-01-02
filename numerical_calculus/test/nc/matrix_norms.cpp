@@ -532,11 +532,24 @@ int main()
                 //    (2 * std::pow(v, 3) - 9 * std::pow(v, 2) + 10 * v);
             };
 
-            std::cout << "r: " << li(1) << " == " << f2(1) << "\n";
             for(int i = 0; i < 20; ++i)
             {
+                std::cout << "r: " << li(i) << " == " << f2(i) << "\n";
             }
         }
+    }
+
+    {
+        std::cout << "creating x\n";
+        auto x = nc::make_column_vector<float>(-1, 1, 2);
+
+        std::cout << "creating fx\n";
+        auto fx = nc::make_column_vector<float>(2, 1, 1);
+
+        std::cout << "creating mi\n";
+        auto mi = nc::monomial_interpolator<3>(x, fx);
+
+        //print_matrix(mi);
     }
 
     return 0;

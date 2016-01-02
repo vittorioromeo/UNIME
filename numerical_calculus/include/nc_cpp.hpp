@@ -10,6 +10,7 @@
 #include <limits>
 #include <vrm/core/static_if.hpp>
 
+#undef ARMA_USE_ATLAS
 #include <armadillo>
 #include <eigen3/Eigen/Dense>
 
@@ -67,6 +68,16 @@ namespace nc
         return make_matrix<T0, 1, sizeof...(Ts)>(xs...);
     }
 
+
+    template <typename T0, typename... Ts>
+    auto make_column_vector(Ts&&... xs)
+    {
+        matrix<T0, sizeof...(Ts), 1> result;
+        result.set_from_column_vector(xs...);
+        return result;
+    }
+
+
     template <typename T0, std::size_t TRowCount, std::size_t TColumnCount>
     auto make_transposed(const matrix<T0, TRowCount, TColumnCount>& m)
     {
@@ -106,17 +117,34 @@ namespace nc
         return result;
     }
 
+    namespace impl
+    {
+        template <typename T0, std::size_t TRows, std::size_t TCols,
+            typename TVAccess, typename TV0>
+        auto make_vandermonde_matrix(TVAccess&& v_access, const TV0& v)
+        {
+            matrix<T0, TRows, TCols> result;
+
+            // Assume TRows x TRows
+            for(auto i(0); i < TRows; ++i)
+                for(auto j(0); j < TRows; ++j)
+                {
+                    result(i, j) = std::pow(v_access(v, i), j);
+                }
+
+            return result;
+        }
+    }
+
     template <typename T0, std::size_t TDim, typename TV0>
     auto make_vandermonde_matrix(const TV0& v)
     {
-        matrix<T0, TDim, TDim> result;
-
-        result.for_idxs([&v, &result](auto i, auto j)
+        return impl::make_vandermonde_matrix<T0, TDim, TDim>(
+            [](auto& v, auto i)
             {
-                result(i, j) = std::pow(v(0, i), j - 1);
-            });
-
-        return result;
+                return access_row_vector(v, i);
+            },
+            v);
     }
 
     namespace impl
@@ -264,6 +292,42 @@ namespace nc
             }
 
             return result;
+        };
+    }
+
+    template <std::size_t TN, typename TXV, typename TFXV>
+    auto monomial_interpolator(const TXV& x, const TFXV& fx)
+    {
+        auto vmm = impl::make_vandermonde_matrix<float, TN, TN + 1>(
+            [](auto& v, auto i)
+            {
+                return access_column_vector(v, i);
+            },
+            x);
+
+        for(auto k(0); k < TN; ++k)
+        {
+            vmm(k, TN) = access_column_vector(fx, k);
+        }
+
+        auto solved_vmm = vmm.solve_gauss();
+
+
+
+        for(auto k(0); k < TN; ++k)
+        {
+            std::cout << access_column_vector(solved_vmm, k) << "\n";
+        }
+
+        return [=](auto value)
+        {
+            float acc = 0;
+
+            for(auto k(0); k < TN; ++k)
+            {
+                auto coeff = solved_vmm(0, k);
+                acc += coeff * std::pow(value, k);
+            }
         };
     }
 

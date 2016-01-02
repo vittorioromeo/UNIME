@@ -152,6 +152,18 @@ namespace nc
             }
         }
 
+        template <typename... Ts>
+        void set_from_column_vector(Ts&&... xs)
+        {
+            static_assert(sizeof...(xs) <= TRowCount * TColumnCount, "");
+
+            std::vector<T0> vec{xs...};
+            for(auto i(0u); i < vec.size(); ++i)
+            {
+                (*this)(i, 0) = vec[i];
+            }
+        }
+
         // TODO: repetition
         auto& operator()(std::size_t row, std::size_t column)
         {

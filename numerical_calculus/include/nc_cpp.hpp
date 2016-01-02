@@ -432,3 +432,5 @@ namespace nc
         };
     }
 }
+
+// TODO: file per l'interpolazione

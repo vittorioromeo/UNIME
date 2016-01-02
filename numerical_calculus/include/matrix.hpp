@@ -693,55 +693,71 @@ namespace nc
         template <typename TSolutions>
         auto solve_gauss_seidel(TSolutions phi)
         {
-            double accuracy = 0.00000001;
-
-            static_assert(TColumnCount == TRowCount + 1, "");
+            // La matrice deve avere una colonna in più delle righe.
+            // (La colonna dei termini noti.)
+            static_assert(column_count() == row_count() + 1, "");
             constexpr auto n(TRowCount);
 
-            // std::vector<double> phi(n, 0);
+            // Tipo per gestire la precisione.
+            using accuracy_type = double;
+
+            // Precisione.
+            accuracy_type accuracy(0.0001);
+
+            // Divergenza massima corrente.
+            accuracy_type max_divergence(0);
+
+            // TODO:
             auto old_phi = phi;
             double sigma;
 
-            double maxDivergence = 0;
-
             do
             {
+                // Inizialmente setta la divergenza massima come il minor
+                // possibile valore rapprentabile.
+                max_divergence = std::numeric_limits<accuracy_type>::lowest();
 
-                maxDivergence = std::numeric_limits<double>::lowest();
-
+                // Itera sulle righe.
                 for(int i = 0; i < n; ++i)
                 {
+                    // TODO:
                     sigma = 0.0;
 
+                    // Itera sulle colonne.
                     for(int j = 0; j < n; ++j)
                     {
+                        // Se `i == j`, salta l'iterazione.
                         if(i == j) continue;
+
                         sigma += (*this)(i, j) * phi[j];
                     }
 
                     phi[i] = (1.0 / ((*this)(i, i))) * ((*this)(i, n) - sigma);
 
-                    double divergence = std::fabs(phi[i] - old_phi[i]);
-                    if(divergence > maxDivergence)
-                    {
-                        maxDivergence = divergence;
-                    }
+                    // Calcola la divergenza tra la soluzione corrente e quella
+                    // precedente.
+                    auto divergence(std::fabs(phi[i] - old_phi[i]));
+
+                    // Aggiorna la divergenza massima se necessario.
+                    max_divergence = std::max(max_divergence, divergence);
                 }
 
+                // Sostituisce la soluzione precendente con quella corrente.
                 old_phi = phi;
+            } while(max_divergence > accuracy);
 
-            } while(maxDivergence > accuracy);
-
+            // TODO:
             for(auto kk : phi) std::cout << kk << " | ";
             std::cout << "\n";
+
+            // TODO: verificare divergenza -> no soluzioni
             return phi;
         }
 
+        // TODO: usa il nostro vettore
         auto solve_gauss_seidel()
         {
-            static_assert(TColumnCount == TRowCount + 1, "");
             constexpr auto n(TRowCount);
-
             std::vector<double> phi(n, 0);
             return solve_gauss_seidel(phi);
         }

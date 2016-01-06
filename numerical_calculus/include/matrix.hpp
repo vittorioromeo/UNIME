@@ -210,21 +210,6 @@ namespace nc
             return impl_at(*this, t);
         }
 
-        // Riempie i valori della matrice da un numero variadico di argomenti.
-        template <typename... Ts>
-        void set_from_variadic(Ts&&... xs)
-        {
-            // Controlla che il numero di argomenti sia valido.
-            static_assert(sizeof...(xs) == row_count() * column_count(), "");
-
-            // TODO:
-            std::vector<T0> vec{xs...};
-            for(auto i(0u); i < vec.size(); ++i)
-            {
-                (*this).at(calc_1d_index(i)) = vec[i];
-            }
-        }
-
         // Restituisce il valore presente negli indici passati.
         auto& operator()(std::size_t row, std::size_t column)
         {
@@ -233,6 +218,21 @@ namespace nc
         const auto& operator()(std::size_t row, std::size_t column) const
         {
             return _data[calc_index(row, column)];
+        }
+
+        // Riempie i valori della matrice da un numero variadico di argomenti.
+        template <typename... Ts>
+        void set_from_variadic(Ts&&... xs)
+        {
+            // Controlla che il numero di argomenti sia valido.
+            static_assert(sizeof...(xs) <= row_count() * column_count(), "");
+
+            // TODO:
+            std::vector<T0> vec{xs...};
+            for(auto i(0u); i < vec.size(); ++i)
+            {
+                (*this).at(calc_1d_index(i)) = vec[i];
+            }
         }
 
     private:

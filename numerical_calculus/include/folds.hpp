@@ -18,8 +18,7 @@ namespace nc
     // valore iniziale.
     template <typename T0, typename TF>
     auto fold(TF&& f, T0 initial_value, const std::vector<T0>& vec) // .
-    // TODO:
-    // noexcept(noexcept(f(T0{}, T0{}))
+    // TODO: noexcept(noexcept(f(std::declval<T0>(), std::declval<T0>())))
     {
         T0 result(initial_value);
         for(const auto& x : vec) f(result, x);

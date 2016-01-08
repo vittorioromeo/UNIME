@@ -78,8 +78,8 @@ int main()
     }
 
     {
-        auto v0 = nc::make_vector<int>(3, 4);
-        auto v1 = nc::make_vector<int>(5, 6);
+        auto v0 = nc::make_row_vector<int>(3, 4);
+        auto v1 = nc::make_row_vector<int>(5, 6);
 
         auto s = nc::vector_scalar_product(v0, v1);
         TEST_ASSERT_OP(s(0, 0), ==, 39);

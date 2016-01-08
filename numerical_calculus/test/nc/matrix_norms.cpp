@@ -110,7 +110,7 @@ int main()
 
     {
         auto m = nc::make_vandermonde_matrix<float, 5>(
-            nc::make_vector<float>(1, 2, 3, 4, 5));
+            nc::make_row_vector<float>(1, 2, 3, 4, 5));
 
         std::cout << "Norm 1 of vandermonde: " << m.norm_1() << "\n";
         std::cout << "Norm 2 of vandermonde: " << m.norm_2() << "\n";
@@ -136,7 +136,7 @@ int main()
     }
 
     {
-        nc::impl::for_args(
+        nc::for_args(
             [](auto x)
             {
                 constexpr auto order = decltype(x){};
@@ -217,7 +217,7 @@ int main()
 
     // TODO: vettori equidistanti
     {
-        nc::impl::for_args(
+        nc::for_args(
             [](auto x)
             {
                 using precision = float;
@@ -266,20 +266,10 @@ int main()
 
     // jacobi test
     {
-        auto float_test = [](auto a, auto b)
+        auto precision_test = [](auto a, auto b, auto prec)
         {
-            return std::abs(a - b) < 0.001;
+            return std::abs(a - b) < prec;
         };
-
-        auto m2 = nc::make_matrix<float, 3, 4>( // .
-            3, 0, 4, 7,                         // .
-            7, 4, 2, 13,                        // .
-            -1, -1, -2, -4);
-
-        auto m = nc::make_matrix<float, 3, 4>( // .
-            -3, 3, -6, -6,                     // .
-            -4, 7, -8, -5,                     // .
-            5, 7, -9, 3);
 
         // gauss seidel test (0.81, -0.66)
         {
@@ -290,30 +280,30 @@ int main()
 
             auto rgs = m_gs.solve_gauss_seidel();
             std::cout << "GAUSS_SEIDEL ^ \n\n";
+
+            auto xj0 = nc::access_column_vector(rgs, 0);
+            auto xj1 = nc::access_column_vector(rgs, 1);
+
+            TEST_ASSERT(precision_test(xj0, 0.81, 0.5f));
+            TEST_ASSERT(precision_test(xj1, -0.66, 0.5f));
         }
 
-        // jacobi test (1,1,1)
+        // jacobi test (1, 2, -1)
         {
+            auto jm = nc::make_matrix<float, 3, 4>( // .
+                4, -1, -1, 3,                       // .
+                -2, 6, 1, 9,                        // .
+                -1, 1, 7, -6);
 
+            auto rj = jm.solve_jacobi();
 
+            auto xj0 = nc::access_column_vector(rj, 0);
+            auto xj1 = nc::access_column_vector(rj, 1);
+            auto xj2 = nc::access_column_vector(rj, 2);
 
-            auto rj = m.solve_jacobi();
-            std::cout << "JACOBBO ^ \n\n";
-
-
-
-            auto r = m.solve_gauss();
-            std::cout << nc::access_column_vector(r, 0) << ", ";
-            std::cout << nc::access_column_vector(r, 1) << ", ";
-            std::cout << nc::access_column_vector(r, 2) << "\n";
-
-            auto xj0 = rj[0];
-            auto xj1 = rj[1];
-            auto xj2 = rj[2];
-
-            // TEST_ASSERT(float_test(xj0, 4.f));
-            // TEST_ASSERT(float_test(xj1, -2.f));
-            //  TEST_ASSERT(float_test(xj2, -2.f));
+            TEST_ASSERT(precision_test(xj0, 1.f, 0.5f));
+            TEST_ASSERT(precision_test(xj1, 2.f, 0.5f));
+            TEST_ASSERT(precision_test(xj2, -1.f, 0.5f));
         }
     }
 
@@ -405,7 +395,7 @@ int main()
             0.81321, 0.68654, 0.74988          // .
             );
 
-        std::vector<double> our_phi{0.33116, 0.7};
+        auto our_phi = nc::make_column_vector<float>(0.33116, 0.7);
 
         auto res = m.solve_gauss_seidel(our_phi);
         (void)res;
@@ -419,23 +409,23 @@ int main()
     // lagrange test
     if(false)
     {
-        auto f = [](auto value)
+        auto f = [](auto val)
         {
-            return 1.0 / value;
+            return 1.0 / val;
         };
 
-        std::vector<float> x;
-        std::vector<float> fx;
+        nc::column_vector<float, 3> x, fx;
 
-        auto add = [&](auto value)
+
+        auto add = [&](auto i, auto value)
         {
-            x.emplace_back(value);
-            fx.emplace_back(f(value));
+            nc::access_column_vector(x, i) = value;
+            nc::access_column_vector(fx, i) = f(value);
         };
 
-        add(2.0);
-        add(2.5);
-        add(4.0);
+        add(0, 2.0);
+        add(1, 2.5);
+        add(2, 4.0);
 
         {
             auto li = nc::lagrange_interpolator(x, fx);
@@ -476,24 +466,20 @@ int main()
             return value + 10;
         };
 
-        std::vector<float> x;
-        std::vector<float> fx;
+        nc::column_vector<float, 5> x, fx;
 
-        auto add = [&](auto xx, auto xfx)
+
+        auto add = [&](auto i, auto value, auto value2)
         {
-            x.emplace_back(xx);
-            fx.emplace_back(xfx);
+            nc::access_column_vector(x, i) = value;
+            nc::access_column_vector(fx, i) = value2;
         };
-        /*
-                add(-2.0, 2.0);
-                add(-1.0, 3.0);
-                add(0.0, 1.0);
-        */
-        add(-3.0, 10.0);
-        add(-2.0, 2.0);
-        add(1.0, 3.0);
-        add(3.0, 12.0);
-        add(2.0, 10.0);
+
+        add(0, -3.0, 10.0);
+        add(1, -2.0, 2.0);
+        add(2, 1.0, 3.0);
+        add(3, 3.0, 12.0);
+        add(4, 2.0, 10.0);
 
         if(false)
         {
@@ -549,7 +535,7 @@ int main()
         std::cout << "creating mi\n";
         auto mi = nc::monomial_interpolator<3>(x, fx);
 
-        //print_matrix(mi);
+        // print_matrix(mi);
     }
 
     return 0;

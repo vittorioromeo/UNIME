@@ -12,8 +12,8 @@
 
 #undef ARMA_USE_ATLAS
 #include <armadillo>
-#include <eigen3/Eigen/Dense>
 
+#include "utilities.hpp"
 #include "multiples.hpp"
 #include "equations.hpp"
 #include "folds.hpp"
@@ -53,7 +53,18 @@ namespace nc
         return v(i, 0);
     }
 
-    // Crea una matrice NxM passando NxM argomenti variadici.
+    // Restituisce la dimensione di un vettore.
+    template <typename T>
+    constexpr auto vector_dimension(const T& v)
+    {
+        constexpr auto rc = v.row_count();
+        constexpr auto cc = v.column_count();
+
+        static_assert(rc == 1 || cc == 1, "");
+        return rc < cc ? cc : rc;
+    }
+
+    // Crea una matrice NxM da NxM argomenti variadici.
     template <typename T0, std::size_t TRowCount, std::size_t TColumnCount,
         typename... Ts>
     auto make_matrix(Ts&&... xs)
@@ -66,34 +77,35 @@ namespace nc
         return result;
     }
 
+    // Crea un matrice quadrata da N argomenti variadici.
     template <typename T0, std::size_t TDim, typename... Ts>
     auto make_square_matrix(Ts&&... xs)
     {
         return make_matrix<T0, TDim, TDim>(xs...);
     }
 
+    // Crea un matrice identità NxN.
     template <typename T0, std::size_t TDim, typename... Ts>
     auto make_identity_matrix()
     {
         return matrix<T0, TDim, TDim>{init_identity{}};
     }
 
+    // Crea un vettore riga (matrice 1xN).
     template <typename T0, typename... Ts>
-    auto make_vector(Ts&&... xs)
+    auto make_row_vector(Ts&&... xs)
     {
         return make_matrix<T0, 1, sizeof...(Ts)>(xs...);
     }
 
-
+    // Crea un vettore colonna (matrice Nx1).
     template <typename T0, typename... Ts>
     auto make_column_vector(Ts&&... xs)
     {
-        matrix<T0, sizeof...(Ts), 1> result;
-        result.set_from_variadic(xs...);
-        return result;
+        return make_matrix<T0, sizeof...(Ts), 1>(xs...);
     }
 
-
+    // Data una matrice `m`, restituisce la sua trasposta.
     template <typename T0, std::size_t TRowCount, std::size_t TColumnCount>
     auto make_transposed(const matrix<T0, TRowCount, TColumnCount>& m)
     {
@@ -108,18 +120,21 @@ namespace nc
         return result;
     }
 
+    // Esegue il prodotto scalare tra due vettori.
     template <typename TV0, typename TV1>
     auto vector_scalar_product(const TV0& v0, const TV1& v1)
     {
         return v0 * make_transposed(v1);
     }
 
+    // Esegue il prodotto tensoriale tra due vettori.
     template <typename TV0, typename TV1>
     auto vector_tensor_product(const TV0& v0, const TV1& v1)
     {
         return make_transposed(v0) * v1;
     }
 
+    // Genera la matrice di Hilbert.
     template <typename T0, std::size_t TDim>
     auto make_hilbert_matrix()
     {
@@ -133,6 +148,7 @@ namespace nc
         return result;
     }
 
+    // Dettagli di implementazione per la matrice di Vandermonde.
     namespace impl
     {
         template <typename T0, std::size_t TRows, std::size_t TCols,
@@ -152,6 +168,7 @@ namespace nc
         }
     }
 
+    // Genera la matrice di Vandermonde.
     template <typename T0, std::size_t TDim, typename TV0>
     auto make_vandermonde_matrix(const TV0& v)
     {
@@ -163,16 +180,7 @@ namespace nc
             v);
     }
 
-    namespace impl
-    {
-        template <typename TF, typename... Ts>
-        void for_args(TF&& f, Ts&&... xs)
-        {
-            using intarray = int[];
-            (void)intarray{(f(xs), 0)...};
-        }
-    }
-
+    // Genera una matrice diagonale dominante.
     template <typename... Ts>
     auto make_diagonal_dominant_square_matrix(Ts&&... xs)
     {
@@ -184,7 +192,7 @@ namespace nc
 
         std::size_t i(0);
 
-        impl::for_args(
+        for_args(
             [&result, &i](auto x)
             {
                 result(i, i) = x;
@@ -195,63 +203,70 @@ namespace nc
         return result;
     }
 
+    // Esegue la decomposizione LU di Crout.
     template <typename T0, std::size_t TDim>
     auto make_crout_decomposition(const matrix<T0, TDim, TDim>& a)
     {
         auto n = TDim;
 
-        matrix<T0, TDim, TDim> m;
+        matrix<T0, TDim, TDim> l;
         matrix<T0, TDim, TDim> u{init_identity{}};
 
+        // Itera sulle righe.
         for(std::size_t i(0); i < n; ++i)
         {
+            // Itera sulle colonne, partendo da `i`.
             for(std::size_t j(i); j < n; ++j)
             {
+                // Sommatoria.
                 T0 sum(0);
-                // for(std::size_t k(0); k < n; ++k)
                 for(std::size_t k(0); k < i; ++k)
                 {
-                    sum += m(j, k) * u(k, i);
+                    sum += l(j, k) * u(k, i);
                 }
 
-                m(j, i) = a(j, i) - sum;
+                // Setta valore della matrice L.
+                l(j, i) = a(j, i) - sum;
             }
 
-            // for(std::size_t j(i + 1); j < n; ++j)
+            // Itera sulle colonne, partendo da `i`.
             for(std::size_t j(i); j < n; ++j)
             {
+                // Sommatoria.
                 T0 sum(0);
-                // for(std::size_t k(0); k < n; ++k)
                 for(std::size_t k(0); k < i; ++k)
                 {
-                    sum += m(i, k) * u(k, j);
+                    sum += l(i, k) * u(k, j);
                 }
 
-                assert(m(i, i) != 0);
-
-                u(i, j) = (a(i, j) - sum) / m(i, i);
+                // Setta valore della matrice U.
+                assert(l(i, i) != 0);
+                u(i, j) = (a(i, j) - sum) / l(i, i);
             }
         }
 
-        return std::make_tuple(std::move(m), std::move(u));
+        // Restituisci una tupla (l, u).
+        return std::make_tuple(std::move(l), std::move(u));
     }
 
+    // Dettagli di implementazione matrice di Wilkinson.
     namespace impl
     {
-
         template <typename T0, std::size_t TDim, typename TF>
         auto make_wilkinson_matrix_impl(TF&& f)
         {
+            // L'ordine deve essere dispari.
             static_assert(is_odd(TDim), "");
 
             matrix<T0, TDim, TDim> m;
 
-            // set diagonal
+            // Setta la diagonale.
             for(auto k(0); k < TDim; ++k)
             {
                 m(k, k) = f(k);
             }
 
+            // Setta valori adiacenti alla diagonale principale.
             for(auto k(0); k < TDim - 1; ++k)
             {
                 m(k + 1, k) = 1;
@@ -260,60 +275,89 @@ namespace nc
 
             return m;
         }
+
+        // Calcolo di default (con segno) della matrice di Wilkinson.
+        template <std::size_t TDim>
+        auto make_wilkinson_calc()
+        {
+            return [](auto k)
+            {
+                return std::floor((int)k - ((int)TDim / 2));
+            };
+        }
     }
 
+    // Genera una matrice di Wilkinson con il segno.
     template <typename T0, std::size_t TDim>
     auto make_wilkinson_m_matrix()
     {
-        return impl::make_wilkinson_matrix_impl<T0, TDim>([](auto k)
-            {
-                return std::floor((int)k - ((int)TDim / 2));
-            });
+        auto calc = impl::make_wilkinson_calc<TDim>();
+        return impl::make_wilkinson_matrix_impl<T0, TDim>(calc);
     }
 
+    // Genera una matrice di Wilkinson con valore assoluto.
     template <typename T0, std::size_t TDim>
     auto make_wilkinson_p_matrix()
     {
-        return impl::make_wilkinson_matrix_impl<T0, TDim>([](auto k)
-            {
-                return std::abs(std::floor((int)k - ((int)TDim / 2)));
-            });
+        // Compone la funzione `abs` con `calc`.
+        auto calc = impl::make_wilkinson_calc<TDim>();
+        auto wrapped_calc = [&calc](auto k)
+        {
+            return std::abs(calc(k));
+        };
+
+        return impl::make_wilkinson_matrix_impl<T0, TDim>(wrapped_calc);
     }
 
-    auto lagrange_interpolator(
-        const std::vector<float>& x, const std::vector<float>& fx)
+    // Genera un interpolatore di Lagrange.
+    template <typename TVector>
+    auto lagrange_interpolator(const TVector& x, const TVector& fx)
     {
+        // Verifica validità dei campioni.
+        static_assert(vector_dimension(x) == vector_dimension(fx), "");
+        static_assert(vector_dimension(x) > 0, "");
+
+        // Restituisce la funzione interpolante.
         return [x, fx](float value)
         {
-            if(fx.size() != x.size() || (x.size() == 0))
-            {
-                return 0.f;
-            }
+            // Numero dei campioni.
+            constexpr auto x_size = vector_dimension(x);
 
+            // Accumulatore del risultato.
             float result = 0;
 
-            float up, down;
-            for(int i = 0; i < x.size(); i++)
+            // Esecuzione formula.
+            float num, den;
+            for(int i = 0; i < x_size; i++)
             {
-                up = down = 1;
-                for(int j = 0; j < x.size(); j++)
-                {
-                    if(j != i)
+                num = den = 1;
+
+                // Salta caso `i == j`.
+                loop_skipping(0, x_size, i, [&num, &den, &x, i, value](auto j)
                     {
-                        up *= (value - x[j]);
-                        down *= (x[i] - x[j]);
-                    }
-                }
-                result += ((up / down) * fx[i]);
+                        num *= (value - access_column_vector(x, j));
+                        den *= (access_column_vector(x, i) -
+                                access_column_vector(x, j));
+                    });
+
+                result += (num / den) * access_column_vector(fx, i);
             }
 
             return result;
         };
     }
 
+    // Genera un interpolatore monomiale.
     template <std::size_t TN, typename TXV, typename TFXV>
     auto monomial_interpolator(const TXV& x, const TFXV& fx)
     {
+        // Verifica validità dei campioni.
+        static_assert(vector_dimension(x) == vector_dimension(fx), "");
+        static_assert(vector_dimension(x) > 0, "");
+
+        // Crea matrice di Vandermonde con grado `TN`.
+        // La matrice rappresenta un sistema lineare.
+        // I coefficenti della matrice sono ottenuti dal vettore `x`.
         auto vmm = impl::make_vandermonde_matrix<float, TN, TN + 1>(
             [](auto& v, auto i)
             {
@@ -321,111 +365,153 @@ namespace nc
             },
             x);
 
+        // Setta i termini noti del sistema lineare di Vandermonde.
         for(auto k(0); k < TN; ++k)
         {
             vmm(k, TN) = access_column_vector(fx, k);
         }
 
+        // Risolvi il sistema con il metodo Gauss.
+        // Troviamo così i coefficenti del polinomio interpolatore.
         auto solved_vmm = vmm.solve_gauss();
 
-
-
+        // TODO:
+        /*
         for(auto k(0); k < TN; ++k)
         {
             std::cout << access_column_vector(solved_vmm, k) << "\n";
         }
+        */
 
+        // Restiusce la funzione interpolatrice.
         return [=](auto value)
         {
+            // Accumulatore del risultato.
             float acc = 0;
 
             for(auto k(0); k < TN; ++k)
             {
+                // `k`-esimo coefficiente.
                 auto coeff = solved_vmm(0, k);
+
+                // Calcola il monomio di grado `k`.
                 acc += coeff * std::pow(value, k);
             }
+
+            return acc;
         };
     }
 
-    auto newton_interpolator(std::vector<float> x, std::vector<float> fx)
+    template <typename TVector>
+    auto newton_interpolator(TVector x, TVector fx)
     {
-        auto n = x.size();
+        // Verifica validità dei campioni.
+        static_assert(vector_dimension(x) == vector_dimension(fx), "");
+        static_assert(vector_dimension(x) > 0, "");
 
-        std::vector<std::vector<double>> table;
-        table.resize(n);
-        for(auto& t : table) t.resize(n + 1);
+        // Numero di campioni.
+        constexpr auto n = vector_dimension(x);
 
-        for(auto& c : table)
-            for(auto& k : c) k = -99;
+        // Tabella delle differenze divise.
+        matrix<double, n, n + 1> table;
 
+        // Generazione della tabella: prime due colonne.
         for(int i = 0; i < n; ++i)
         {
-            table[i][0] = x[i];
-            table[i][1] = fx[i];
+            // Colonna 0: valori di `x`.
+            table(i, 0) = access_column_vector(x, i);
+
+            // Colonna 1: valori di `fx`.
+            table(i, 1) = access_column_vector(fx, i);
         }
 
+        // Generazione della tabella: resto delle colonne.
+        // Esegue l'algoritmo delle differenze divise.
         for(int c = 2; c < n + 1; ++c)
         {
+            // Riga corrente.
             int curr = 0;
 
             for(int r = c - 1; r < n; ++r)
             {
+                // Indici precedenti riga/colonna.
                 auto prev_r = r - 1;
                 auto prev_c = c - 1;
 
-                auto prev0 = table[r][prev_c];
-                auto prev1 = table[prev_r][prev_c];
+                // Valori precedenti numeratore.
+                auto prev0 = table(r, prev_c);
+                auto prev1 = table(prev_r, prev_c);
+
+                // Differenza dei valori precedenti.
+                // (Numeratore.)
                 auto num = prev0 - prev1;
 
-                auto den_v0 = table[r][0];
-                auto den_v1 = table[curr][0];
+                // Valori precedenti denominatore.
+                auto den_v0 = table(r, 0);
+                auto den_v1 = table(curr, 0);
+
+                // Differenza dei valori precedenti.
+                // (Denominatore.)
                 auto den = den_v0 - den_v1;
 
+                // Divisione delle differenze.
                 auto frac = num / den;
 
-                std::cout << r << ", " << c << " -> " << frac << "\n";
-                table[r][c] = frac;
+                // TODO:
+                // std::cout << r << ", " << c << " -> " << frac << "\n";
 
+                table(r, c) = frac;
                 ++curr;
             }
         }
 
+        // TODO:
+        /*
         for(int ix = 0; ix < n; ++ix)
         {
             for(int iy = 0; iy < n + 1; ++iy)
             {
-                std::cout << table[ix][iy] << "\t";
+                std::cout << table(ix, iy) << "\t";
             }
 
             std::cout << "\n";
         }
+        */
 
-        return [=](auto value)
+        // Restituisce la funzione interpolatrice.
+        return [n, table, x](auto value)
         {
+            // Restituisce l'`u`-esimo coefficiente.
             auto uesimo = [=](auto u)
             {
-                std::cout << "uesimo(" << u << ") = " << table[u][u + 1]
-                          << "\n";
+                // TODO:
+                /*
+                    std::cout << "uesimo(" << u << ") = " << table(u, u + 1)
+                              << "\n";
+                */
 
-                return table[u][u + 1];
+                return table(u, u + 1);
             };
 
+            // Accumulatore del risultato.
             double acc = 0;
 
+            // Itera sul grado.
             for(int i = 0; i < n; ++i)
             {
+                // Accumulatore dei fattori interni.
                 double pacc = 1;
                 for(int j = 0; j < i; ++j)
                 {
-                    // pacc *= value - table[j][0];
-                    pacc *= value - x[j];
+                    pacc *= value - access_column_vector(x, j);
                 }
 
-                // TODO: test e pulizia
-
-                // std::cout << "pacc = " << pacc << "\n";
-
                 acc += uesimo(i) * pacc;
+
+                // Esempio:
+                // `(x-x0)(x-x1) * f[x0,x1,x2]`
+                // Il `pacc` equivale a: `(x-x0)(x-x1)`.
+                // L'`uesimo` equivale a: `f[x0,x1,x2]`.
             }
 
             return acc;

@@ -39,6 +39,8 @@ namespace nc
     class matrix
     {
     public:
+        using value_type = T0;
+
         // Restituisce il numero delle righe.
         constexpr static auto row_count() noexcept { return TRowCount; }
 
@@ -403,12 +405,16 @@ namespace nc
             return arma::norm(m, 2);
         }
 
-        // Calcolo della norma 2.
-        // (Utilizza la libreria "Eigen".)
+        // Calcolo della norma di Frobenius.
         auto norm_frobenius() const noexcept
         {
-            // TODO: implement manually
-            return as_mapped_eigen().norm();
+            double acc(0);
+            for(auto k(0); k < order(); ++k)
+            {
+                acc += std::pow((*this)(k, k), 2);
+            }
+
+            return std::sqrt(acc);
         }
 
         // Restituisce l'ordine della matrice. Se la matrice non è quadrata,
@@ -430,27 +436,25 @@ namespace nc
             std::size_t target_row(0);
 
             // Iteriamo sulle nostre righe.
-            for(auto i(0); i < order(); ++i)
-            {
-                // TODO: remove check?
-                // Saltiamo la riga desiderata.
-                if(i == row_to_skip) continue;
-
-                // Iteriamo sulle nostre colonne.
-                target_column = 0;
-                for(auto j(0); j < order(); ++j)
+            loop_skipping(0, order(), row_to_skip, [&](auto i)
                 {
-                    // TODO: remove check?
-                    // Saltiamo la colonna desiderata.
-                    if(j == column_to_skip) continue;
+                    target_column = 0;
 
-                    // Settiamo il valore nella matrice nuova.
-                    result(target_row, target_column) = (*this)(i, j);
-                    ++target_column;
-                }
+                    auto set_inner_column = [&](auto j)
+                    {
+                        // Settiamo il valore nella matrice nuova.
+                        result(target_row, target_column) = (*this)(i, j);
+                        ++target_column;
+                    };
 
-                ++target_row;
-            }
+                    // Iteriamo sulle nostre colonne.
+                    // Loop che salta la j-esima colonna.
+                    // Setta i valori della matrice `result`.
+                    loop_skipping(
+                        0, this->order(), column_to_skip, set_inner_column);
+
+                    ++target_row;
+                });
 
             return result;
         }
@@ -588,17 +592,23 @@ namespace nc
                 // Rende `0` tutti gli elementi sotto il pivot corrente.
                 for(auto k(i + 1); k < n; k++)
                 {
-                    // TODO: review with pseudocode
-
+                    // Calcoliamo il fattore di annullamento dell'elemento `(k,
+                    // i)` sotto il pivot.
                     auto c(-a(k, i) / a(i, i));
+
+                    // Itera sui valori sotto il pivot.
                     for(auto j(i); j < n + 1; j++)
                     {
                         if(i == j)
                         {
+                            // Se ci troviamo sulla diagonale, possiamo settare
+                            // il valore sotto il pivot direttamente a zero.
                             a(k, j) = 0;
                         }
                         else
                         {
+                            // Altrimenti, usiamo il fattore di annullamento per
+                            // azzerare i valori sotto il pivot.
                             a(k, j) += c * a(i, j);
                         }
                     }
@@ -612,7 +622,12 @@ namespace nc
             // La matrice `a` adesso è triangolare superiore.
             for(int i(n - 1); i >= 0; i--)
             {
+                // Setta `i`-esimo risultato.
+                // `a(i, n)` è inizialmente un termine noto.
+                // `a(i, i)` è inizialmente il coefficiente di un'incognita.
                 x(i, 0) = a(i, n) / a(i, i);
+
+                // Backward substitution.
                 for(int k(i - 1); k >= 0; k--)
                 {
                     a(k, n) -= a(k, i) * x(i, 0);
@@ -623,143 +638,107 @@ namespace nc
         }
 
         // Risolvi un sistema lineare tramite il metodo di Jacobi.
-        auto solve_jacobi() const noexcept
+        auto solve_jacobi(std::size_t max_iterations = 100000,
+            accuracy_type accuracy = 0.0001) const noexcept
         {
             // La matrice deve avere una colonna in più delle righe.
             // (La colonna dei termini noti.)
             static_assert(column_count() == row_count() + 1, "");
-            constexpr auto n(TRowCount);
+            constexpr auto n(row_count());
 
-            // Tipo per gestire la precisione.
-            using accuracy_type = double;
+            // Inizializza i vettori delle soluzioni.
+            using vector_type = matrix<accuracy_type, n, 1>;
+            vector_type temp_solution;
+            vector_type solution = temp_solution;
 
-            // Precisione.
-            accuracy_type accuracy(0.0001);
-
-            // Divergenza massima corrente.
-            accuracy_type max_divergence(0);
-
-            // TODO:
-            std::vector<double> newSolution(n, 0);
-            std::vector<double> solution = newSolution;
-
-            do
-            {
-                // Inizialmente setta la divergenza massima come il minor
-                // possibile valore rapprentabile.
-                max_divergence = std::numeric_limits<accuracy_type>::lowest();
-
-                // Itera sulle righe.
-                for(int i = 0; i < row_count(); i++)
+            divergence_loop(max_iterations, accuracy,
+                [this, &solution, &temp_solution, n](auto& max_divergence)
                 {
-                    // Prende l'i-esimo valore della riga.
-                    auto x((*this)(i, n));
-
-                    // Itera sulle colonne.
-                    for(int j = 0; j < n; j++)
+                    // Itera sulle righe.
+                    for(std::size_t i(0); i < TRowCount; i++)
                     {
-                        // Se `i == j`, salta l'iterazione.
-                        if(i == j) continue;
+                        // Prende l'i-esimo valore della riga.
+                        auto x((*this)(i, n));
 
-                        // TODO:
-                        x -= (*this)(i, j) * solution[j];
+                        // Itera sulle colonne, saltando `i == j`.
+                        loop_skipping(0, n, i, [&](auto j)
+                            {
+                                // Formula della sommatoria.
+                                x -= (*this)(i, j) * solution(j, 0);
+                            });
+
+                        // Parte finale della formula.
+                        x /= (*this)(i, i);
+
+                        // Setta la `i`-esima soluzione a `x`.
+                        temp_solution(i, 0) = x;
+
+                        // Aggiorna la divergenza massima se necessario.
+                        update_max_divergence(
+                            i, temp_solution, solution, max_divergence);
                     }
 
-                    x /= (*this)(i, i);
-                    newSolution[i] = x;
-
-                    // Calcola la divergenza tra la soluzione corrente e quella
-                    // precedente.
-                    auto divergence(std::fabs(solution[i] - newSolution[i]));
-
-                    // Aggiorna la divergenza massima se necessario.
-                    max_divergence = std::max(max_divergence, divergence);
-                }
-
-
-                // TODO:
-                for(auto j : solution) std::cout << j << " ";
-                std::cout << "\n divergence:  " << max_divergence << "\n\n";
-
-                // Sostituisce la soluzione precendente con quella corrente.
-                solution = newSolution;
-            } while(max_divergence > accuracy);
-
-            // TODO: verificare divergenza -> no soluzioni
+                    // Sostituisce la soluzione precendente con quella corrente.
+                    solution = temp_solution;
+                });
 
             return solution;
         }
 
         template <typename TSolutions>
-        auto solve_gauss_seidel(TSolutions phi)
+        auto solve_gauss_seidel(TSolutions phi,
+            std::size_t max_iterations = 100000,
+            accuracy_type accuracy = 0.0001)
         {
             // La matrice deve avere una colonna in più delle righe.
             // (La colonna dei termini noti.)
             static_assert(column_count() == row_count() + 1, "");
-            constexpr auto n(TRowCount);
+            constexpr auto n(row_count());
 
-            // Tipo per gestire la precisione.
-            using accuracy_type = double;
-
-            // Precisione.
-            accuracy_type accuracy(0.0001);
-
-            // Divergenza massima corrente.
-            accuracy_type max_divergence(0);
-
-            // TODO:
-            auto old_phi = phi;
+            // Inizializza i vettori delle soluzioni.
+            using vector_type = TSolutions;
+            TSolutions temp_phi = phi;
             double sigma;
 
-            do
-            {
-                // Inizialmente setta la divergenza massima come il minor
-                // possibile valore rapprentabile.
-                max_divergence = std::numeric_limits<accuracy_type>::lowest();
-
-                // Itera sulle righe.
-                for(int i = 0; i < n; ++i)
+            divergence_loop(max_iterations, accuracy,
+                [this, &phi, &temp_phi, &sigma, n](auto& max_divergence)
                 {
-                    // TODO:
-                    sigma = 0.0;
-
-                    // Itera sulle colonne.
-                    for(int j = 0; j < n; ++j)
+                    // Itera sulle righe.
+                    for(int i = 0; i < n; ++i)
                     {
-                        // Se `i == j`, salta l'iterazione.
-                        if(i == j) continue;
+                        // Accumulatore sommatoria.
+                        sigma = 0.0;
 
-                        sigma += (*this)(i, j) * phi[j];
+                        // Itera sulle colonne.
+                        loop_skipping(0, n, i, [&](auto j)
+                            {
+                                // Formula della sommatoria.
+                                sigma += (*this)(i, j) * phi(j, 0);
+                            });
+
+                        phi(i, 0) = ((*this)(i, n) - sigma) / (*this)(i, i);
+
+                        // Aggiorna la divergenza massima se necessario.
+                        update_max_divergence(i, temp_phi, phi, max_divergence);
                     }
 
-                    phi[i] = (1.0 / ((*this)(i, i))) * ((*this)(i, n) - sigma);
+                    // Sostituisce la soluzione precendente con quella corrente.
+                    temp_phi = phi;
+                });
 
-                    // Calcola la divergenza tra la soluzione corrente e quella
-                    // precedente.
-                    auto divergence(std::fabs(phi[i] - old_phi[i]));
-
-                    // Aggiorna la divergenza massima se necessario.
-                    max_divergence = std::max(max_divergence, divergence);
-                }
-
-                // Sostituisce la soluzione precendente con quella corrente.
-                old_phi = phi;
-            } while(max_divergence > accuracy);
-
-            // TODO:
-            for(auto kk : phi) std::cout << kk << " | ";
-            std::cout << "\n";
-
-            // TODO: verificare divergenza -> no soluzioni
             return phi;
         }
 
-        // TODO: usa il nostro vettore
-        auto solve_gauss_seidel()
+        auto solve_gauss_seidel(std::size_t max_iterations = 100000,
+            accuracy_type accuracy = 0.0001)
         {
-            constexpr auto n(TRowCount);
-            std::vector<double> phi(n, 0);
-            return solve_gauss_seidel(phi);
+            constexpr auto n(row_count());
+
+            // Inizializza i vettori delle soluzioni.
+            using vector_type = matrix<accuracy_type, n, 1>;
+            vector_type phi;
+
+            return solve_gauss_seidel(phi, max_iterations, accuracy);
         }
     };
 }

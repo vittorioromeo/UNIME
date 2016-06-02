@@ -541,3 +541,123 @@
 * **Read-only optimization**: if an RM only needs to read, it will not influence the transaction's result - it can be ignored during second phase.
 
 * TODO: other commits, replication, cooperation
+
+
+### Other commit protocols
+
+* The biggest issue with the 2-phase protocol is that an RM can become stuck if the TM drops.
+
+    * The following protocols don't have this issue but are less performant.
+
+#### 4-phase commit protocol
+
+* The TM process can be replicated by a **backup process** on a different node.
+
+    * On every phase, the TM first communicates with the backup, then with the RMs.
+
+
+#### 3-phase commit protocol
+
+* After receiving `ready` from every RM, the TM has an additional **pre-commit** state.
+
+    * If the TM drops during that state, any RM can become the TM, because every RM has to be `ready`.
+
+* Unusable in practice due to widened uncertainty interval and atomicity issues in case of network partitioning.
+
+
+#### Paxos commit
+
+* More general goal: have nodes "agree" on a specific value in case of malfunction.
+
+* Three node categories:
+
+    * Proponent.
+
+    * Acceptor.
+
+    * Receiver.
+
+* Three phases:
+
+    1. Election of a coordinator.
+
+    2. Acceptors agree on a value.
+
+    3. The value is propagated to receivers.
+
+* Algorithm:
+
+    1. The coordinator sends $n$ `prepare` messages to participants.
+
+    2. Every participant sends `ready` to coordinator and to $f$ acceptors.
+
+    3. Every acceptor sends its state using $f$ messages.
+
+    4. Coordinator and acceptors are $f + 1$ nodes that know the state of the transaction. Any malfunction in $f$ is not a problem.
+
+
+#### X-Open DTP
+
+* Guarantees interoperability of transactions on different DBMSs.
+
+* Two main interfaces:
+
+    1. **TM-interface**: between client and TM. 
+
+        * `tm_xxx` functions.
+
+    2. **XA-interface**: between TM and RM.
+
+        * Database vendors must guarantee XA-interface availability.
+
+        * `xa_xxx` functions.
+
+* Features:
+
+    * RMs are passive. All control is in TM, which uses RPCs to enable RM functions.
+
+    * Uses 2-phase commit with aforementioned optimizations.
+
+    * **Heuristical decisions** are taken, which can harm atomiticy *(notifying clients)*.
+
+
+## DBMS replication
+
+* A **data replicator** handles replication and **synchronization** between copies.
+
+    * Copies are updated asynchronously *(no commit protocols)*.
+
+* Replication data can be **batched** and reconciled with the copies all at once.
+
+* **Multidatabase systems**: tree hierarchies of **dispatchers** and multiple DBs behind a single interface.
+
+
+
+# Parallel DBMSs and cloud architectures
+
+## Parallelism
+
+* Ideally speeds up computation by a factor of $1 / n$.
+
+* Two types:
+
+    1. **Inter-query**: different queries ran in parallel.
+
+    2. **Intra-query**: parts of the same query *(subqueries)* ran in parallel.
+
+### Relationship with data fragmentation
+
+* Data fragments are in different locations, which can be associated to different processors.
+
+
+### Speed-up and scale-up
+
+* **Speed-up**: only related to inter-query parallelism. Measures $\mathit{tps}$ as the number of processors grows.
+
+* **Scale-up**: related to both parallelism types. Measures $\frac{\mathit{cost}}{\mathit{tps}}$ aas the number of processors grows.
+
+
+
+## Cloud computing architectures
+
+TODO:

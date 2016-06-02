@@ -15,6 +15,7 @@ pdf:
 	-V fontsize=12pt \
 	-V papersize=a4paper \
 	-V documentclass:report \
+	-V geometry:margin=2.5cm \
 	-N \
 	--latex-engine=xelatex \
 	--verbose

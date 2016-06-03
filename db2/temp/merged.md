@@ -733,3 +733,243 @@
 ### Apache Hive and Hive QL
 
 * Similar to Pig, but closer to SQL.
+
+
+
+# Cloud computing
+
+TODO: merge previous chapter into this one or viceversa?
+
+TODO: add cloud federations to cloud models 
+
+## Definitions
+
+* **Cloud computing** describes a class of network-based computing:
+
+    * A collection/group of networked hardware, software and infrastructure *(platform)*.
+
+    * Uses the Internet for communication/transport, providing hardware and software services to client.
+
+* The complexity of the platforms is hidden behind simple **APIs**.
+
+* Characteristics:
+
+    * **Remotely hosted**.
+
+    * **Ubiquitous**: services/data available from anywhere.
+
+    * **Commodified**: pay for what you want/need.
+
+    * Common characteristics:
+
+        * Massive scale.
+
+        * Resilient computing.
+
+        * Homogeneity.
+
+        * Geographic distribution.
+
+        * Virtualization.
+
+        * Service-orientation.
+
+        * Low-cost.
+
+        * Security.
+
+    * Essential characteristics:
+
+        * On-demand self-service.
+
+        * Broad network access.
+
+        * Elasticity.
+
+        * Resource pooling.
+
+        * Measured service.
+
+## Service models
+
+### Layers
+
+* From application-focused to infrastructure-focused:
+
+    1. Services.
+
+    2. Application.
+
+    3. Development.
+
+    4. Platform.
+
+    5. Storage.
+
+    6. Hosting.
+
+
+### IaaS
+
+* Provides hardware.
+
+#### Virtualization
+
+* The basis of IaaS.
+
+* **Virtual workspaces**: abstraction over the execution environment.
+
+    * Has specific resource quota and software configuration.
+
+* Implemented on **VMs** *(virtual machines)*.
+
+    * Abstraction of the physical host.
+
+    * Advantages:
+
+        * OS flexibility. Easier deployment.
+
+        * Versioning/backups/migrations.
+
+* A **VMM** *(virtual machine monitor, or hypervisor)* is used to manage multiple VMs on a single machine.
+
+
+### PaaS
+
+* Deploys user-created applications.
+
+* Highly-scalable architecture.
+
+
+### SaaS
+
+* Provides applications.
+
+* *Examples:* Facebook apps, Google apps.
+
+#### Maturity model
+
+* **Level 1**: ad-hoc/custom. One instance per customer.
+
+* **Level 2**: configurable per customer.
+
+* **Level 3**: configurable and multi-tenant-efficient.
+
+* **Level 4**: scalable *(uses load balancer)* level 3.
+
+
+# SQL vs NoSQL
+
+## SQL characteristics
+
+* Data is stored in columns and tables.
+
+* Relationships represented by data.
+
+* DML and DDL.
+
+* Transactions.
+
+    * ACID properties.
+
+* Abstraction from physical layer.
+
+    * Declarative language.
+
+    * Query optimization engine.
+
+## Big data
+
+* Extremely large datasets.
+
+* Challenges:
+
+    * Analysis, capture, searching, storage, transfer, visualization, querying, security.
+
+* Characteristics: **volume**, **velocity** and **variety**.
+
+* Big data **analytics**: capture and analysis processes aiming to find patterns and correlations in huge heterogeneous datasets.
+
+### 3-layer processing architecture
+
+1. Online processing:
+
+    * Real-time data capture/processing.
+
+    * Deals with **velocity**:
+
+        * Algorithms need to be simple and fast.
+
+2. Nearline processing:
+
+    * Database-oriented.
+
+    * Handles data storage and some processing *(slightly more complex than online processing)*.
+
+3. Offline processing:
+
+    * Batch heavy-procesing of data.
+
+
+### Lambda architecture
+
+* Principles:
+    
+    1. **Human fault-tolerance**: data needs to survive human errors and hardware faults.
+
+    2. **Data immutability**: no updates/deletes.
+
+    3. **Recomputation**: recomputing previous results must always be possible.
+
+
+* Levels: 
+
+    1. **Batch layer**: stores the master dataset and computes **views** *(pre-computing)* using MapReduce algorithms.
+
+    2. **Speed layer**: computes **real-time** views only with new data, not total data. Uses an **incremental model**. 
+
+    3. **Serving layer**: output of the batch layer. Handles view indexing and provides views to the query system.
+
+        * The query system uses both batch and speed views.
+
+
+
+
+## NoSQL
+
+* Class of non-relational data storage systems.
+
+    * Types:
+
+        * Document store. *Example:* **MongoDB**.
+
+        * Column based. *Example:* **Cassandra**.
+
+        * Graph. *Example:* **Neo4j**.
+
+        * Key-value.
+
+* Usually do not require fixed schema and do not use joins.
+
+    * Can be distributed.
+
+* One or more ACID properties are relaxed.
+
+    * **BASE** transactions:
+
+        * Basically available.
+
+        * Soft state.
+
+        * Eventually consistent.
+
+    * Brewer's **CAP** theorem: a distributed system can support only two of the following:
+
+        * Consistency.
+
+        * Availability.
+
+        * Partition tolerance.
+
+* Compared to SQL: higher scalability and flexibility.
+

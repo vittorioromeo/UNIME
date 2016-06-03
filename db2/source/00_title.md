@@ -12,7 +12,7 @@
         Vittorio Romeo
 
         \vspace{1.5cm}
-      
+
     \end{center}
 \end{titlepage}
 

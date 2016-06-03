@@ -9,6 +9,7 @@ OUTPUTDIR=$(BASEDIR)/output
 pdf:
 	pp -en "$(INPUTDIR)"/**.md > "$(TEMPDIR)"/merged.md
 	pandoc "$(TEMPDIR)"/merged.md \
+	--toc-depth=4 \
 	-S \
 	-o "$(OUTPUTDIR)/out.pdf" \
 	--highlight-style pygments \

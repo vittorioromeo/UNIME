@@ -16,6 +16,9 @@
     \end{center}
 \end{titlepage}
 
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
+
 \tableofcontents
 
 \newpage

@@ -141,6 +141,8 @@ TODO: consider merging with 15
 
 * Examples: SimpleDB, Riak.
 
+* Use for: storing session information, user profiles, shopping carts.
+
 
 
 ### Document stores
@@ -155,6 +157,7 @@ TODO: consider merging with 15
 
 * Examples: CouchDB, MongoDB, SimpleDB.
 
+* Use for: event logging, CMSs, analytics, e-commerce.
 
 #### MongoDB
 
@@ -163,6 +166,7 @@ TODO: consider merging with 15
 * Multiple documents are grouped in **collections**.
 
 * Collections can be queried/mutated by specific field filters.
+
 
 
 
@@ -194,11 +198,11 @@ TODO: consider merging with 15
 
 * A **column** is a **tuple** with name, value and timestamp.
 
-    * A **super column** contains more columns.
+    * A **super column** contains more columns.d
 
 * A **key** is a name of a record.
 
-
+* Use for: CMSs, blogging platforms, event logging.
 
 ### Graph database
 

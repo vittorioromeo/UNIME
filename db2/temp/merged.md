@@ -545,8 +545,6 @@
 
 * **Read-only optimization**: if an RM only needs to read, it will not influence the transaction's result - it can be ignored during second phase.
 
-* TODO: other commits, replication, cooperation
-
 
 ### Other commit protocols
 
@@ -665,7 +663,39 @@
 
 ## Cloud computing architectures
 
+* **Cloud computing** describes a class of network-based computing:
+
+    * A collection/group of networked hardware, software and infrastructure *(platform)*.
+
+    * Uses the Internet for communication/transport, providing hardware and software services to client.
+
+* The complexity of the platforms is hidden behind simple **APIs**.
+
 ### Classification
+
+#### Characteristics
+
+* **Remotely hosted**.
+
+* **Ubiquitous**: services/data available from anywhere.
+
+* **Commodified**: pay for what you want/need.
+
+* Massive scale.
+
+* Resilient computing.
+
+* Homogeneity.
+
+* Geographic distribution.
+
+* Virtualization.
+
+* Service-orientation.
+
+* Low-cost.
+
+* Security.
 
 #### Features
 
@@ -673,7 +703,7 @@
 
 * **Remote access**.
 
-* **Service measuring**: architectural resources are rented using costs depending onuse.
+* **Measured services**: architectural resources are rented using costs depending on use.
 
 * **Elasticity**.
 
@@ -690,14 +720,78 @@
 
 * **Hybrid cloud**: private cloud that use public services when needed.
 
+* **Cloud federations**.
 
-#### Service models
 
-* **SaaS**: clients rent finished applications.
+### Service models
+
+#### Layers
+
+* From application-focused to infrastructure-focused:
+
+    1. Services.
+
+    2. Application.
+
+    3. Development.
+
+    4. Platform.
+
+    5. Storage.
+
+    6. Hosting.
+
+#### IaaS
+
+* **IaaS**: clients rent only hardware resources.
+
+##### Virtualization
+
+* The basis of IaaS.
+
+* **Virtual workspaces**: abstraction over the execution environment.
+
+    * Has specific resource quota and software configuration.
+
+* Implemented on **VMs** *(virtual machines)*.
+
+    * Abstraction of the physical host.
+
+    * Advantages:
+
+        * OS flexibility. Easier deployment.
+
+        * Versioning/backups/migrations.
+
+* A **VMM** *(virtual machine monitor, or hypervisor)* is used to manage multiple VMs on a single machine.
+
+
+#### PaaS
 
 * **PaaS**: clients rent hardware resources and base software.
 
-* **IaaS**: clients rent only hardware resources.
+* Deploys user-created applications.
+
+* Highly-scalable architecture.
+
+#### SaaS
+
+* **SaaS**: clients rent finished applications.
+
+* Provides applications.
+
+* *Examples:* Facebook apps, Google apps.
+
+
+##### Maturity model
+
+* **Level 1**: ad-hoc/custom. One instance per customer.
+
+* **Level 2**: configurable per customer.
+
+* **Level 3**: configurable and multi-tenant-efficient.
+
+* **Level 4**: scalable *(uses load balancer)* level 3.
 
 
 ### Google ecosystem
@@ -795,129 +889,6 @@
 * Similar to Pig, but closer to SQL.
 
 
-
-# Cloud computing
-
-TODO: merge previous chapter into this one or viceversa?
-
-TODO: add cloud federations to cloud models 
-
-## Definitions
-
-* **Cloud computing** describes a class of network-based computing:
-
-    * A collection/group of networked hardware, software and infrastructure *(platform)*.
-
-    * Uses the Internet for communication/transport, providing hardware and software services to client.
-
-* The complexity of the platforms is hidden behind simple **APIs**.
-
-* Characteristics:
-
-    * **Remotely hosted**.
-
-    * **Ubiquitous**: services/data available from anywhere.
-
-    * **Commodified**: pay for what you want/need.
-
-    * Common characteristics:
-
-        * Massive scale.
-
-        * Resilient computing.
-
-        * Homogeneity.
-
-        * Geographic distribution.
-
-        * Virtualization.
-
-        * Service-orientation.
-
-        * Low-cost.
-
-        * Security.
-
-    * Essential characteristics:
-
-        * On-demand self-service.
-
-        * Broad network access.
-
-        * Elasticity.
-
-        * Resource pooling.
-
-        * Measured service.
-
-## Service models
-
-### Layers
-
-* From application-focused to infrastructure-focused:
-
-    1. Services.
-
-    2. Application.
-
-    3. Development.
-
-    4. Platform.
-
-    5. Storage.
-
-    6. Hosting.
-
-
-### IaaS
-
-* Provides hardware.
-
-#### Virtualization
-
-* The basis of IaaS.
-
-* **Virtual workspaces**: abstraction over the execution environment.
-
-    * Has specific resource quota and software configuration.
-
-* Implemented on **VMs** *(virtual machines)*.
-
-    * Abstraction of the physical host.
-
-    * Advantages:
-
-        * OS flexibility. Easier deployment.
-
-        * Versioning/backups/migrations.
-
-* A **VMM** *(virtual machine monitor, or hypervisor)* is used to manage multiple VMs on a single machine.
-
-
-### PaaS
-
-* Deploys user-created applications.
-
-* Highly-scalable architecture.
-
-
-### SaaS
-
-* Provides applications.
-
-* *Examples:* Facebook apps, Google apps.
-
-#### Maturity model
-
-* **Level 1**: ad-hoc/custom. One instance per customer.
-
-* **Level 2**: configurable per customer.
-
-* **Level 3**: configurable and multi-tenant-efficient.
-
-* **Level 4**: scalable *(uses load balancer)* level 3.
-
-
 # SQL vs NoSQL
 
 ## SQL characteristics
@@ -994,58 +965,11 @@ TODO: add cloud federations to cloud models
 
 
 
-
-## NoSQL
-
-* Class of non-relational data storage systems.
-
-    * Types:
-
-        * Document store. *Example:* **MongoDB**.
-
-        * Column based. *Example:* **Cassandra**.
-
-        * Graph. *Example:* **Neo4j**.
-
-        * Key-value.
-
-* Usually do not require fixed schema and do not use joins.
-
-    * Can be distributed.
-
-* One or more ACID properties are relaxed.
-
-    * **BASE** transactions:
-
-        * **Basically available**: failures do not affect the entire system.
-
-        * **Soft state**: data copies may be inconsistent.
-
-        * **Eventually consistent**: consistency is obtained over time.
-
-    * Brewer's **CAP** theorem: a distributed system can support only two of the following:
-
-        * **Consistency**.
-
-        * **Availability**.
-
-        * **Partition tolerance**.
-
-* Compared to SQL: higher scalability and flexibility.
-
-
-
-
 # Oracle and PL/SQL
 
-## Oracle RDMBS
+* **Oracle Database** is an object-relational database management system *(ORDBMS)*.
 
-TODO: ?
-
-
-# PL/SQL
-
-* Also known as **Embedded SQL**.
+* **PL/SQL** is also known as **Embedded SQL**.
 
 * More powerful than pure **SQL**:
 
@@ -1355,7 +1279,45 @@ END;
 
 # NoSQL and NoSQL types
 
-TODO: consider merging with 15
+
+## NoSQL
+
+* Class of non-relational data storage systems.
+
+    * Types:
+
+        * Document store. *Example:* **MongoDB**.
+
+        * Column based. *Example:* **Cassandra**.
+
+        * Graph. *Example:* **Neo4j**.
+
+        * Key-value.
+
+* Usually do not require fixed schema and do not use joins.
+
+    * Can be distributed.
+
+* One or more ACID properties are relaxed.
+
+    * **BASE** transactions:
+
+        * **Basically available**: failures do not affect the entire system.
+
+        * **Soft state**: data copies may be inconsistent.
+
+        * **Eventually consistent**: consistency is obtained over time.
+
+    * Brewer's **CAP** theorem: a distributed system can support only two of the following:
+
+        * **Consistency**.
+
+        * **Availability**.
+
+        * **Partition tolerance**.
+
+* Compared to SQL: higher scalability and flexibility.
+
 
 ## Motivation
 
@@ -1446,7 +1408,6 @@ TODO: consider merging with 15
 
 ## NoSQL types
 
-### Categories
 
 * Key-value stores.
 
@@ -1510,14 +1471,7 @@ TODO: consider merging with 15
 
 * Use for: event logging, CMSs, analytics, e-commerce.
 
-#### MongoDB
-
-* Stores data as nested JSON-like field/value pairs.
-
-* Multiple documents are grouped in **collections**.
-
-* Collections can be queried/mutated by specific field filters.
-
+* *Example:* MongoDB.
 
 
 
@@ -1540,20 +1494,8 @@ TODO: consider merging with 15
 
     * Transparency to application.
 
+* *Example:* Cassandra.
 
-#### Cassandra
-
-* The **keyspace** wraps all keys. Usually the name of the application.
-
-* A **column family** is a structure containing an unlimited number of rows.
-
-* A **column** is a **tuple** with name, value and timestamp.
-
-    * A **super column** contains more columns.d
-
-* A **key** is a name of a record.
-
-* Use for: CMSs, blogging platforms, event logging.
 
 ### Graph database
 
@@ -1561,13 +1503,12 @@ TODO: consider merging with 15
 
 * Interface and query languages vary.
 
-* Examples: Neo4j, FlockDB, Prgel.
+* *Examples:* Neo4j, FlockDB, Prgel.
 
 
 
 # Cassandra
 
-TODO: merge with 17?
 
 ## Background
 
@@ -1608,6 +1549,22 @@ TODO: merge with 17?
 * Columns may be indexed separately from primary key.
 
 * Tables can be altered at runtime without blocking queries.
+
+#### Elements
+
+
+* The **keyspace** wraps all keys. Usually the name of the application.
+
+* A **column family** is a structure containing an unlimited number of rows.
+
+* A **column** is a **tuple** with name, value and timestamp.
+
+    * A **super column** contains more columns.d
+
+* A **key** is a name of a record.
+
+* Use for: CMSs, blogging platforms, event logging.
+
 
 
 ### P2P clustering

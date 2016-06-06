@@ -3,14 +3,9 @@
 
 # Oracle and PL/SQL
 
-## Oracle RDMBS
+* **Oracle Database** is an object-relational database management system *(ORDBMS)*.
 
-* Oracle Database is an object-relational database management system *(ORDBMS)*.
-
-
-# PL/SQL
-
-* Also known as **Embedded SQL**.
+* **PL/SQL** is also known as **Embedded SQL**.
 
 * More powerful than pure **SQL**:
 

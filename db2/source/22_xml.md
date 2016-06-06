@@ -20,7 +20,7 @@
 
 * Defining subelement occurrences:
 
-    ```xml
+    ```dtd
     <!ELEMENT product (description)>
     <!ELEMENT product (description?)>
 
@@ -81,8 +81,8 @@
     * Examples:
 
         ```java
-        doc ("books.xml”)/List/Book 
-        doc ("books.xml”)/List/Book[Editore = ‘Bompiani’]/Title 
+        doc("books.xml”)/List/Book 
+        doc("books.xml”)/List/Book[Editore = ‘Bompiani’]/Title 
         doc("books.xml”)//Author 
         doc("books.xml”)/List/Book[2]/*
         ```
@@ -99,7 +99,7 @@
         ```
 
         ```java
-        for $book in doc ("books.xml”)//Book
+        for $book in doc("books.xml”)//Book
         WHERE $book/Editor = “Bompiani” and $book/@availability = “S”
         return $book
         ```

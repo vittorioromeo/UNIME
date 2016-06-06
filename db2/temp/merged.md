@@ -700,7 +700,63 @@
 * **IaaS**: clients rent only hardware resources.
 
 
-### Hadoop and MapReduce
+### Google ecosystem
+
+#### GFS
+
+* Distributed file system. 
+
+* Two node types: 
+
+    * **Chunk**: nodes that store files. 
+
+        * Every file is 64MB. 
+
+        * Every chunk is assigned to a 64bit partition. 
+
+        * Chunks are periodically replicated. 
+
+    * **Master**: manage chunk metadata, 64bit partition tables, chunk copies locations.
+
+#### MapReduce
+
+* Like Hadoop MapReduce.
+
+#### BigTable
+
+* A **key-value** big data system based on GFS.
+
+#### Chubby
+
+* Manages locks and agreements between nodes.
+
+* A **cell** is a small set of servers *(usually 5)* called replicas. 
+
+    * Replicas use the Paxos protocol to elect a master. 
+
+* Similar to Apache Zookeeper.
+
+
+
+### Hadoop ecosystem and MapReduce
+
+* **Apache Hadoop** is a suite of open-source components which serve as the building blocks of large distributed systems.
+
+    * Focus on gradual, horizontal scaling.
+
+#### ZooKeeper
+
+* **ZooKeeper** is a distributed coordination service which is used when nodes in a distributed system need a single source of truth.
+
+    * Similar to **Google Chubby**.
+
+* Implemented as a single moveable master, with $n$ coordinated nodes. 
+    
+    * A majority $(n/2+1)$ must agree on a write.
+
+    * Reads can be answered by any node.
+
+#### HDFS
 
 * **HDFS**: distributed filesystem developed in Java.
 
@@ -710,6 +766,8 @@
 
     * The main node is called **NameNode**, others are called **workers**.
 
+#### MapReduce
+
 * **MapReduce**: parallel computation model.
     
     * **Jobs** are handled by a **job tracker**.
@@ -717,7 +775,7 @@
     * Jobs assign **tasks**, which are handled by a **task tracker**.
 
 
-### Apache Pig and Pig Latin
+#### Apache Pig and Pig Latin
 
 * Query system based on Hadoop.
 
@@ -732,7 +790,7 @@
 * Example query: `FOREACH table GENERATE attribute0 attribute1;`.
 
 
-### Apache Hive and Hive QL
+#### Apache Hive and Hive QL
 
 * Similar to Pig, but closer to SQL.
 
@@ -959,19 +1017,19 @@ TODO: add cloud federations to cloud models
 
     * **BASE** transactions:
 
-        * Basically available.
+        * **Basically available**: failures do not affect the entire system.
 
-        * Soft state.
+        * **Soft state**: data copies may be inconsistent.
 
-        * Eventually consistent.
+        * **Eventually consistent**: consistency is obtained over time.
 
     * Brewer's **CAP** theorem: a distributed system can support only two of the following:
 
-        * Consistency.
+        * **Consistency**.
 
-        * Availability.
+        * **Availability**.
 
-        * Partition tolerance.
+        * **Partition tolerance**.
 
 * Compared to SQL: higher scalability and flexibility.
 
@@ -2116,3 +2174,107 @@ PRIMARY KEY (email, time_posted));
 * Bad horizonal scalability:
 
     * Read-only scalability: all writes go to master, then fan out.
+
+
+
+# XML
+
+* **XML** *(extensible markup language)* is both a markup language and a meta-language to specify markup languages.
+
+* A data model can be defined using **DTD** or **XSD**.
+
+* Queries can be executed with **Xquery** or **XSL**.
+
+* An XML document is **well-formed** when the syntax is valid.
+
+* An XML document is **valid** when the contents respect a data model *(schema)*.
+
+* Namespaces are handled by using prefixes.
+
+## DTD
+
+* Defining subelement occurrences:
+
+    ```dtd
+    <!ELEMENT product (description)>
+    <!ELEMENT product (description?)>
+
+    <!ELEMENT product_list (product+)>
+    <!ELEMENT product_list (product*)>
+    ```
+
+* Attributes/modifiers:
+
+    * `CDATA`: character data.
+
+    * `ID`: identifier.
+
+    * `IDREF`: this value is an ID of anoter element.
+
+    * `ENTITY`: this value is an entity.
+
+    * `NMTOKEN`: this value is a valid XML name.
+
+* Constraints:
+
+    * `#REQUIRED`.
+
+    * `#IMPLIED`: can be absent.
+
+    * `#FIXED "x"`: value needs to be `x`.
+
+    * `#DEFAULT "x"`.
+
+
+## XSD
+
+* Another schema definition language.
+
+* Compared to DTD:
+
+    * More extensible and richer.
+
+    * Can manage multiple namespaces.
+
+    * Are XML themselves.
+
+
+## XSL
+
+* **Extensible stylesheet language**.
+
+* Specifies how XML output is reprsented.
+
+* **XSLT** *(XSL transformation)* transforms an XML in another XML or a different type *(like HTML)*.
+
+
+
+## Xquery
+
+* Can use **Xpath** expressions to query XML documents.
+
+    * Examples:
+
+        ```java
+        doc("books.xml”)/List/Book 
+        doc("books.xml”)/List/Book[Editore = ‘Bompiani’]/Title 
+        doc("books.xml”)//Author 
+        doc("books.xml”)/List/Book[2]/*
+        ```
+
+* Can use complex **Xquery** expressions combined with Xpath.
+
+    * `FOR`, `LET`, `WHERE`, `ORDER BY`, `RETURN`, `INSERT`, `DELETE`.
+
+    * Examples:
+
+        ```java
+        for $book in doc("books.xml”)//Book
+        return $book
+        ```
+
+        ```java
+        for $book in doc("books.xml”)//Book
+        WHERE $book/Editor = “Bompiani” and $book/@availability = “S”
+        return $book
+        ```

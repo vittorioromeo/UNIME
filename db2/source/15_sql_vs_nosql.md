@@ -100,19 +100,19 @@
 
     * **BASE** transactions:
 
-        * Basically available.
+        * **Basically available**: failures do not affect the entire system.
 
-        * Soft state.
+        * **Soft state**: data copies may be inconsistent.
 
-        * Eventually consistent.
+        * **Eventually consistent**: consistency is obtained over time.
 
     * Brewer's **CAP** theorem: a distributed system can support only two of the following:
 
-        * Consistency.
+        * **Consistency**.
 
-        * Availability.
+        * **Availability**.
 
-        * Partition tolerance.
+        * **Partition tolerance**.
 
 * Compared to SQL: higher scalability and flexibility.
 

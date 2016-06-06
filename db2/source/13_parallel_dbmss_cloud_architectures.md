@@ -64,7 +64,63 @@
 * **IaaS**: clients rent only hardware resources.
 
 
-### Hadoop and MapReduce
+### Google ecosystem
+
+#### GFS
+
+* Distributed file system. 
+
+* Two node types: 
+
+    * **Chunk**: nodes that store files. 
+
+        * Every file is 64MB. 
+
+        * Every chunk is assigned to a 64bit partition. 
+
+        * Chunks are periodically replicated. 
+
+    * **Master**: manage chunk metadata, 64bit partition tables, chunk copies locations.
+
+#### MapReduce
+
+* Like Hadoop MapReduce.
+
+#### BigTable
+
+* A **key-value** big data system based on GFS.
+
+#### Chubby
+
+* Manages locks and agreements between nodes.
+
+* A **cell** is a small set of servers *(usually 5)* called replicas. 
+
+    * Replicas use the Paxos protocol to elect a master. 
+
+* Similar to Apache Zookeeper.
+
+
+
+### Hadoop ecosystem and MapReduce
+
+* **Apache Hadoop** is a suite of open-source components which serve as the building blocks of large distributed systems.
+
+    * Focus on gradual, horizontal scaling.
+
+#### ZooKeeper
+
+* **ZooKeeper** is a distributed coordination service which is used when nodes in a distributed system need a single source of truth.
+
+    * Similar to **Google Chubby**.
+
+* Implemented as a single moveable master, with $n$ coordinated nodes. 
+    
+    * A majority $(n/2+1)$ must agree on a write.
+
+    * Reads can be answered by any node.
+
+#### HDFS
 
 * **HDFS**: distributed filesystem developed in Java.
 
@@ -74,6 +130,8 @@
 
     * The main node is called **NameNode**, others are called **workers**.
 
+#### MapReduce
+
 * **MapReduce**: parallel computation model.
     
     * **Jobs** are handled by a **job tracker**.
@@ -81,7 +139,7 @@
     * Jobs assign **tasks**, which are handled by a **task tracker**.
 
 
-### Apache Pig and Pig Latin
+#### Apache Pig and Pig Latin
 
 * Query system based on Hadoop.
 
@@ -96,6 +154,6 @@
 * Example query: `FOREACH table GENERATE attribute0 attribute1;`.
 
 
-### Apache Hive and Hive QL
+#### Apache Hive and Hive QL
 
 * Similar to Pig, but closer to SQL.

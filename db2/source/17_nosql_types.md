@@ -4,7 +4,45 @@
 
 # NoSQL and NoSQL types
 
-TODO: consider merging with 15
+
+## NoSQL
+
+* Class of non-relational data storage systems.
+
+    * Types:
+
+        * Document store. *Example:* **MongoDB**.
+
+        * Column based. *Example:* **Cassandra**.
+
+        * Graph. *Example:* **Neo4j**.
+
+        * Key-value.
+
+* Usually do not require fixed schema and do not use joins.
+
+    * Can be distributed.
+
+* One or more ACID properties are relaxed.
+
+    * **BASE** transactions:
+
+        * **Basically available**: failures do not affect the entire system.
+
+        * **Soft state**: data copies may be inconsistent.
+
+        * **Eventually consistent**: consistency is obtained over time.
+
+    * Brewer's **CAP** theorem: a distributed system can support only two of the following:
+
+        * **Consistency**.
+
+        * **Availability**.
+
+        * **Partition tolerance**.
+
+* Compared to SQL: higher scalability and flexibility.
+
 
 ## Motivation
 
@@ -95,7 +133,6 @@ TODO: consider merging with 15
 
 ## NoSQL types
 
-### Categories
 
 * Key-value stores.
 
@@ -159,14 +196,7 @@ TODO: consider merging with 15
 
 * Use for: event logging, CMSs, analytics, e-commerce.
 
-#### MongoDB
-
-* Stores data as nested JSON-like field/value pairs.
-
-* Multiple documents are grouped in **collections**.
-
-* Collections can be queried/mutated by specific field filters.
-
+* *Example:* MongoDB.
 
 
 
@@ -189,20 +219,8 @@ TODO: consider merging with 15
 
     * Transparency to application.
 
+* *Example:* Cassandra.
 
-#### Cassandra
-
-* The **keyspace** wraps all keys. Usually the name of the application.
-
-* A **column family** is a structure containing an unlimited number of rows.
-
-* A **column** is a **tuple** with name, value and timestamp.
-
-    * A **super column** contains more columns.d
-
-* A **key** is a name of a record.
-
-* Use for: CMSs, blogging platforms, event logging.
 
 ### Graph database
 
@@ -210,4 +228,4 @@ TODO: consider merging with 15
 
 * Interface and query languages vary.
 
-* Examples: Neo4j, FlockDB, Prgel.
+* *Examples:* Neo4j, FlockDB, Prgel.

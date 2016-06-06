@@ -185,8 +185,6 @@
 
 * **Read-only optimization**: if an RM only needs to read, it will not influence the transaction's result - it can be ignored during second phase.
 
-* TODO: other commits, replication, cooperation
-
 
 ### Other commit protocols
 

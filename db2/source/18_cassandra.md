@@ -4,7 +4,6 @@
 
 # Cassandra
 
-TODO: merge with 17?
 
 ## Background
 
@@ -45,6 +44,22 @@ TODO: merge with 17?
 * Columns may be indexed separately from primary key.
 
 * Tables can be altered at runtime without blocking queries.
+
+#### Elements
+
+
+* The **keyspace** wraps all keys. Usually the name of the application.
+
+* A **column family** is a structure containing an unlimited number of rows.
+
+* A **column** is a **tuple** with name, value and timestamp.
+
+    * A **super column** contains more columns.d
+
+* A **key** is a name of a record.
+
+* Use for: CMSs, blogging platforms, event logging.
+
 
 
 ### P2P clustering

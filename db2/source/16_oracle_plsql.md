@@ -5,7 +5,7 @@
 
 ## Oracle RDMBS
 
-TODO: ?
+* Oracle Database is an object-relational database management system *(ORDBMS)*.
 
 
 # PL/SQL

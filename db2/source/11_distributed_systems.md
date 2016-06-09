@@ -184,11 +184,11 @@
 
     * **Structured**: nodes follow a specific data structure.
 
-        * Example: ring, kd-tree.
+        * *Example:* ring, kd-tree.
 
     * **Unstructured**: nodes choose random neighbors.
 
-        * Example: random graph.
+        * *Example:* random graph.
 
             * Each node has a **partial view** of the network which is shared with random nodes selected periodically, along with data.
 
@@ -204,7 +204,7 @@
 
         * **Superpeers:** few specific nodes.
 
-            * Examples: indexing, coordination, connection setup.
+            * *Examples:* indexing, coordination, connection setup.
 
 * Hybrid architectures *(P2P + client-server)*:
 
@@ -243,4 +243,4 @@
 
 * **Feedback control model**.
 
-    * Example: globule *(collaborative CDN driven by cost model)*.
+    * *Example:* globule *(collaborative CDN driven by cost model)*.

@@ -51,7 +51,7 @@
 
 3. Offline processing:
 
-    * Batch heavy-procesing of data.
+    * Batch heavy-processing of data.
 
 
 ### Lambda architecture

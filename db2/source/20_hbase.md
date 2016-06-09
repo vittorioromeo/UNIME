@@ -108,3 +108,22 @@
     * Durability:
 
         * All visible data is durable data.
+
+## Examples
+
+```sql
+create 'impiegato', 'personali', 'professionali'
+
+scan 'impiegato'
+
+drop 'impiegato'
+
+put 'impiegato', 'row1', 'personali:nome', 'mario'
+
+put 'impiegato', 'row1', 'personali:cognome', 'rossi'
+
+put 'impiegato', 'row1', 'personali:eta', '65'
+
+get 'impiegato', 'row1', {COLUMN => ['personali:nome',
+    'personali:eta']}
+```

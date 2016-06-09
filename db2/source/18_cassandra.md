@@ -160,6 +160,42 @@ PRIMARY KEY (email, time_posted));
     SELECT email FROM users WHERE active = true;
     ```
 
+### Other
+
+```sql
+CREATE KEYSPACE Excelsior WITH replication = 
+    {'class': 'SimpleStrategy', 'replication_factor' : 3};
+
+CREATE KEYSPACE Excalibur WITH replication = 
+    {'class': 'NetworkTopologyStrategy', 'DC1' : 1, 'DC2' : 3}
+
+ALTER KEYSPACE Excelsior WITH replication = 
+    {'class': 'SimpleStrategy', 'replication_factor' : 4};
+
+DROP KEYSPACE Excelsior;
+
+CREATE TABLE timeline (userid uuid,posted_month int,
+    posted_time uuid,body text,posted_by text,
+PRIMARY KEY (userid, posted_month, posted_time)
+) WITH compaction = { 'class' : 'LeveledCompactionStrategy' };
+
+INSERT INTO timeline(userid, posted_month, posted_time, 
+    body, posted_by) VALUES (0, 0, 0, 'mioTesto', ecc ecc);
+
+SELECT * FROM timeline WHERE userid = 0 AND posted_time = 0;
+ALTER TABLE timeline ADD gravesite varchar;
+
+UPDATE timeline SET posted_month = posted_month + 2 
+WHERE userid = 2 AND posted_by = 'Mario';
+
+DELETE posted_by FROM timeline WHERE userid IN (3, 4);
+
+DROP TABLE timeline;
+
+CREATE INDEX userIndex ON timeline (userid);
+
+DROP INDEX userIndex;
+```sql
 
 
 ## Architecture

@@ -64,6 +64,71 @@
     * Are XML themselves.
 
 
+### Example
+
+```xml
+<xs:element name="Attributo" type="xs:string">
+    <xs:attribute name="lang" type="xs:string" 
+        use="required"/>
+</xs:element>
+
+<xs:element name="age">
+    <xs:simpleType>
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="120"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:element>
+
+<xs:element name="car">
+    <xs:simpleType>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Audi"/>
+            <xs:enumeration value="Golf"/>
+            <xs:enumeration value="BMW"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:element>
+
+<xs:complexType name="tipoComplessoMio">
+    <xs:sequence>
+        <xs:element name="firstname" type="xs:string" 
+            minOccurs="0" maxOccurs= "2"/>
+        <xs:element name="lastname" type="xs:string" 
+            minOccurs="2"/>
+    </xs:sequence>
+</xs:complexType>
+<xs:element name="employee" type="tipoComplessoMio"/>
+
+<xs:complexType name="tipoComplessoMioESTESO">
+    <xs:complexContent>
+        <xs:extension base="tipoComplessoMio">
+            <xs:sequence>
+                <xs:element name="address" type="xs:string"/>
+                <xs:element name="city" type="xs:string"/>
+                <xs:element name="country" type="xs:integer"/>
+            </xs:sequence>
+        </xs:extension>
+    </xs:complexContent>
+</xs:complexType>
+<xs:element name="amministratore" type="tipoComplessoMioESTESO"/>
+
+<xs:group name="custGroup">
+    <xs:sequence> 
+        <xs:element name="customer" type="xs:string"/>
+        <xs:element name="orderdetails" type="xs:string"/>
+    </xs:sequence>
+</xs:group>
+
+<xs:complexType name="ordertype"> Riuso di “custGroup”
+    <xs:group ref="custGroup"/>
+    <xs:attribute name="status" type="xs:string"/>
+</xs:complexType>
+<xs:element name="esempioGRUPPO" type="ordertype"/>
+```
+
+
 ## XSL
 
 * **Extensible stylesheet language**.

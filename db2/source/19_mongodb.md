@@ -34,7 +34,9 @@
 
     * Uses **B-trees**.
 
-### Examples
+## Examples
+
+### Basic
 
 * Documents:
 
@@ -82,3 +84,33 @@
     * ```json
     db.users.find( {age: {$in: [23,25]} } )
     ```
+
+### Complex
+
+```json
+db.createCollection(miaCollection, options)
+db.COLLECTION_NAME.drop()
+
+db.miaCollection.insert({name: Mario, sesso:’M’, peso: 450})
+db.miaCollection.find({sesso: ’m’,peso: {$gt: 700}})
+db.miaCollection.update({name: 'Mario'}, {$set: {peso: 590}})
+db.miaCollection.find().sort({peso: -1})
+db.miaCollection.count({peso: {$gt: 50}})
+
+db.employees.insert({
+    _id: ObjectId(”4d85c7039ab0fd70a117d734”),
+    name: ’Ghanima’,
+    scores:[],
+    latlong: [40.0,70.0],
+    family: 
+        {mother: ’Chani’,
+        father: ’Paul’,
+        brother: ObjectId(”4d85c7039ab0fd70a117d730”)
+        }
+    })
+db.employees.find({’family.mother’: ’Chani’})
+db.employees.update({ _id: 1 }, { $push: { scores: 89 } }
+db.employees.find({latlong:{$near: { [40,70], $minDistance: 
+    1000,$maxDistance: 5000 }}})
+```
+

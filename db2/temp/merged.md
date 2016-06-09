@@ -1665,6 +1665,42 @@ PRIMARY KEY (email, time_posted));
     SELECT email FROM users WHERE active = true;
     ```
 
+### Other
+
+```sql
+CREATE KEYSPACE Excelsior WITH replication = 
+    {'class': 'SimpleStrategy', 'replication_factor' : 3};
+
+CREATE KEYSPACE Excalibur WITH replication = 
+    {'class': 'NetworkTopologyStrategy', 'DC1' : 1, 'DC2' : 3}
+
+ALTER KEYSPACE Excelsior WITH replication = 
+    {'class': 'SimpleStrategy', 'replication_factor' : 4};
+
+DROP KEYSPACE Excelsior;
+
+CREATE TABLE timeline (userid uuid,posted_month int,
+    posted_time uuid,body text,posted_by text,
+PRIMARY KEY (userid, posted_month, posted_time)
+) WITH compaction = { 'class' : 'LeveledCompactionStrategy' };
+
+INSERT INTO timeline(userid, posted_month, posted_time, 
+    body, posted_by) VALUES (0, 0, 0, 'mioTesto', ecc ecc);
+
+SELECT * FROM timeline WHERE userid = 0 AND posted_time = 0;
+ALTER TABLE timeline ADD gravesite varchar;
+
+UPDATE timeline SET posted_month = posted_month + 2 
+WHERE userid = 2 AND posted_by = 'Mario';
+
+DELETE posted_by FROM timeline WHERE userid IN (3, 4);
+
+DROP TABLE timeline;
+
+CREATE INDEX userIndex ON timeline (userid);
+
+DROP INDEX userIndex;
+```sql
 
 
 ## Architecture
@@ -1930,7 +1966,9 @@ PRIMARY KEY (email, time_posted));
 
     * Uses **B-trees**.
 
-### Examples
+## Examples
+
+### Basic
 
 * Documents:
 
@@ -1978,6 +2016,36 @@ PRIMARY KEY (email, time_posted));
     * ```json
     db.users.find( {age: {$in: [23,25]} } )
     ```
+
+### Complex
+
+```json
+db.createCollection(miaCollection, options)
+db.COLLECTION_NAME.drop()
+
+db.miaCollection.insert({name: Mario, sesso:’M’, peso: 450})
+db.miaCollection.find({sesso: ’m’,peso: {$gt: 700}})
+db.miaCollection.update({name: 'Mario'}, {$set: {peso: 590}})
+db.miaCollection.find().sort({peso: -1})
+db.miaCollection.count({peso: {$gt: 50}})
+
+db.employees.insert({
+    _id: ObjectId(”4d85c7039ab0fd70a117d734”),
+    name: ’Ghanima’,
+    scores:[],
+    latlong: [40.0,70.0],
+    family: 
+        {mother: ’Chani’,
+        father: ’Paul’,
+        brother: ObjectId(”4d85c7039ab0fd70a117d730”)
+        }
+    })
+db.employees.find({’family.mother’: ’Chani’})
+db.employees.update({ _id: 1 }, { $push: { scores: 89 } }
+db.employees.find({latlong:{$near: { [40,70], $minDistance: 
+    1000,$maxDistance: 5000 }}})
+```
+
 
 
 
@@ -2089,6 +2157,24 @@ PRIMARY KEY (email, time_posted));
 
         * All visible data is durable data.
 
+## Examples
+
+```sql
+create 'impiegato', 'personali', 'professionali'
+
+scan 'impiegato'
+
+drop 'impiegato'
+
+put 'impiegato', 'row1', 'personali:nome', 'mario'
+
+put 'impiegato', 'row1', 'personali:cognome', 'rossi'
+
+put 'impiegato', 'row1', 'personali:eta', '65'
+
+get 'impiegato', 'row1', {COLUMN => ['personali:nome',
+    'personali:eta']}
+```
 
 
 
@@ -2131,6 +2217,33 @@ PRIMARY KEY (email, time_posted));
 * Bad horizonal scalability:
 
     * Read-only scalability: all writes go to master, then fan out.
+
+## Examples
+
+```sql
+CREATE (p1:Profilo1)
+
+CREATE (m:Movie:Cinema:Film:Picture)
+
+CREATE (p1:Profilo1)-[relazione1:LIKES]->(p2:Profilo2)
+
+MATCH (emp:Employee) RETURN emp.empid,emp.name,emp.salary,emp.deptno
+
+MATCH (emp:Employee) WHERE emp.name = 'Abc' RETURN emp
+
+MATCH (emp:Employee) WHERE emp.name = 'Abc' OR emp.name = 'Xyz' RETURN emp
+
+MATCH (cust:Customer),(cc:CreditCard)
+WHERE cust.id = "1001" AND cc.id= "5001" 
+CREATE (cust)-[r:DO_SHOPPING_WITH{shopdate:"12/12/2014"}]->(cc) 
+RETURN r
+
+MATCH (cc:CreditCard)-[r]-(c:Customer)RETURN r 
+
+MATCH (cc: CreditCard)-[rel]-(c:Customer) DELETE cc,c,rel
+
+MATCH (e: Employee) DELETE e
+```
 
 
 
@@ -2194,6 +2307,71 @@ PRIMARY KEY (email, time_posted));
     * Can manage multiple namespaces.
 
     * Are XML themselves.
+
+
+### Example
+
+```xml
+<xs:element name="Attributo" type="xs:string">
+    <xs:attribute name="lang" type="xs:string" 
+        use="required"/>
+</xs:element>
+
+<xs:element name="age">
+    <xs:simpleType>
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="120"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:element>
+
+<xs:element name="car">
+    <xs:simpleType>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Audi"/>
+            <xs:enumeration value="Golf"/>
+            <xs:enumeration value="BMW"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:element>
+
+<xs:complexType name="tipoComplessoMio">
+    <xs:sequence>
+        <xs:element name="firstname" type="xs:string" 
+            minOccurs="0" maxOccurs= "2"/>
+        <xs:element name="lastname" type="xs:string" 
+            minOccurs="2"/>
+    </xs:sequence>
+</xs:complexType>
+<xs:element name="employee" type="tipoComplessoMio"/>
+
+<xs:complexType name="tipoComplessoMioESTESO">
+    <xs:complexContent>
+        <xs:extension base="tipoComplessoMio">
+            <xs:sequence>
+                <xs:element name="address" type="xs:string"/>
+                <xs:element name="city" type="xs:string"/>
+                <xs:element name="country" type="xs:integer"/>
+            </xs:sequence>
+        </xs:extension>
+    </xs:complexContent>
+</xs:complexType>
+<xs:element name="amministratore" type="tipoComplessoMioESTESO"/>
+
+<xs:group name="custGroup">
+    <xs:sequence> 
+        <xs:element name="customer" type="xs:string"/>
+        <xs:element name="orderdetails" type="xs:string"/>
+    </xs:sequence>
+</xs:group>
+
+<xs:complexType name="ordertype"> Riuso di “custGroup”
+    <xs:group ref="custGroup"/>
+    <xs:attribute name="status" type="xs:string"/>
+</xs:complexType>
+<xs:element name="esempioGRUPPO" type="ordertype"/>
+```
 
 
 ## XSL

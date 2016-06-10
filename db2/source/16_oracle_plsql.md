@@ -228,6 +228,22 @@ END;
 * Returns a single value.
 
 
+### Example: swapping values
+
+```sql
+CREATE OR REPLACE FUNCTION swap(a IN OUT integer, b IN OUT integer)
+    RETURN integer
+IS
+    temp integer;
+BEGIN
+    temp := a;
+    a := b;
+    b := temp;
+    RETURN a;
+END;
+```
+
+
 ## Packages
 
 ### Specification example
@@ -301,6 +317,32 @@ BEGIN
 END;  
 ```
 
+### Example: copying between tables
+
+```sql
+DECLARE 
+    CURSOR c IS
+    SELECT CF, Productivity, Salary 
+    FROM People;
+    
+    temp_bonus integer; 
+
+BEGIN
+    FOR i IN c LOOP
+        IF ( i.Productivity >= 20 ) THEN
+            temp_bonus := 15;
+        ELSIF ( i.Productivity >= 10 ) THEN
+            temp_bonus := 10;
+        ELSE
+            temp_bonus := 5;
+        END IF;
+
+        INSERT INTO PeopleUpgrade(CF, Productivity, Salary, Bonus)
+        VALUES(i.CF, i.Productivity, i.Salary, temp_bonus);
+
+    END LOOP;
+END;
+```
 
 
 ## Dynamic SQL

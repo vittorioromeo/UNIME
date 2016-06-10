@@ -33,7 +33,7 @@
 
 * Big data **analytics**: capture and analysis processes aiming to find patterns and correlations in huge heterogeneous datasets.
 
-### 3-layer processing architecture
+### 3-layer hybrid architecture
 
 1. Online processing:
 
@@ -53,6 +53,10 @@
 
     * Batch heavy-processing of data.
 
+#### Netflix architecture
+
+![Netflix architecture diagram](netflix_architecture.jpg)
+
 
 ### Lambda architecture
 
@@ -64,7 +68,6 @@
 
     3. **Recomputation**: recomputing previous results must always be possible.
 
-
 * Levels: 
 
     1. **Batch layer**: stores the master dataset and computes **views** *(pre-computing)* using MapReduce algorithms.
@@ -74,3 +77,5 @@
     3. **Serving layer**: output of the batch layer. Handles view indexing and provides views to the query system.
 
         * The query system uses both batch and speed views.
+
+![Lambda architecture diagram](lambda_architecture.jpg)

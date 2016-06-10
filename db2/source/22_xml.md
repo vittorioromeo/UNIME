@@ -16,7 +16,7 @@
 
 * Namespaces are handled by using prefixes.
 
-## DTD
+## DTD (Document Type Definition)
 
 * Defining subelement occurrences:
 
@@ -51,7 +51,7 @@
     * `#DEFAULT "x"`.
 
 
-## XSD
+## XSD (XML Schema Definition)
 
 * Another schema definition language.
 
@@ -61,7 +61,7 @@
 
     * Can manage multiple namespaces.
 
-    * Are XML themselves.
+    * XSD is valid XML.
 
 
 ### Example

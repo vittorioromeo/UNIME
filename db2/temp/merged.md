@@ -449,7 +449,7 @@
 * Nodes have a local counter that helps ordering transactions.
 
 
-#### Distributed deadlock detection
+#### Deadlock detection (Obermark's Algorithm)
 
 * Two subtransactions may be waiting for one another in the same or in diffrerent DBMSs.
 

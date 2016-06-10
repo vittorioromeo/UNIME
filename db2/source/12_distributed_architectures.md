@@ -26,6 +26,8 @@
 
         * Like the `select` SQL clause.
 
+        * The primary key **must be replicated** in every fragment, in order to re-compose the original table.
+
 
 ### Transparency levels
 
@@ -89,7 +91,7 @@
 * Nodes have a local counter that helps ordering transactions.
 
 
-#### Distributed deadlock detection
+#### Deadlock detection (Obermark's Algorithm)
 
 * Two subtransactions may be waiting for one another in the same or in diffrerent DBMSs.
 
@@ -97,13 +99,13 @@
 
 * Algorithm:
 
-    1. DBMSs share their waiting sequences. 
+    1. Nodes receive previous nodes' waiting sequences. 
 
-    2. Waiting sequences are composed in a **local waiting graph**.
+    2. Waiting sequences are composed in a **local waiting graph**, finding cycles.
 
     3. Deadlocks are detected locally and solved by aborting transactions.
 
-    4. Updated waiting sequences are sent to other DBMSs.
+    4. Updated waiting sequences are sent to other nodes, via RPC.
 
 
 
@@ -181,7 +183,7 @@
 
 * **Presumed abort protocol**: if in doubt during a RM recovery, and TM has no information, `abort` is returned.
 
-    * Some synchronous record writes can be avoided.
+    * Synchronous `abort` record log writes can be avoided, as it is implied.
 
 * **Read-only optimization**: if an RM only needs to read, it will not influence the transaction's result - it can be ignored during second phase.
 

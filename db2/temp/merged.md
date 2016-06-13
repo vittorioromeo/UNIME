@@ -386,6 +386,8 @@
 
         * Like the `select` SQL clause.
 
+        * The primary key **must be replicated** in every fragment, in order to re-compose the original table.
+
 
 ### Transparency levels
 
@@ -457,13 +459,13 @@
 
 * Algorithm:
 
-    1. DBMSs share their waiting sequences. 
+    1. Nodes receive previous nodes' waiting sequences. 
 
-    2. Waiting sequences are composed in a **local waiting graph**.
+    2. Waiting sequences are composed in a **local waiting graph**, finding cycles.
 
     3. Deadlocks are detected locally and solved by aborting transactions.
 
-    4. Updated waiting sequences are sent to other DBMSs.
+    4. Updated waiting sequences are sent to other nodes, via RPC.
 
 
 
@@ -541,7 +543,7 @@
 
 * **Presumed abort protocol**: if in doubt during a RM recovery, and TM has no information, `abort` is returned.
 
-    * Some synchronous record writes can be avoided.
+    * Synchronous `abort` record log writes can be avoided, as it is implied.
 
 * **Read-only optimization**: if an RM only needs to read, it will not influence the transaction's result - it can be ignored during second phase.
 
@@ -921,7 +923,7 @@
 
 * Big data **analytics**: capture and analysis processes aiming to find patterns and correlations in huge heterogeneous datasets.
 
-### 3-layer processing architecture
+### 3-layer hybrid architecture
 
 1. Online processing:
 
@@ -941,6 +943,8 @@
 
     * Batch heavy-processing of data.
 
+![Netflix architecture diagram](source/netflix_architecture.jpg)
+
 
 ### Lambda architecture
 
@@ -952,7 +956,6 @@
 
     3. **Recomputation**: recomputing previous results must always be possible.
 
-
 * Levels: 
 
     1. **Batch layer**: stores the master dataset and computes **views** *(pre-computing)* using MapReduce algorithms.
@@ -962,6 +965,8 @@
     3. **Serving layer**: output of the batch layer. Handles view indexing and provides views to the query system.
 
         * The query system uses both batch and speed views.
+
+![Lambda architecture diagram](source/lambda_architecture.jpg)
 
 
 
@@ -1192,6 +1197,22 @@ END;
 * Returns a single value.
 
 
+### Example: swapping values
+
+```sql
+CREATE OR REPLACE FUNCTION swap(a IN OUT integer, b IN OUT integer)
+    RETURN integer
+IS
+    temp integer;
+BEGIN
+    temp := a;
+    a := b;
+    b := temp;
+    RETURN a;
+END;
+```
+
+
 ## Packages
 
 ### Specification example
@@ -1265,6 +1286,32 @@ BEGIN
 END;  
 ```
 
+### Example: copying between tables
+
+```sql
+DECLARE 
+    CURSOR c IS
+    SELECT CF, Productivity, Salary 
+    FROM People;
+    
+    temp_bonus integer; 
+
+BEGIN
+    FOR i IN c LOOP
+        IF ( i.Productivity >= 20 ) THEN
+            temp_bonus := 15;
+        ELSIF ( i.Productivity >= 10 ) THEN
+            temp_bonus := 10;
+        ELSE
+            temp_bonus := 5;
+        END IF;
+
+        INSERT INTO PeopleUpgrade(CF, Productivity, Salary, Bonus)
+        VALUES(i.CF, i.Productivity, i.Salary, temp_bonus);
+
+    END LOOP;
+END;
+```
 
 
 ## Dynamic SQL
@@ -2261,7 +2308,7 @@ MATCH (e: Employee) DELETE e
 
 * Namespaces are handled by using prefixes.
 
-## DTD
+## DTD (Document Type Definition)
 
 * Defining subelement occurrences:
 
@@ -2296,7 +2343,7 @@ MATCH (e: Employee) DELETE e
     * `#DEFAULT "x"`.
 
 
-## XSD
+## XSD (XML Schema Definition)
 
 * Another schema definition language.
 
@@ -2306,7 +2353,7 @@ MATCH (e: Employee) DELETE e
 
     * Can manage multiple namespaces.
 
-    * Are XML themselves.
+    * XSD is valid XML.
 
 
 ### Example

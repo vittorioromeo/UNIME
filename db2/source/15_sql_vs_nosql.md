@@ -53,9 +53,7 @@
 
     * Batch heavy-processing of data.
 
-#### Netflix architecture
-
-![Netflix architecture diagram](netflix_architecture.jpg)
+![Netflix architecture diagram](source/netflix_architecture.jpg)
 
 
 ### Lambda architecture
@@ -78,4 +76,4 @@
 
         * The query system uses both batch and speed views.
 
-![Lambda architecture diagram](lambda_architecture.jpg)
+![Lambda architecture diagram](source/lambda_architecture.jpg)
